@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Riemann Sums & Numerical Integration - AP Calculus BC Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Math.js for parsing mathematical expressions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --navy-dark: #001a2c;
+            --navy: #002B49;
+            --navy-light: #003e69;
+            --yellow: #FFC72C;
+            --vegas-gold: #CCCC99;
+            --gold-light: #e6e6c2;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--navy-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--navy-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--navy-light);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--vegas-gold);
+        }
+        .glass-panel {
+            background: rgba(0, 43, 73, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 204, 153, 0.25);
+        }
+        .accent-yellow {
+            color: var(--yellow);
+        }
+        .accent-gold {
+            color: var(--vegas-gold);
+        }
+        .bg-navy-panel {
+            background-color: var(--navy);
+        }
+        .bg-navy-darker {
+            background-color: var(--navy-dark);
+        }
+        .border-gold {
+            border-color: rgba(204, 204, 153, 0.3);
+        }
+        .border-yellow {
+            border-color: rgba(255, 199, 44, 0.5);
+        }
+        .custom-slider::-webkit-slider-thumb {
+            background-color: var(--yellow);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[#002B49] border-b border-[#CCCC99]/30 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#FFC72C] to-[#CCCC99] flex items-center justify-center text-[#002B49] font-bold shadow-lg shadow-[#FFC72C]/20">
+                <i class="fa-solid text-lg">∑</i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Numerical Integration & Area Approximations
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">AP Calculus BC</span>
+                </h1>
+                <p class="text-xs text-[#CCCC99]">Left, Right, Midpoint, Trapezoidal & Simpson's (Parabolic) Rules</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu -->
+        <div class="hidden md:flex items-center space-x-2">
+            <span class="text-xs text-[#CCCC99] font-medium mr-1"><i class="fa-solid fa-bookmark mr-1 text-[#FFC72C]"></i> Presets:</span>
+            <button onclick="loadPreset('inc_concave_up')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">x² (Increasing, Up)</button>
+            <button onclick="loadPreset('sine')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">sin(x) + 2</button>
+            <button onclick="loadPreset('exponential')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">e^x</button>
+            <button onclick="loadPreset('cubic_simpson')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">x³ - 3x + 4 (Simpson Test)</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-graduation-cap"></i> AP Calculus Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-full lg:w-96 bg-[#002B49]/95 border-r border-[#CCCC99]/20 flex flex-col overflow-y-auto shrink-0 z-10 p-4 space-y-4">
+            
+            <!-- Method Badge Card -->
+            <div id="methodBadgeCard" class="p-3.5 rounded-xl bg-gradient-to-r from-[#001a2c] to-[#002B49] border border-[#FFC72C]/40 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-[#CCCC99]">Active Approximation Method</div>
+                    <div id="activeMethodTitle" class="text-base font-bold text-[#FFC72C]">Trapezoidal Rule</div>
+                </div>
+                <span id="methodTypeTag" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">
+                    O(Δx²) Error
+                </span>
+            </div>
+
+            <!-- Function Input Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-root-variable text-[#FFC72C]"></i> Function Definition
+                </h2>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-[#CCCC99] flex items-center justify-between">
+                        <span>Integrand Function f(x):</span>
+                        <span class="text-[10px] text-[#CCCC99]/70">e.g. x^2, sin(x)+2, e^x</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-[#FFC72C] font-mono font-bold">f(x) =</span>
+                        <input type="text" id="funcFInput" value="x^2" class="w-full pl-14 pr-3 py-2 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C] transition">
+                    </div>
+                </div>
+
+                <div id="functionError" class="hidden text-xs text-rose-300 bg-rose-950/60 p-2 rounded-md border border-rose-800/50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="errorMsg">Invalid Math Syntax</span>
+                </div>
+            </div>
+
+            <!-- Approximation Method Selector Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-layer-group text-[#FFC72C]"></i> Method Selection
+                </h2>
+
+                <div class="grid grid-cols-1 gap-1.5">
+                    <button onclick="setMethod('left')" id="btnLeft" class="px-3 py-2 text-xs font-medium rounded-lg text-left border flex items-center justify-between transition bg-[#001a2c] border-[#CCCC99]/30 text-[#CCCC99] hover:bg-[#003961]">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-align-left text-[#FFC72C]"></i> Left Riemann Sum</span>
+                        <span class="text-[10px] font-mono text-[#CCCC99]">L_n</span>
+                    </button>
+
+                    <button onclick="setMethod('right')" id="btnRight" class="px-3 py-2 text-xs font-medium rounded-lg text-left border flex items-center justify-between transition bg-[#001a2c] border-[#CCCC99]/30 text-[#CCCC99] hover:bg-[#003961]">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-align-right text-[#FFC72C]"></i> Right Riemann Sum</span>
+                        <span class="text-[10px] font-mono text-[#CCCC99]">R_n</span>
+                    </button>
+
+                    <button onclick="setMethod('midpoint')" id="btnMidpoint" class="px-3 py-2 text-xs font-medium rounded-lg text-left border flex items-center justify-between transition bg-[#001a2c] border-[#CCCC99]/30 text-[#CCCC99] hover:bg-[#003961]">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-align-center text-[#FFC72C]"></i> Midpoint Riemann Sum</span>
+                        <span class="text-[10px] font-mono text-[#CCCC99]">M_n</span>
+                    </button>
+
+                    <button onclick="setMethod('trapezoid')" id="btnTrapezoid" class="px-3 py-2 text-xs font-bold rounded-lg text-left border flex items-center justify-between transition bg-[#FFC72C] border-[#FFC72C] text-[#002B49] shadow-md">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-draw-polygon"></i> Trapezoidal Rule</span>
+                        <span class="text-[10px] font-mono text-[#002B49] font-bold">T_n</span>
+                    </button>
+
+                    <button onclick="setMethod('simpson')" id="btnSimpson" class="px-3 py-2 text-xs font-medium rounded-lg text-left border flex items-center justify-between transition bg-[#001a2c] border-[#CCCC99]/30 text-[#CCCC99] hover:bg-[#003961]">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-chart-area text-[#FFC72C]"></i> Simpson's Rule (Parabolic)</span>
+                        <span class="text-[10px] font-mono text-[#CCCC99]">S_n</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bounds & Subintervals Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-left-right-to-line text-[#FFC72C]"></i> Bounds & Subintervals (n)
+                </h2>
+
+                <!-- Integration Bounds -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-[#CCCC99] mb-1 block">Lower Bound (a):</label>
+                        <input type="number" id="boundAInput" value="0" step="0.5" class="w-full px-3 py-1.5 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                    </div>
+                    <div>
+                        <label class="text-xs text-[#CCCC99] mb-1 block">Upper Bound (b):</label>
+                        <input type="number" id="boundBInput" value="3" step="0.5" class="w-full px-3 py-1.5 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                    </div>
+                </div>
+
+                <!-- Number of Subintervals Slider -->
+                <div class="space-y-1 pt-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-[#CCCC99] font-medium">Subintervals (n):</span>
+                        <span id="nSubintervalsText" class="text-[#FFC72C] font-mono font-bold">6</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="nSlider" min="1" max="50" value="6" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+                    </div>
+                    <div id="simpsonEvenWarning" class="hidden text-[11px] text-[#FFC72C] bg-[#001a2c] p-1.5 rounded border border-[#FFC72C]/40 flex items-center gap-1 mt-1">
+                        <i class="fa-solid fa-circle-info"></i> Simpson's rule automatically rounds n up to an even number.
+                    </div>
+                    <div class="text-[11px] text-[#CCCC99] font-mono text-right">
+                        Subinterval Width Δx = <span id="dxValueText" class="text-[#FFC72C] font-bold">0.5000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slice Inspector & Display Toggles Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-magnifying-glass text-[#FFC72C]"></i> Subinterval Inspector & Options
+                </h2>
+
+                <!-- Subinterval Slider -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-[#CCCC99] font-medium">Inspect Subinterval (i):</span>
+                        <span id="subintervalIdxText" class="text-[#FFC72C] font-mono font-bold">Subinterval 1</span>
+                    </div>
+                    <input type="range" id="subintervalSlider" min="1" max="6" value="1" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+                </div>
+
+                <!-- Display Toggles -->
+                <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showExactAreaCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Exact Curve Area</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showSamplePointsCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Sample Height Dots</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showGridCheck" checked class="accent-[#CCCC99] rounded">
+                        <span>Grid Lines</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showShapeFillCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Fill Shapes</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Main Workspace -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-[#001a2c]">
+
+            <!-- Graphic Canvas Area -->
+            <div class="flex-1 relative bg-[#001a2c] p-3 flex flex-col overflow-hidden">
+                
+                <div class="absolute top-4 left-4 bg-[#002B49]/85 backdrop-blur border border-[#CCCC99]/30 px-3 py-1.5 rounded-lg text-xs font-medium text-[#CCCC99] flex items-center gap-2 pointer-events-none z-10 shadow-lg">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C] animate-pulse"></span>
+                    Interactive Graph Area (Hover/Tap shapes for instant subinterval feedback)
+                </div>
+
+                <!-- Main Canvas -->
+                <div class="flex-1 w-full h-full relative rounded-xl border border-[#CCCC99]/30 bg-[#002B49]/40 overflow-hidden">
+                    <canvas id="mainCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                </div>
+
+                <!-- Legend Overlay at Canvas Bottom -->
+                <div class="absolute bottom-5 left-5 bg-[#002B49]/90 backdrop-blur border border-[#CCCC99]/30 p-2.5 rounded-lg text-xs text-[#CCCC99] flex flex-wrap items-center gap-4 pointer-events-none z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-1 rounded bg-[#FFC72C]"></span> <span class="font-mono text-white">f(x) Integrand</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded bg-[#CCCC99]/40 border border-[#CCCC99]"></span> Approximation Shapes
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded bg-[#FFC72C]/70 border border-[#FFC72C]"></span> Inspected Subinterval
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C]"></span> Height Evaluation Point
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Calculus Analysis & Formula Panel -->
+            <div class="h-auto max-h-64 bg-[#002B49] border-t border-[#CCCC99]/30 p-4 overflow-y-auto shrink-0 space-y-3">
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    
+                    <!-- Exact vs Approximate Results Card -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-2">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>Calculated Values</span>
+                            <span class="text-[10px] font-mono text-[#CCCC99]">n = <span id="cardNVal">6</span></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Exact Integral ∫ f(x) dx</div>
+                                <div id="exactValText" class="text-base font-mono font-bold text-[#CCCC99]">9.0000</div>
+                            </div>
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Approximation Value</div>
+                                <div id="approxValText" class="text-base font-mono font-bold text-[#FFC72C]">9.1250</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs font-mono pt-1">
+                            <span class="text-[#CCCC99]">Absolute Error |I - Appr|:</span>
+                            <span id="errorValText" class="text-[#FFC72C] font-bold">0.1250 (1.39%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Inspected Subinterval Details Card -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center justify-between">
+                            <span>Subinterval <span id="inspectIdxNum" class="text-[#FFC72C]">1</span> Breakdown</span>
+                            <span id="inspectIntervalRange" class="text-[10px] font-mono text-[#FFC72C]">[0.00, 0.50]</span>
+                        </div>
+                        
+                        <div id="inspectDetailsContent" class="text-xs font-mono space-y-1 text-[#CCCC99]">
+                            <div>Sample Point x* = 0.250</div>
+                            <div>Height f(x*) = 0.0625</div>
+                            <div class="text-[#FFC72C] font-semibold">Subinterval Area = 0.03125</div>
+                        </div>
+                    </div>
+
+                    <!-- AP Calculus BC Under/Over-Estimation Theorem Card -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-br from-[#001a2c] to-[#002B49] border border-[#FFC72C]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-[#FFC72C]"></i> AP Calculus BC Exam Note
+                        </div>
+                        <div id="apCalculusTheoremText" class="text-xs text-white leading-relaxed font-sans">
+                            Since $f(x) = x^2$ is <strong>increasing</strong> on $[0, 3]$, the <strong>Left Riemann Sum underestimates</strong> the actual area, while the <strong>Right Riemann Sum overestimates</strong> it.
+                        </div>
+                        <div id="concavityTheoremText" class="text-[11px] text-[#CCCC99] font-sans border-t border-[#CCCC99]/20 pt-1">
+                            Since $f(x)$ is concave up, Trapezoidal Rule overestimates the integral.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#001a2c]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#002B49] border border-[#CCCC99]/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-[#CCCC99] hover:text-[#FFC72C] text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#FFC72C]/20 text-[#FFC72C] flex items-center justify-center font-bold text-xl border border-[#FFC72C]/40">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">AP Calculus BC Numerical Integration Guide</h3>
+                    <p class="text-xs text-[#CCCC99]">Core Concepts & Exam Justifications</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-[#CCCC99] leading-relaxed max-h-96 overflow-y-auto pr-2">
+                
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">1. Left & Right Riemann Sums</span>
+                    <p>• <strong>Left Sum ($L_n$):</strong> Evaluates function height at left endpoint $x_{i-1}$. If $f(x)$ is strictly <em>increasing</em>, $L_n$ is an <strong>underestimate</strong>. If $f(x)$ is <em>decreasing</em>, $L_n$ is an <strong>overestimate</strong>.<br>
+                    • <strong>Right Sum ($R_n$):</strong> Evaluates function height at right endpoint $x_i$. If $f(x)$ is <em>increasing</em>, $R_n$ is an <strong>overestimate</strong>. If $f(x)$ is <em>decreasing</em>, $R_n$ is an <strong>underestimate</strong>.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">2. Midpoint Riemann Sum ($M_n$)</span>
+                    <p>Evaluates height at midpoint $x_i^* = \frac{x_{i-1}+x_i}{2}$. Offers higher accuracy than Left/Right sums ($O(\Delta x^2)$ error). For concave up curves, Midpoint underestimates; for concave down curves, Midpoint overestimates.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">3. Trapezoidal Rule ($T_n$)</span>
+                    <p>Connects $(x_{i-1}, f(x_{i-1}))$ and $(x_i, f(x_i))$ with secant lines. Formula: $T_n = \frac{\Delta x}{2} [f(x_0) + 2f(x_1) + \dots + 2f(x_{n-1}) + f(x_n)]$.<br>
+                    • If $f(x)$ is <strong>concave up</strong> ($f'' > 0$), secant lines lie above the curve $\implies T_n$ is an <strong>overestimate</strong>.<br>
+                    • If $f(x)$ is <strong>concave down</strong> ($f'' < 0$), secant lines lie below the curve $\implies T_n$ is an <strong>underestimate</strong>.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">4. Simpson's Parabolic Rule ($S_n$) - AP BC Topic</span>
+                    <p>Fits parabolic arcs through groups of 3 consecutive points $(x_{2k-2}, x_{2k-1}, x_{2k})$. Requires $n$ to be <strong>even</strong>.<br>
+                    Formula: $S_n = \frac{\Delta x}{3} [f(x_0) + 4f(x_1) + 2f(x_2) + 4f(x_3) + \dots + 4f(x_{n-1}) + f(x_n)]$.<br>
+                    Simpson's Rule is <strong>exact</strong> for linear, quadratic, and cubic polynomials!</p>
+                </div>
+
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- Global State ---
+        const state = {
+            fStr: 'x^2',
+            a: 0,
+            b: 3,
+            n: 6,
+            method: 'trapezoid', // 'left', 'right', 'midpoint', 'trapezoid', 'simpson'
+            inspectedIdx: 1, // 1 to n
+            showExactArea: true,
+            showSamplePoints: true,
+            showGrid: true,
+            showShapeFill: true
+        };
+
+        // --- Compiled Functions ---
+        let compiledF = (x) => Math.pow(x, 2);
+
+        // --- Canvas Globals ---
+        let canvas, ctx;
+
+        // --- Window Onload ---
+        window.onload = function() {
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+            resizeCanvas();
+            updateAll();
+        };
+
+        // --- Safe Math Evaluator ---
+        function parseFunction(exprStr) {
+            try {
+                const node = math.parse(exprStr);
+                const code = node.compile();
+                return (x) => {
+                    try {
+                        let res = code.evaluate({ x: x });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return 0;
+                        return res;
+                    } catch (e) {
+                        return 0;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Canvas Resize ---
+        function resizeCanvas() {
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            drawGraph();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Master Update ---
+        function updateAll() {
+            // Enforce Simpson's Even n Rule
+            if (state.method === 'simpson') {
+                if (state.n % 2 !== 0) {
+                    state.n = Math.min(50, state.n + 1);
+                    document.getElementById('nSlider').value = state.n;
+                    document.getElementById('nSubintervalsText').textContent = state.n;
+                }
+                document.getElementById('simpsonEvenWarning').classList.remove('hidden');
+            } else {
+                document.getElementById('simpsonEvenWarning').classList.add('hidden');
+            }
+
+            // Update Inspector bounds
+            const subSlider = document.getElementById('subintervalSlider');
+            subSlider.max = state.n;
+            if (state.inspectedIdx > state.n) state.inspectedIdx = state.n;
+            subSlider.value = state.inspectedIdx;
+            document.getElementById('subintervalIdxText').textContent = `Subinterval ${state.inspectedIdx}`;
+
+            const dx = (state.b - state.a) / state.n;
+            document.getElementById('dxValueText').textContent = dx.toFixed(4);
+            document.getElementById('cardNVal').textContent = state.n;
+
+            updateMethodBadge();
+            drawGraph();
+            calculateIntegrationResults();
+            updateAPTheoremText();
+        }
+
+        // --- Method Badge & Button Styles ---
+        function setMethod(methodKey) {
+            state.method = methodKey;
+            
+            const btns = ['Left', 'Right', 'Midpoint', 'Trapezoid', 'Simpson'];
+            btns.forEach(m => {
+                const key = m.toLowerCase();
+                const btn = document.getElementById(`btn${m}`);
+                if (key === methodKey) {
+                    btn.className = 'px-3 py-2 text-xs font-bold rounded-lg text-left border flex items-center justify-between transition bg-[#FFC72C] border-[#FFC72C] text-[#002B49] shadow-md';
+                } else {
+                    btn.className = 'px-3 py-2 text-xs font-medium rounded-lg text-left border flex items-center justify-between transition bg-[#001a2c] border-[#CCCC99]/30 hover:bg-[#003961] text-[#CCCC99]';
+                }
+            });
+
+            updateAll();
+        }
+
+        function updateMethodBadge() {
+            const titleEl = document.getElementById('activeMethodTitle');
+            const tagEl = document.getElementById('methodTypeTag');
+
+            const map = {
+                left: { title: 'Left Riemann Sum', tag: 'O(Δx) Error' },
+                right: { title: 'Right Riemann Sum', tag: 'O(Δx) Error' },
+                midpoint: { title: 'Midpoint Riemann Sum', tag: 'O(Δx²) Error' },
+                trapezoid: { title: 'Trapezoidal Rule', tag: 'O(Δx²) Error' },
+                simpson: { title: "Simpson's Rule (Parabolic)", tag: 'O(Δx⁴) Exact for Cubics' }
+            };
+
+            const info = map[state.method];
+            titleEl.textContent = info.title;
+            tagEl.textContent = info.tag;
+        }
+
+        // --- Calculate Integrals & Errors ---
+        function calculateIntegrationResults() {
+            const { a, b, n, method } = state;
+            const dx = (b - a) / n;
+
+            // 1. High precision Exact Integral numerical reference (Simpson 2000 steps)
+            const N_EXACT = 2000;
+            const h_ex = (b - a) / N_EXACT;
+            let exactVal = compiledF(a) + compiledF(b);
+            for (let i = 1; i < N_EXACT; i++) {
+                const x = a + i * h_ex;
+                exactVal += (i % 2 === 0 ? 2 : 4) * compiledF(x);
+            }
+            exactVal *= (h_ex / 3);
+
+            // 2. Approximation Calculation
+            let approxVal = 0;
+            if (method === 'left') {
+                for (let i = 0; i < n; i++) {
+                    const x = a + i * dx;
+                    approxVal += compiledF(x);
+                }
+                approxVal *= dx;
+            } else if (method === 'right') {
+                for (let i = 1; i <= n; i++) {
+                    const x = a + i * dx;
+                    approxVal += compiledF(x);
+                }
+                approxVal *= dx;
+            } else if (method === 'midpoint') {
+                for (let i = 0; i < n; i++) {
+                    const x = a + (i + 0.5) * dx;
+                    approxVal += compiledF(x);
+                }
+                approxVal *= dx;
+            } else if (method === 'trapezoid') {
+                let sum = compiledF(a) + compiledF(b);
+                for (let i = 1; i < n; i++) {
+                    sum += 2 * compiledF(a + i * dx);
+                }
+                approxVal = (dx / 2) * sum;
+            } else if (method === 'simpson') {
+                let sum = compiledF(a) + compiledF(b);
+                for (let i = 1; i < n; i++) {
+                    sum += (i % 2 === 0 ? 2 : 4) * compiledF(a + i * dx);
+                }
+                approxVal = (dx / 3) * sum;
+            }
+
+            const absError = Math.abs(exactVal - approxVal);
+            const pctError = exactVal !== 0 ? (absError / Math.abs(exactVal)) * 100 : 0;
+
+            document.getElementById('exactValText').textContent = exactVal.toFixed(4);
+            document.getElementById('approxValText').textContent = approxVal.toFixed(4);
+            document.getElementById('errorValText').textContent = `${absError.toFixed(4)} (${pctError.toFixed(2)}%)`;
+
+            // 3. Inspected Subinterval Details
+            const k = state.inspectedIdx - 1; // 0 to n-1
+            const x_start = a + k * dx;
+            const x_end = a + (k + 1) * dx;
+            document.getElementById('inspectIdxNum').textContent = state.inspectedIdx;
+            document.getElementById('inspectIntervalRange').textContent = `[${x_start.toFixed(2)}, ${x_end.toFixed(2)}]`;
+
+            let x_sample = x_start;
+            let subArea = 0;
+            if (method === 'left') {
+                x_sample = x_start;
+                subArea = compiledF(x_start) * dx;
+            } else if (method === 'right') {
+                x_sample = x_end;
+                subArea = compiledF(x_end) * dx;
+            } else if (method === 'midpoint') {
+                x_sample = (x_start + x_end) / 2;
+                subArea = compiledF(x_sample) * dx;
+            } else if (method === 'trapezoid') {
+                x_sample = (x_start + x_end) / 2;
+                subArea = (dx / 2) * (compiledF(x_start) + compiledF(x_end));
+            } else if (method === 'simpson') {
+                x_sample = (x_start + x_end) / 2;
+                subArea = (dx / 3) * (compiledF(x_start) + 4 * compiledF(x_sample) + compiledF(x_end)) / 2; 
+            }
+
+            const y_sample = compiledF(x_sample);
+
+            document.getElementById('inspectDetailsContent').innerHTML = `
+                <div>Sample Point x* = ${x_sample.toFixed(3)}</div>
+                <div>Height f(x*) = ${y_sample.toFixed(4)}</div>
+                <div>Width Δx = ${dx.toFixed(4)}</div>
+                <div class="text-[#FFC72C] font-bold border-t border-[#CCCC99]/20 pt-1">Subinterval Area = ${subArea.toFixed(4)}</div>
+            `;
+        }
+
+        // --- AP Calculus Theorem Analysis Engine ---
+        function updateAPTheoremText() {
+            const { a, b, method } = state;
+            
+            // Sample first and second derivatives numerically over [a, b]
+            const N = 40;
+            const h = (b - a) / N;
+            let increasingCount = 0, decreasingCount = 0;
+            let concaveUpCount = 0, concaveDownCount = 0;
+
+            for (let i = 1; i < N; i++) {
+                const x = a + i * h;
+                const d1 = (compiledF(x + 0.001) - compiledF(x - 0.001)) / 0.002;
+                const d2 = (compiledF(x + 0.001) - 2 * compiledF(x) + compiledF(x - 0.001)) / 0.000001;
+
+                if (d1 > 0.01) increasingCount++;
+                else if (d1 < -0.01) decreasingCount++;
+
+                if (d2 > 0.01) concaveUpCount++;
+                else if (d2 < -0.01) concaveDownCount++;
+            }
+
+            let incStatus = 'increasing';
+            if (decreasingCount > increasingCount) incStatus = 'decreasing';
+            else if (Math.abs(increasingCount - decreasingCount) < 5) incStatus = 'mixed';
+
+            let concStatus = 'concave up';
+            if (concaveDownCount > concaveUpCount) concStatus = 'concave down';
+            else if (Math.abs(concaveUpCount - concaveDownCount) < 5) concStatus = 'mixed concavity';
+
+            const apEl = document.getElementById('apCalculusTheoremText');
+            const concEl = document.getElementById('concavityTheoremText');
+
+            // AP Theorem Explanations
+            if (method === 'left') {
+                if (incStatus === 'increasing') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>strictly increasing</strong> on $[${a}, ${b}]$, the <strong>Left Riemann Sum UNDERESTIMATES</strong> the true integral because each rectangle height is evaluated at the lowest point of the subinterval.`;
+                } else if (incStatus === 'decreasing') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>strictly decreasing</strong> on $[${a}, ${b}]$, the <strong>Left Riemann Sum OVERESTIMATES</strong> the true integral.`;
+                } else {
+                    apEl.innerHTML = `Functions with <strong>mixed behavior</strong> (increasing and decreasing) require testing subintervals individually to determine net over/under-estimation.`;
+                }
+            } else if (method === 'right') {
+                if (incStatus === 'increasing') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>strictly increasing</strong> on $[${a}, ${b}]$, the <strong>Right Riemann Sum OVERESTIMATES</strong> the true integral.`;
+                } else if (incStatus === 'decreasing') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>strictly decreasing</strong> on $[${a}, ${b}]$, the <strong>Right Riemann Sum UNDERESTIMATES</strong> the true integral.`;
+                } else {
+                    apEl.innerHTML = `Right sum overestimates where $f(x)$ increases and underestimates where $f(x)$ decreases.`;
+                }
+            } else if (method === 'trapezoid') {
+                if (concStatus === 'concave up') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>concave up ($f'' > 0$)</strong> on $[${a}, ${b}]$, the secant lines connecting endpoints lie <em>above</em> the curve, so the <strong>Trapezoidal Rule OVERESTIMATES</strong> the true integral.`;
+                } else if (concStatus === 'concave down') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>concave down ($f'' < 0$)</strong> on $[${a}, ${b}]$, the secant lines lie <em>below</em> the curve, so the <strong>Trapezoidal Rule UNDERESTIMATES</strong> the true integral.`;
+                } else {
+                    apEl.innerHTML = `Trapezoidal Rule overestimates on concave up sections and underestimates on concave down sections.`;
+                }
+            } else if (method === 'midpoint') {
+                if (concStatus === 'concave up') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>concave up</strong> on $[${a}, ${b}]$, tangent lines at midpoints lie below the curve, causing the <strong>Midpoint Sum to UNDERESTIMATE</strong> the true integral.`;
+                } else if (concStatus === 'concave down') {
+                    apEl.innerHTML = `Because $f(x)$ is <strong>concave down</strong> on $[${a}, ${b}]$, the <strong>Midpoint Sum OVERESTIMATES</strong> the true integral.`;
+                } else {
+                    apEl.innerHTML = `Midpoint rule provides high accuracy ($O(\\Delta x^2)$) by balancing endpoint errors.`;
+                }
+            } else if (method === 'simpson') {
+                apEl.innerHTML = `<strong>Simpson's Parabolic Rule</strong> fits quadratic polynomials $Ax^2+Bx+C$ over pairs of subintervals. It yields the <strong>exact volume/area</strong> for any polynomial of degree $\\le 3$ (linear, quadratic, or cubic).`;
+            }
+
+            concEl.innerHTML = `Derivative Summary: Region is <strong>${incStatus}</strong> & <strong>${concStatus}</strong>.`;
+        }
+
+        // --- Graph Rendering Engine (HTML5 Canvas) ---
+        function drawGraph() {
+            if (!ctx) return;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const { a, b, n, method, inspectedIdx } = state;
+            const dx = (b - a) / n;
+
+            // Compute Bounding Box
+            const xMin = Math.min(a - (b - a) * 0.15, -0.5);
+            const xMax = Math.max(b + (b - a) * 0.15, 1.0);
+
+            // Sample y bounds
+            let yMin = 0;
+            let yMax = 1;
+            const sampleSteps = 200;
+            for (let i = 0; i <= sampleSteps; i++) {
+                const x = xMin + (i / sampleSteps) * (xMax - xMin);
+                const y = compiledF(x);
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+            // Add padding
+            const yRange = yMax - yMin || 1;
+            yMin = Math.min(0, yMin - yRange * 0.1);
+            yMax = yMax + yRange * 0.15;
+
+            // Canvas coordinate converters
+            const toPxX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+            const toPxY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+            // 1. Draw Grid Lines (Vegas Gold with low opacity)
+            if (state.showGrid) {
+                ctx.strokeStyle = 'rgba(204, 204, 153, 0.12)';
+                ctx.lineWidth = 1;
+
+                // Vertical grid lines
+                const xStep = Math.pow(10, Math.floor(Math.log10(xMax - xMin))) / 2 || 0.5;
+                for (let x = Math.floor(xMin / xStep) * xStep; x <= xMax; x += xStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(x), 0);
+                    ctx.lineTo(toPxX(x), height);
+                    ctx.stroke();
+                }
+
+                // Horizontal grid lines
+                const yStep = Math.pow(10, Math.floor(Math.log10(yMax - yMin))) / 2 || 0.5;
+                for (let y = Math.floor(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, toPxY(y));
+                    ctx.lineTo(width, toPxY(y));
+                    ctx.stroke();
+                }
+            }
+
+            // 2. Draw Main Axes (Vegas Gold)
+            ctx.strokeStyle = '#CCCC99';
+            ctx.lineWidth = 1.5;
+            // X axis
+            ctx.beginPath();
+            ctx.moveTo(0, toPxY(0));
+            ctx.lineTo(width, toPxY(0));
+            ctx.stroke();
+            // Y axis
+            ctx.beginPath();
+            ctx.moveTo(toPxX(0), 0);
+            ctx.lineTo(toPxX(0), height);
+            ctx.stroke();
+
+            // 3. Draw Exact Area Under Curve (Shaded Yellow Tint)
+            if (state.showExactArea) {
+                ctx.fillStyle = 'rgba(255, 199, 44, 0.12)';
+                ctx.beginPath();
+                ctx.moveTo(toPxX(a), toPxY(0));
+                for (let i = 0; i <= 150; i++) {
+                    const x = a + (i / 150) * (b - a);
+                    ctx.lineTo(toPxX(x), toPxY(compiledF(x)));
+                }
+                ctx.lineTo(toPxX(b), toPxY(0));
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 4. Draw Approximation Shapes (Subintervals using Vegas Gold and Yellow)
+            for (let i = 0; i < n; i++) {
+                const x0 = a + i * dx;
+                const x1 = a + (i + 1) * dx;
+                const isInspected = (i + 1 === inspectedIdx);
+
+                // Colors using Palette: Yellow for Inspected, Vegas Gold for Normal
+                const fillColor = isInspected ? 'rgba(255, 199, 44, 0.45)' : 'rgba(204, 204, 153, 0.25)';
+                const strokeColor = isInspected ? '#FFC72C' : '#CCCC99';
+
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = isInspected ? 2.5 : 1.5;
+
+                if (method === 'left' || method === 'right' || method === 'midpoint') {
+                    let sampleX = x0;
+                    if (method === 'right') sampleX = x1;
+                    if (method === 'midpoint') sampleX = (x0 + x1) / 2;
+
+                    const hVal = compiledF(sampleX);
+                    const rectPxX0 = toPxX(x0);
+                    const rectPxWidth = toPxX(x1) - toPxX(x0);
+                    const rectPxY0 = toPxY(0);
+                    const rectPxY1 = toPxY(hVal);
+
+                    if (state.showShapeFill) {
+                        ctx.fillRect(rectPxX0, Math.min(rectPxY0, rectPxY1), rectPxWidth, Math.abs(rectPxY0 - rectPxY1));
+                    }
+                    ctx.strokeRect(rectPxX0, Math.min(rectPxY0, rectPxY1), rectPxWidth, Math.abs(rectPxY0 - rectPxY1));
+
+                    // Sample Point Dot & Vertical Height Line
+                    if (state.showSamplePoints) {
+                        ctx.strokeStyle = '#FFC72C';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 3]);
+                        ctx.beginPath();
+                        ctx.moveTo(toPxX(sampleX), toPxY(0));
+                        ctx.lineTo(toPxX(sampleX), toPxY(hVal));
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        // Dot at (sampleX, f(sampleX))
+                        ctx.fillStyle = '#FFC72C';
+                        ctx.beginPath();
+                        ctx.arc(toPxX(sampleX), toPxY(hVal), isInspected ? 5 : 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                } else if (method === 'trapezoid') {
+                    const y0 = compiledF(x0);
+                    const y1 = compiledF(x1);
+
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(x0), toPxY(0));
+                    ctx.lineTo(toPxX(x0), toPxY(y0));
+                    ctx.lineTo(toPxX(x1), toPxY(y1));
+                    ctx.lineTo(toPxX(x1), toPxY(0));
+                    ctx.closePath();
+
+                    if (state.showShapeFill) ctx.fill();
+                    ctx.stroke();
+
+                    if (state.showSamplePoints) {
+                        ctx.fillStyle = '#FFC72C';
+                        ctx.beginPath();
+                        ctx.arc(toPxX(x0), toPxY(y0), 3.5, 0, Math.PI * 2);
+                        ctx.arc(toPxX(x1), toPxY(y1), 3.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                } else if (method === 'simpson') {
+                    // Draw Parabolic Segments over pairs of subintervals (i, i+1)
+                    if (i % 2 === 0 && i + 1 < n) {
+                        const x0_p = a + i * dx;
+                        const x1_p = a + (i + 1) * dx;
+                        const x2_p = a + (i + 2) * dx;
+
+                        const y0_p = compiledF(x0_p);
+                        const y1_p = compiledF(x1_p);
+                        const y2_p = compiledF(x2_p);
+
+                        ctx.beginPath();
+                        ctx.moveTo(toPxX(x0_p), toPxY(0));
+                        ctx.lineTo(toPxX(x0_p), toPxY(y0_p));
+
+                        const stepsP = 40;
+                        for (let s = 0; s <= stepsP; s++) {
+                            const t = -1 + (2 * s) / stepsP;
+                            const x_curr = x1_p + t * dx;
+                            const y_curr = y1_p + ((y2_p - y0_p) / 2) * t + ((y0_p - 2 * y1_p + y2_p) / 2) * t * t;
+                            ctx.lineTo(toPxX(x_curr), toPxY(y_curr));
+                        }
+
+                        ctx.lineTo(toPxX(x2_p), toPxY(0));
+                        ctx.closePath();
+
+                        const isPairInspected = (i + 1 === inspectedIdx || i + 2 === inspectedIdx);
+                        ctx.fillStyle = isPairInspected ? 'rgba(255, 199, 44, 0.45)' : 'rgba(204, 204, 153, 0.25)';
+                        ctx.strokeStyle = isPairInspected ? '#FFC72C' : '#CCCC99';
+                        ctx.lineWidth = isPairInspected ? 2.5 : 1.5;
+
+                        if (state.showShapeFill) ctx.fill();
+                        ctx.stroke();
+
+                        if (state.showSamplePoints) {
+                            ctx.fillStyle = '#FFC72C';
+                            ctx.beginPath();
+                            ctx.arc(toPxX(x0_p), toPxY(y0_p), 3.5, 0, Math.PI * 2);
+                            ctx.arc(toPxX(x1_p), toPxY(y1_p), 3.5, 0, Math.PI * 2);
+                            ctx.arc(toPxX(x2_p), toPxY(y2_p), 3.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+
+            // 5. Plot Integrand Function Curve f(x) (Vibrant Yellow Curve)
+            ctx.strokeStyle = '#FFC72C';
+            ctx.lineWidth = 3.5;
+            ctx.beginPath();
+            const curveSteps = 300;
+            for (let i = 0; i <= curveSteps; i++) {
+                const x = xMin + (i / curveSteps) * (xMax - xMin);
+                const y = compiledF(x);
+                if (i === 0) ctx.moveTo(toPxX(x), toPxY(y));
+                else ctx.lineTo(toPxX(x), toPxY(y));
+            }
+            ctx.stroke();
+
+            // 6. Draw Vertical Bound Lines at x = a and x = b (Vegas Gold Dashed Lines)
+            ctx.strokeStyle = '#CCCC99';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([4, 4]);
+
+            ctx.beginPath();
+            ctx.moveTo(toPxX(a), 0); ctx.lineTo(toPxX(a), height);
+            ctx.moveTo(toPxX(b), 0); ctx.lineTo(toPxX(b), height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Bound Labels
+            ctx.fillStyle = '#CCCC99';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(`a = ${a}`, toPxX(a) + 5, toPxY(0) - 10);
+            ctx.fillText(`b = ${b}`, toPxX(b) + 5, toPxY(0) - 10);
+        }
+
+        // --- Presets Loader ---
+        function loadPreset(key) {
+            if (key === 'inc_concave_up') {
+                document.getElementById('funcFInput').value = 'x^2';
+                compiledF = parseFunction('x^2');
+                state.a = 0; state.b = 3; state.n = 6;
+                setMethod('trapezoid');
+            } else if (key === 'sine') {
+                document.getElementById('funcFInput').value = 'sin(x) + 2';
+                compiledF = parseFunction('sin(x) + 2');
+                state.a = 0; state.b = Math.PI * 2; state.n = 8;
+                setMethod('midpoint');
+            } else if (key === 'exponential') {
+                document.getElementById('funcFInput').value = 'e^x';
+                compiledF = parseFunction('e^x');
+                state.a = 0; state.b = 2; state.n = 6;
+                setMethod('left');
+            } else if (key === 'cubic_simpson') {
+                document.getElementById('funcFInput').value = 'x^3 - 3*x + 4';
+                compiledF = parseFunction('x^3 - 3*x + 4');
+                state.a = 0; state.b = 3; state.n = 6;
+                setMethod('simpson');
+            }
+
+            document.getElementById('boundAInput').value = state.a;
+            document.getElementById('boundBInput').value = state.b;
+            document.getElementById('nSlider').value = state.n;
+            document.getElementById('nSubintervalsText').textContent = state.n;
+
+            updateAll();
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            // Function Input
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                const fn = parseFunction(e.target.value);
+                if (fn) {
+                    compiledF = fn;
+                    state.fStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Bounds
+            document.getElementById('boundAInput').addEventListener('change', (e) => {
+                state.a = parseFloat(e.target.value) || 0;
+                updateAll();
+            });
+            document.getElementById('boundBInput').addEventListener('change', (e) => {
+                state.b = parseFloat(e.target.value) || 1;
+                updateAll();
+            });
+
+            // n Slider
+            document.getElementById('nSlider').addEventListener('input', (e) => {
+                state.n = parseInt(e.target.value) || 1;
+                document.getElementById('nSubintervalsText').textContent = state.n;
+                updateAll();
+            });
+
+            // Subinterval Inspector Slider
+            document.getElementById('subintervalSlider').addEventListener('input', (e) => {
+                state.inspectedIdx = parseInt(e.target.value) || 1;
+                document.getElementById('subintervalIdxText').textContent = `Subinterval ${state.inspectedIdx}`;
+                updateAll();
+            });
+
+            // Toggles
+            document.getElementById('showExactAreaCheck').addEventListener('change', (e) => {
+                state.showExactArea = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showSamplePointsCheck').addEventListener('change', (e) => {
+                state.showSamplePoints = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showGridCheck').addEventListener('change', (e) => {
+                state.showGrid = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showShapeFillCheck').addEventListener('change', (e) => {
+                state.showShapeFill = e.target.checked;
+                drawGraph();
+            });
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
