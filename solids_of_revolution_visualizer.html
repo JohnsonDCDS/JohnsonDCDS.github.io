@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solids of Revolution - AP Calculus BC Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Math.js for parsing mathematical expressions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 380px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+                <i class="fa-solid font-bold text-lg">∫</i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Solids of Revolution 
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">AP Calculus BC</span>
+                </h1>
+                <p class="text-xs text-slate-400">Interactive 3D Visualizer & Differential Slice Inspector</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu -->
+        <div class="hidden md:flex items-center space-x-2">
+            <span class="text-xs text-slate-400 font-medium mr-1"><i class="fa-solid fa-bookmark mr-1"></i> Presets:</span>
+            <button onclick="loadPreset('parabola')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">Disk (Parabola)</button>
+            <button onclick="loadPreset('washer')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">Washer (Bowl)</button>
+            <button onclick="loadPreset('shell')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">Shell (Vertical Axis)</button>
+            <button onclick="loadPreset('shifted')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">Shifted Axis y=-1</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button id="resetCamBtn" class="px-3 py-1.5 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-video"></i> Reset View
+            </button>
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium flex items-center gap-1.5 transition shadow-sm">
+                <i class="fa-solid fa-circle-question"></i> Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-full lg:w-96 bg-slate-900/95 border-r border-slate-800 flex flex-col overflow-y-auto shrink-0 z-10 p-4 space-y-4">
+            
+            <!-- Method Identification Card -->
+            <div id="methodBadgeCard" class="p-3.5 rounded-xl bg-gradient-to-r from-indigo-900/50 to-slate-800 border border-indigo-500/30 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-indigo-400">Calculus Method Detected</div>
+                    <div id="activeMethodTitle" class="text-base font-bold text-white">Washer Method</div>
+                </div>
+                <span id="methodTypeTag" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+                    Horizontal Axis
+                </span>
+            </div>
+
+            <!-- Equations Input Section -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-root-variable text-indigo-400"></i> Functions
+                    </h2>
+                    <div class="flex items-center gap-1.5 bg-slate-800 p-1 rounded-lg border border-slate-700 text-xs">
+                        <button id="singleCurveBtn" onclick="setNumCurves(1)" class="px-2 py-0.5 rounded font-medium text-slate-400 transition">1 Curve</button>
+                        <button id="doubleCurveBtn" onclick="setNumCurves(2)" class="px-2 py-0.5 rounded font-medium bg-indigo-600 text-white shadow-sm transition">2 Curves</button>
+                    </div>
+                </div>
+
+                <!-- f(x) Input -->
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-blue-400 flex items-center justify-between">
+                        <span>Top / Outer Curve f(x):</span>
+                        <span class="text-[10px] text-slate-400">e.g. sqrt(x), x^2, sin(x)+2</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-blue-400 font-mono font-bold">f(x) =</span>
+                        <input type="text" id="funcFInput" value="x^2 + 1" class="w-full pl-14 pr-3 py-2 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-blue-500 transition">
+                    </div>
+                </div>
+
+                <!-- g(x) Input -->
+                <div id="gCurveContainer" class="space-y-1">
+                    <label class="text-xs font-medium text-red-400 flex items-center justify-between">
+                        <span>Bottom / Inner Curve g(x):</span>
+                        <span class="text-[10px] text-slate-400">e.g. x, 0, x^2</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-red-400 font-mono font-bold">g(x) =</span>
+                        <input type="text" id="funcGInput" value="x" class="w-full pl-14 pr-3 py-2 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-red-500 transition">
+                    </div>
+                </div>
+
+                <div id="functionError" class="hidden text-xs text-rose-400 bg-rose-950/40 p-2 rounded-md border border-rose-800/50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation"></i> <span id="errorMsg">Invalid Math Syntax</span>
+                </div>
+            </div>
+
+            <!-- Bounds & Axis Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrows-left-right-to-line text-emerald-400"></i> Bounds & Axis of Revolution
+                </h2>
+
+                <!-- Integration Bounds -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Lower Bound (a):</label>
+                        <input type="number" id="boundAInput" value="0" step="0.5" class="w-full px-3 py-1.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-400 mb-1 block">Upper Bound (b):</label>
+                        <input type="number" id="boundBInput" value="2" step="0.5" class="w-full px-3 py-1.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Axis Selection -->
+                <div class="space-y-2">
+                    <label class="text-xs text-slate-400 block">Axis of Revolution:</label>
+                    <select id="axisTypeSelect" class="w-full px-3 py-2 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <option value="x-axis">x-axis (y = 0)</option>
+                        <option value="y-axis">y-axis (x = 0)</option>
+                        <option value="horiz">Custom Horizontal Line (y = k)</option>
+                        <option value="vert">Custom Vertical Line (x = h)</option>
+                    </select>
+                </div>
+
+                <!-- Custom Axis Value Input -->
+                <div id="customAxisContainer" class="hidden space-y-1">
+                    <label id="customAxisLabel" class="text-xs text-amber-400 block font-medium">Line Value (k):</label>
+                    <input type="number" id="customAxisValInput" value="-1" step="0.5" class="w-full px-3 py-1.5 text-sm bg-slate-950 border border-slate-700 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <!-- Visualization Controls Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-cyan-400"></i> Interactive controls
+                </h2>
+
+                <!-- Revolution Sweep Angle Slider -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 font-medium">Revolution Angle (θ):</span>
+                        <span id="angleValueText" class="text-cyan-400 font-mono font-bold">360°</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="angleSlider" min="5" max="360" value="360" class="w-full accent-cyan-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+                        <button id="playSweepBtn" class="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 w-8 h-8 flex items-center justify-center transition">
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Slice Inspector Slider -->
+                <div class="space-y-1 pt-2 border-t border-slate-800">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 font-medium">Differential Slice Position (x):</span>
+                        <span id="slicePosText" class="text-amber-400 font-mono font-bold">x = 1.00</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="slicePosSlider" min="0" max="100" value="50" class="w-full accent-amber-500 bg-slate-800 rounded-lg h-2 cursor-pointer">
+                        <button id="playSliceBtn" class="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 w-8 h-8 flex items-center justify-center transition">
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Render Toggles -->
+                <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showSolidCheck" checked class="accent-indigo-500 rounded">
+                        <span>Show 3D Solid</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showWireframeCheck" class="accent-indigo-500 rounded">
+                        <span>Wireframe</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showSliceCheck" checked class="accent-amber-500 rounded">
+                        <span>Highlight Slice</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="show2dRegionCheck" checked class="accent-emerald-500 rounded">
+                        <span>2D Region</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Main Workspace: Split 3D Viewport, 2D Graph, and Calculus Formula Panel -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+
+            <!-- Upper Split Container (3D View + 2D View side-by-side or stacked) -->
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+                
+                <!-- 3D Three.js Canvas Container -->
+                <div class="flex-1 relative bg-slate-950 border-b md:border-b-0 md:border-r border-slate-800 overflow-hidden">
+                    <div id="canvas3d" class="w-full h-full"></div>
+
+                    <!-- Floating 3D Overlays -->
+                    <div class="absolute top-3 left-3 bg-slate-900/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 flex items-center gap-2 pointer-events-none shadow-lg">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                        3D Viewport (Drag to Rotate, Scroll to Zoom)
+                    </div>
+
+                    <!-- 3D Legend -->
+                    <div class="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur border border-slate-800 p-2.5 rounded-lg text-[11px] text-slate-300 space-y-1 pointer-events-none">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-indigo-500/80 border border-indigo-400"></span> Solid Outer Surface
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-amber-400/90 border border-amber-300"></span> Active Differential Slice
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-0.5 bg-purple-400 border-t-2 border-dashed border-purple-300"></span> Axis of Revolution
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2D Function & Slice Graphic View -->
+                <div class="w-full md:w-80 lg:w-96 h-64 md:h-full bg-slate-900/90 flex flex-col border-slate-800 overflow-hidden shrink-0">
+                    <div class="px-3 py-2 border-b border-slate-800 flex items-center justify-between bg-slate-900">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-line text-emerald-400"></i> 2D Region & Slice Profile
+                        </span>
+                        <span class="text-[10px] text-slate-400 font-mono">dx integration</span>
+                    </div>
+                    <div class="flex-1 relative p-2 bg-slate-950 flex items-center justify-center">
+                        <canvas id="canvas2d" class="w-full h-full rounded-lg bg-slate-900/80 border border-slate-800"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Bottom Calculus Explanation & Definite Integral Panel -->
+            <div class="h-auto max-h-56 bg-slate-900 border-t border-slate-800 p-4 overflow-y-auto shrink-0 space-y-3">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+                    
+                    <!-- Method Math Formula Header -->
+                    <div>
+                        <div class="text-xs font-semibold text-indigo-400 uppercase tracking-wider">AP Calculus Integral Setup</div>
+                        <div id="mathIntegralFormula" class="text-base font-mono font-bold text-white tracking-wide mt-0.5">
+                            V = π ∫[a,b] ( [f(x)]² - [g(x)]² ) dx
+                        </div>
+                    </div>
+
+                    <!-- Computed Exact Volume Result Box -->
+                    <div class="flex items-center gap-3 bg-slate-950 px-4 py-2 rounded-xl border border-slate-800">
+                        <div class="text-right">
+                            <div class="text-[10px] uppercase font-bold text-slate-400">Calculated Volume</div>
+                            <div id="volumeResultValue" class="text-lg font-mono font-bold text-emerald-400">12.5664 units³</div>
+                        </div>
+                        <div id="piVolumeValue" class="text-xs font-mono text-indigo-300 bg-indigo-950/60 px-2.5 py-1 rounded-md border border-indigo-800/50">
+                            4.000 π
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Differential Slice Explanation -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                    
+                    <!-- Box 1: Geometry Breakdown -->
+                    <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 space-y-1">
+                        <span class="font-bold text-indigo-300 block border-b border-slate-800 pb-1">
+                            <i class="fa-solid fa-ruler-combined text-indigo-400 mr-1"></i> Slice Parameters @ x = <span id="explainXVal">1.00</span>
+                        </span>
+                        <div id="explainSliceParams" class="text-slate-300 font-mono space-y-0.5">
+                            <div>Outer Radius R(x) = 2.00</div>
+                            <div>Inner Radius r(x) = 1.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 2: Differential Slice Area -->
+                    <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 space-y-1">
+                        <span class="font-bold text-amber-300 block border-b border-slate-800 pb-1">
+                            <i class="fa-solid fa-shapes text-amber-400 mr-1"></i> Differential Area A(x)
+                        </span>
+                        <div id="explainSliceArea" class="text-slate-300 font-mono space-y-0.5">
+                            <div>A(x) = π ( R² - r² ) = 9.42</div>
+                            <div>dV = A(x) dx</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: Pedagogical Tip -->
+                    <div class="p-2.5 rounded-lg bg-indigo-950/30 border border-indigo-900/50 space-y-1">
+                        <span class="font-bold text-emerald-300 block border-b border-indigo-900/40 pb-1">
+                            <i class="fa-solid fa-lightbulb text-emerald-400 mr-1"></i> Teacher Concept Note
+                        </span>
+                        <div id="explainTeacherTip" class="text-slate-300 leading-relaxed text-[11px]">
+                            Disks/Washers occur when cross-section slices are perpendicular to the axis of revolution.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-bold text-xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Solids of Revolution Guide</h3>
+                    <p class="text-xs text-slate-400">AP Calculus BC Teaching Tool</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-slate-300 leading-relaxed max-h-80 overflow-y-auto pr-2">
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-indigo-400 block">1. Disk Method</span>
+                    <p>Used when rotating a single region bounded by $f(x)$ directly against the axis of revolution. Slice is a solid circular disk with Area $A(x) = \pi [R(x)]^2$.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-indigo-400 block">2. Washer Method</span>
+                    <p>Used when rotating the region between two functions $f(x)$ and $g(x)$ around an axis. Slice is a circular washer with outer radius $R(x)$ and inner radius $r(x)$. Area $A(x) = \pi ([R(x)]^2 - [r(x)]^2)$.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-indigo-400 block">3. Cylindrical Shell Method</span>
+                    <p>Used when slices are parallel to the axis of revolution (e.g., vertical slices rotated around a vertical axis $x=h$). Surface area of shell $A(x) = 2\pi \cdot \text{Radius}(x) \cdot \text{Height}(x)$.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-indigo-400 block">4. Controls & Shortcuts</span>
+                    <p>• Use the <strong>Revolution Angle Slider</strong> to cut open the 3D solid and view interior cross-sections.<br>
+                    • Use the <strong>Differential Slice Position Slider</strong> to observe individual disks/washers/shells traveling along $[a, b]$.<br>
+                    • Mouse controls: Right click/drag to pan, Left click/drag to rotate 3D camera.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            numCurves: 2,
+            fStr: 'x^2 + 1',
+            gStr: 'x',
+            a: 0,
+            b: 2,
+            axisType: 'horiz', // 'x-axis', 'y-axis', 'horiz', 'vert'
+            axisVal: -1,
+            maxAngle: 360,
+            slicePos: 1.0,
+            showSolid: true,
+            showWireframe: false,
+            showSlice: true,
+            show2dRegion: true,
+            isSweeping: false,
+            isSlicing: false,
+            method: 'washer' // 'disk', 'washer', 'shell'
+        };
+
+        // --- Compiled Functions ---
+        let compiledF = (x) => Math.pow(x, 2) + 1;
+        let compiledG = (x) => x;
+
+        // --- Three.js Globals ---
+        let scene, camera, renderer, controls;
+        let solidMesh = null;
+        let wireframeMesh = null;
+        let sliceMesh = null;
+        let axisLineGroup = null;
+
+        // --- 2D Canvas Globals ---
+        let canvas2d, ctx2d;
+
+        // --- Init Function ---
+        window.onload = function() {
+            initThree();
+            init2DCanvas();
+            setupEventListeners();
+            updateAll();
+            animate();
+        };
+
+        // --- Safe Math Evaluator ---
+        function parseFunction(exprStr) {
+            try {
+                const node = math.parse(exprStr);
+                const code = node.compile();
+                return (x) => {
+                    try {
+                        let res = code.evaluate({ x: x });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return 0;
+                        return res;
+                    } catch (e) {
+                        return 0;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Three.js Initialization ---
+        function initThree() {
+            const container = document.getElementById('canvas3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0f172a);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(5, 4, 7);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(10, 15, 10);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x38bdf8, 0.4);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
+
+            // Grid helper
+            const gridHelper = new THREE.GridHelper(20, 20, 0x334155, 0x1e293b);
+            gridHelper.position.y = -0.01;
+            scene.add(gridHelper);
+
+            // Handle Resize
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas3d');
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+
+            draw2DGraph();
+        }
+
+        // --- 2D Canvas Initialization ---
+        function init2DCanvas() {
+            canvas2d = document.getElementById('canvas2d');
+            ctx2d = canvas2d.getContext('2d');
+            resize2DCanvas();
+        }
+
+        function resize2DCanvas() {
+            const rect = canvas2d.parentElement.getBoundingClientRect();
+            canvas2d.width = rect.width;
+            canvas2d.height = rect.height;
+        }
+
+        // --- Detect Calculus Method ---
+        function updateMethodType() {
+            const isHorizontalAxis = (state.axisType === 'x-axis' || state.axisType === 'horiz');
+            
+            if (isHorizontalAxis) {
+                if (state.numCurves === 1) {
+                    state.method = 'disk';
+                } else {
+                    state.method = 'washer';
+                }
+            } else {
+                state.method = 'shell';
+            }
+
+            const titleEl = document.getElementById('activeMethodTitle');
+            const tagEl = document.getElementById('methodTypeTag');
+            const badgeCard = document.getElementById('methodBadgeCard');
+
+            if (state.method === 'disk') {
+                titleEl.textContent = 'Disk Method';
+                tagEl.textContent = 'Horizontal Axis (dx)';
+                tagEl.className = 'px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+            } else if (state.method === 'washer') {
+                titleEl.textContent = 'Washer Method';
+                tagEl.textContent = 'Horizontal Axis (dx)';
+                tagEl.className = 'px-2.5 py-1 text-xs font-semibold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/40';
+            } else {
+                titleEl.textContent = 'Cylindrical Shell Method';
+                tagEl.textContent = 'Vertical Axis (dx)';
+                tagEl.className = 'px-2.5 py-1 text-xs font-semibold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40';
+            }
+        }
+
+        // --- Geometry Builders ---
+
+        // Generic Mesh Builder Helper for Quad Faces
+        class QuadGeometryBuilder {
+            constructor() {
+                this.positions = [];
+                this.normals = [];
+                this.indices = [];
+            }
+
+            addQuad(p1, p2, p3, p4) {
+                const idx = this.positions.length / 3;
+                this.positions.push(
+                    p1.x, p1.y, p1.z,
+                    p2.x, p2.y, p2.z,
+                    p3.x, p3.y, p3.z,
+                    p4.x, p4.y, p4.z
+                );
+
+                // Calculate Face Normal
+                const vA = new THREE.Vector3().subVectors(p2, p1);
+                const vB = new THREE.Vector3().subVectors(p4, p1);
+                const n = new THREE.Vector3().crossVectors(vA, vB).normalize();
+
+                for (let i = 0; i < 4; i++) {
+                    this.normals.push(n.x, n.y, n.z);
+                }
+
+                this.indices.push(idx, idx + 1, idx + 2, idx, idx + 2, idx + 3);
+            }
+
+            toGeometry() {
+                const geom = new THREE.BufferGeometry();
+                geom.setAttribute('position', new THREE.Float32BufferAttribute(this.positions, 3));
+                geom.setAttribute('normal', new THREE.Float32BufferAttribute(this.normals, 3));
+                geom.setIndex(this.indices);
+                geom.computeVertexNormals();
+                return geom;
+            }
+        }
+
+        // Generate 3D Solid Mesh for Horizontal Axis (y = k) or Vertical Axis (x = h)
+        function generateSolidGeometry() {
+            const builder = new QuadGeometryBuilder();
+            const Nx = 70;
+            const Ntheta = 60;
+            const maxRad = (state.maxAngle / 360) * Math.PI * 2;
+            const { a, b, axisType, axisVal } = state;
+
+            const isHorizontal = (axisType === 'x-axis' || axisType === 'horiz');
+            const k = isHorizontal ? (axisType === 'x-axis' ? 0 : axisVal) : 0;
+            const h = !isHorizontal ? (axisType === 'y-axis' ? 0 : axisVal) : 0;
+
+            if (isHorizontal) {
+                // Disk / Washer Method: Horizontal Axis y = k
+                for (let i = 0; i < Nx; i++) {
+                    const x1 = a + (b - a) * (i / Nx);
+                    const x2 = a + (b - a) * ((i + 1) / Nx);
+
+                    const y1_f = compiledF(x1), y1_g = state.numCurves === 2 ? compiledG(x1) : 0;
+                    const y2_f = compiledF(x2), y2_g = state.numCurves === 2 ? compiledG(x2) : 0;
+
+                    const d1_f = y1_f - k, d1_g = y1_g - k;
+                    const d2_f = y2_f - k, d2_g = y2_g - k;
+
+                    const R1_out = Math.max(Math.abs(d1_f), Math.abs(d1_g));
+                    const R1_in  = Math.min(Math.abs(d1_f), Math.abs(d1_g));
+                    const R2_out = Math.max(Math.abs(d2_f), Math.abs(d2_g));
+                    const R2_in  = Math.min(Math.abs(d2_f), Math.abs(d2_g));
+
+                    for (let j = 0; j < Ntheta; j++) {
+                        const t1 = maxRad * (j / Ntheta);
+                        const t2 = maxRad * ((j + 1) / Ntheta);
+
+                        // Outer Surface Points
+                        const P1_out = new THREE.Vector3(x1, k + R1_out * Math.cos(t1), R1_out * Math.sin(t1));
+                        const P2_out = new THREE.Vector3(x2, k + R2_out * Math.cos(t1), R2_out * Math.sin(t1));
+                        const P3_out = new THREE.Vector3(x2, k + R2_out * Math.cos(t2), R2_out * Math.sin(t2));
+                        const P4_out = new THREE.Vector3(x1, k + R1_out * Math.cos(t2), R1_out * Math.sin(t2));
+
+                        builder.addQuad(P1_out, P2_out, P3_out, P4_out);
+
+                        // Inner Surface Points (if washer)
+                        if (R1_in > 0.001 || R2_in > 0.001) {
+                            const P1_in = new THREE.Vector3(x1, k + R1_in * Math.cos(t1), R1_in * Math.sin(t1));
+                            const P2_in = new THREE.Vector3(x2, k + R2_in * Math.cos(t1), R2_in * Math.sin(t1));
+                            const P3_in = new THREE.Vector3(x2, k + R2_in * Math.cos(t2), R2_in * Math.sin(t2));
+                            const P4_in = new THREE.Vector3(x1, k + R1_in * Math.cos(t2), R1_in * Math.sin(t2));
+
+                            builder.addQuad(P4_in, P3_in, P2_in, P1_in); // Inverted face normal
+                        }
+                    }
+                }
+
+                // End Caps at x = a and x = b
+                for (const xVal of [a, b]) {
+                    const isStart = (xVal === a);
+                    for (let j = 0; j < Ntheta; j++) {
+                        const t1 = maxRad * (j / Ntheta);
+                        const t2 = maxRad * ((j + 1) / Ntheta);
+
+                        const y_f = compiledF(xVal), y_g = state.numCurves === 2 ? compiledG(xVal) : 0;
+                        const R_out = Math.max(Math.abs(y_f - k), Math.abs(y_g - k));
+                        const R_in  = Math.min(Math.abs(y_f - k), Math.abs(y_g - k));
+
+                        const P_in1  = new THREE.Vector3(xVal, k + R_in * Math.cos(t1), R_in * Math.sin(t1));
+                        const P_out1 = new THREE.Vector3(xVal, k + R_out * Math.cos(t1), R_out * Math.sin(t1));
+                        const P_out2 = new THREE.Vector3(xVal, k + R_out * Math.cos(t2), R_out * Math.sin(t2));
+                        const P_in2  = new THREE.Vector3(xVal, k + R_in * Math.cos(t2), R_in * Math.sin(t2));
+
+                        if (isStart) {
+                            builder.addQuad(P_in1, P_in2, P_out2, P_out1);
+                        } else {
+                            builder.addQuad(P_in1, P_out1, P_out2, P_in2);
+                        }
+                    }
+                }
+
+                // Angular Cut Caps (at theta = 0 and theta = maxRad)
+                if (state.maxAngle < 360) {
+                    for (const angle of [0, maxRad]) {
+                        const isZero = (angle === 0);
+                        for (let i = 0; i < Nx; i++) {
+                            const x1 = a + (b - a) * (i / Nx);
+                            const x2 = a + (b - a) * ((i + 1) / Nx);
+
+                            const R1_out = Math.max(Math.abs(compiledF(x1) - k), Math.abs((state.numCurves === 2 ? compiledG(x1) : 0) - k));
+                            const R1_in  = Math.min(Math.abs(compiledF(x1) - k), Math.abs((state.numCurves === 2 ? compiledG(x1) : 0) - k));
+                            const R2_out = Math.max(Math.abs(compiledF(x2) - k), Math.abs((state.numCurves === 2 ? compiledG(x2) : 0) - k));
+                            const R2_in  = Math.min(Math.abs(compiledF(x2) - k), Math.abs((state.numCurves === 2 ? compiledG(x2) : 0) - k));
+
+                            const P1_in  = new THREE.Vector3(x1, k + R1_in * Math.cos(angle), R1_in * Math.sin(angle));
+                            const P1_out = new THREE.Vector3(x1, k + R1_out * Math.cos(angle), R1_out * Math.sin(angle));
+                            const P2_out = new THREE.Vector3(x2, k + R2_out * Math.cos(angle), R2_out * Math.sin(angle));
+                            const P2_in  = new THREE.Vector3(x2, k + R2_in * Math.cos(angle), R2_in * Math.sin(angle));
+
+                            if (isZero) {
+                                builder.addQuad(P1_in, P1_out, P2_out, P2_in);
+                            } else {
+                                builder.addQuad(P1_in, P2_in, P2_out, P1_out);
+                            }
+                        }
+                    }
+                }
+
+            } else {
+                // Shell Method: Vertical Axis x = h
+                for (let i = 0; i < Nx; i++) {
+                    const x1 = a + (b - a) * (i / Nx);
+                    const x2 = a + (b - a) * ((i + 1) / Nx);
+
+                    const r1 = x1 - h;
+                    const r2 = x2 - h;
+
+                    const y1_top = Math.max(compiledF(x1), state.numCurves === 2 ? compiledG(x1) : 0);
+                    const y1_bot = Math.min(compiledF(x1), state.numCurves === 2 ? compiledG(x1) : 0);
+                    const y2_top = Math.max(compiledF(x2), state.numCurves === 2 ? compiledG(x2) : 0);
+                    const y2_bot = Math.min(compiledF(x2), state.numCurves === 2 ? compiledG(x2) : 0);
+
+                    for (let j = 0; j < Ntheta; j++) {
+                        const t1 = maxRad * (j / Ntheta);
+                        const t2 = maxRad * ((j + 1) / Ntheta);
+
+                        // Top Surface
+                        const P1_top = new THREE.Vector3(h + r1 * Math.cos(t1), y1_top, r1 * Math.sin(t1));
+                        const P2_top = new THREE.Vector3(h + r2 * Math.cos(t1), y2_top, r2 * Math.sin(t1));
+                        const P3_top = new THREE.Vector3(h + r2 * Math.cos(t2), y2_top, r2 * Math.sin(t2));
+                        const P4_top = new THREE.Vector3(h + r1 * Math.cos(t2), y1_top, r1 * Math.sin(t2));
+
+                        builder.addQuad(P1_top, P2_top, P3_top, P4_top);
+
+                        // Bottom Surface
+                        const P1_bot = new THREE.Vector3(h + r1 * Math.cos(t1), y1_bot, r1 * Math.sin(t1));
+                        const P2_bot = new THREE.Vector3(h + r2 * Math.cos(t1), y2_bot, r2 * Math.sin(t1));
+                        const P3_bot = new THREE.Vector3(h + r2 * Math.cos(t2), y2_bot, r2 * Math.sin(t2));
+                        const P4_bot = new THREE.Vector3(h + r1 * Math.cos(t2), y1_bot, r1 * Math.sin(t2));
+
+                        builder.addQuad(P4_bot, P3_bot, P2_bot, P1_bot);
+                    }
+                }
+
+                // Inner and Outer Cylindrical Boundaries
+                for (const xVal of [a, b]) {
+                    const r = xVal - h;
+                    const isOuter = (xVal === b);
+                    for (let j = 0; j < Ntheta; j++) {
+                        const t1 = maxRad * (j / Ntheta);
+                        const t2 = maxRad * ((j + 1) / Ntheta);
+
+                        const y_top = Math.max(compiledF(xVal), state.numCurves === 2 ? compiledG(xVal) : 0);
+                        const y_bot = Math.min(compiledF(xVal), state.numCurves === 2 ? compiledG(xVal) : 0);
+
+                        const P1_b = new THREE.Vector3(h + r * Math.cos(t1), y_bot, r * Math.sin(t1));
+                        const P1_t = new THREE.Vector3(h + r * Math.cos(t1), y_top, r * Math.sin(t1));
+                        const P2_t = new THREE.Vector3(h + r * Math.cos(t2), y_top, r * Math.sin(t2));
+                        const P2_b = new THREE.Vector3(h + r * Math.cos(t2), y_bot, r * Math.sin(t2));
+
+                        if (isOuter) {
+                            builder.addQuad(P1_b, P1_t, P2_t, P2_b);
+                        } else {
+                            builder.addQuad(P1_b, P2_b, P2_t, P1_t);
+                        }
+                    }
+                }
+
+                // Angular Cut Caps
+                if (state.maxAngle < 360) {
+                    for (const angle of [0, maxRad]) {
+                        const isZero = (angle === 0);
+                        for (let i = 0; i < Nx; i++) {
+                            const x1 = a + (b - a) * (i / Nx);
+                            const x2 = a + (b - a) * ((i + 1) / Nx);
+
+                            const r1 = x1 - h;
+                            const r2 = x2 - h;
+
+                            const y1_t = Math.max(compiledF(x1), state.numCurves === 2 ? compiledG(x1) : 0);
+                            const y1_b = Math.min(compiledF(x1), state.numCurves === 2 ? compiledG(x1) : 0);
+                            const y2_t = Math.max(compiledF(x2), state.numCurves === 2 ? compiledG(x2) : 0);
+                            const y2_b = Math.min(compiledF(x2), state.numCurves === 2 ? compiledG(x2) : 0);
+
+                            const P1_b = new THREE.Vector3(h + r1 * Math.cos(angle), y1_b, r1 * Math.sin(angle));
+                            const P1_t = new THREE.Vector3(h + r1 * Math.cos(angle), y1_t, r1 * Math.sin(angle));
+                            const P2_t = new THREE.Vector3(h + r2 * Math.cos(angle), y2_t, r2 * Math.sin(angle));
+                            const P2_b = new THREE.Vector3(h + r2 * Math.cos(angle), y2_b, r2 * Math.sin(angle));
+
+                            if (isZero) {
+                                builder.addQuad(P1_b, P1_t, P2_t, P2_b);
+                            } else {
+                                builder.addQuad(P1_b, P2_b, P2_t, P1_t);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return builder.toGeometry();
+        }
+
+        // Generate Single Differential Slice Mesh (Disk, Washer, or Shell)
+        function generateSliceGeometry() {
+            const builder = new QuadGeometryBuilder();
+            const Ntheta = 48;
+            const maxRad = (state.maxAngle / 360) * Math.PI * 2;
+            const xVal = state.slicePos;
+            const { axisType, axisVal, a, b } = state;
+            const dx = (b - a) / 45; // Slice thickness
+
+            const isHorizontal = (axisType === 'x-axis' || axisType === 'horiz');
+            const k = isHorizontal ? (axisType === 'x-axis' ? 0 : axisVal) : 0;
+            const h = !isHorizontal ? (axisType === 'y-axis' ? 0 : axisVal) : 0;
+
+            if (isHorizontal) {
+                // Disk or Washer Slice at xVal
+                const x1 = xVal - dx / 2;
+                const x2 = xVal + dx / 2;
+
+                const y_f = compiledF(xVal);
+                const y_g = state.numCurves === 2 ? compiledG(xVal) : 0;
+
+                const R_out = Math.max(Math.abs(y_f - k), Math.abs(y_g - k));
+                const R_in  = Math.min(Math.abs(y_f - k), Math.abs(y_g - k));
+
+                for (let j = 0; j < Ntheta; j++) {
+                    const t1 = maxRad * (j / Ntheta);
+                    const t2 = maxRad * ((j + 1) / Ntheta);
+
+                    // Outer Rim
+                    const P1_o = new THREE.Vector3(x1, k + R_out * Math.cos(t1), R_out * Math.sin(t1));
+                    const P2_o = new THREE.Vector3(x2, k + R_out * Math.cos(t1), R_out * Math.sin(t1));
+                    const P3_o = new THREE.Vector3(x2, k + R_out * Math.cos(t2), R_out * Math.sin(t2));
+                    const P4_o = new THREE.Vector3(x1, k + R_out * Math.cos(t2), R_out * Math.sin(t2));
+
+                    builder.addQuad(P1_o, P2_o, P3_o, P4_o);
+
+                    // Inner Rim
+                    if (R_in > 0.001) {
+                        const P1_i = new THREE.Vector3(x1, k + R_in * Math.cos(t1), R_in * Math.sin(t1));
+                        const P2_i = new THREE.Vector3(x2, k + R_in * Math.cos(t1), R_in * Math.sin(t1));
+                        const P3_i = new THREE.Vector3(x2, k + R_in * Math.cos(t2), R_in * Math.sin(t2));
+                        const P4_i = new THREE.Vector3(x1, k + R_in * Math.cos(t2), R_in * Math.sin(t2));
+
+                        builder.addQuad(P4_i, P3_i, P2_i, P1_i);
+                    }
+
+                    // Side Faces
+                    const P1_in = new THREE.Vector3(x1, k + R_in * Math.cos(t1), R_in * Math.sin(t1));
+                    const P1_out = new THREE.Vector3(x1, k + R_out * Math.cos(t1), R_out * Math.sin(t1));
+                    const P2_out = new THREE.Vector3(x1, k + R_out * Math.cos(t2), R_out * Math.sin(t2));
+                    const P2_in = new THREE.Vector3(x1, k + R_in * Math.cos(t2), R_in * Math.sin(t2));
+
+                    builder.addQuad(P1_in, P2_in, P2_out, P1_out);
+
+                    const Q1_in = new THREE.Vector3(x2, k + R_in * Math.cos(t1), R_in * Math.sin(t1));
+                    const Q1_out = new THREE.Vector3(x2, k + R_out * Math.cos(t1), R_out * Math.sin(t1));
+                    const Q2_out = new THREE.Vector3(x2, k + R_out * Math.cos(t2), R_out * Math.sin(t2));
+                    const Q2_in = new THREE.Vector3(x2, k + R_in * Math.cos(t2), R_in * Math.sin(t2));
+
+                    builder.addQuad(Q1_in, Q1_out, Q2_out, Q2_in);
+                }
+            } else {
+                // Cylindrical Shell Slice at xVal
+                const r_inner = Math.abs(xVal - h) - dx / 2;
+                const r_outer = Math.abs(xVal - h) + dx / 2;
+
+                const y_top = Math.max(compiledF(xVal), state.numCurves === 2 ? compiledG(xVal) : 0);
+                const y_bot = Math.min(compiledF(xVal), state.numCurves === 2 ? compiledG(xVal) : 0);
+
+                for (let j = 0; j < Ntheta; j++) {
+                    const t1 = maxRad * (j / Ntheta);
+                    const t2 = maxRad * ((j + 1) / Ntheta);
+
+                    // Outer Cylinder Wall
+                    const P1_o_b = new THREE.Vector3(h + r_outer * Math.cos(t1), y_bot, r_outer * Math.sin(t1));
+                    const P1_o_t = new THREE.Vector3(h + r_outer * Math.cos(t1), y_top, r_outer * Math.sin(t1));
+                    const P2_o_t = new THREE.Vector3(h + r_outer * Math.cos(t2), y_top, r_outer * Math.sin(t2));
+                    const P2_o_b = new THREE.Vector3(h + r_outer * Math.cos(t2), y_bot, r_outer * Math.sin(t2));
+
+                    builder.addQuad(P1_o_b, P1_o_t, P2_o_t, P2_o_b);
+
+                    // Inner Cylinder Wall
+                    const P1_i_b = new THREE.Vector3(h + r_inner * Math.cos(t1), y_bot, r_inner * Math.sin(t1));
+                    const P1_i_t = new THREE.Vector3(h + r_inner * Math.cos(t1), y_top, r_inner * Math.sin(t1));
+                    const P2_i_t = new THREE.Vector3(h + r_inner * Math.cos(t2), y_top, r_inner * Math.sin(t2));
+                    const P2_i_b = new THREE.Vector3(h + r_inner * Math.cos(t2), y_bot, r_inner * Math.sin(t2));
+
+                    builder.addQuad(P1_i_b, P2_i_b, P2_i_t, P1_i_t);
+
+                    // Top Ring Cap
+                    builder.addQuad(P1_i_t, P1_o_t, P2_o_t, P2_i_t);
+                    // Bottom Ring Cap
+                    builder.addQuad(P1_i_b, P2_i_b, P2_o_b, P1_o_b);
+                }
+            }
+
+            return builder.toGeometry();
+        }
+
+        // Draw Axis of Revolution Indicator Line
+        function updateAxisLine() {
+            if (axisLineGroup) scene.remove(axisLineGroup);
+            axisLineGroup = new THREE.Group();
+
+            const { axisType, axisVal, a, b } = state;
+            const isHorizontal = (axisType === 'x-axis' || axisType === 'horiz');
+
+            const material = new THREE.LineDashedMaterial({
+                color: 0xc084fc,
+                linewidth: 3,
+                scale: 1,
+                dashSize: 0.2,
+                gapSize: 0.1,
+            });
+
+            const points = [];
+            if (isHorizontal) {
+                const k = (axisType === 'x-axis') ? 0 : axisVal;
+                points.push(new THREE.Vector3(a - 2, k, 0));
+                points.push(new THREE.Vector3(b + 2, k, 0));
+            } else {
+                const h = (axisType === 'y-axis') ? 0 : axisVal;
+                points.push(new THREE.Vector3(h, -5, 0));
+                points.push(new THREE.Vector3(h, 8, 0));
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.Line(geometry, material);
+            line.computeLineDistances();
+            axisLineGroup.add(line);
+
+            scene.add(axisLineGroup);
+        }
+
+        // Main 3D Render Update
+        function update3DSolid() {
+            if (solidMesh) { scene.remove(solidMesh); solidMesh = null; }
+            if (wireframeMesh) { scene.remove(wireframeMesh); wireframeMesh = null; }
+            if (sliceMesh) { scene.remove(sliceMesh); sliceMesh = null; }
+
+            updateAxisLine();
+
+            if (state.showSolid) {
+                const geom = generateSolidGeometry();
+
+                const mat = new THREE.MeshPhongMaterial({
+                    color: 0x4f46e5,
+                    emissive: 0x1e1b4b,
+                    specular: 0x38bdf8,
+                    shininess: 40,
+                    transparent: true,
+                    opacity: 0.78,
+                    side: THREE.DoubleSide
+                });
+
+                solidMesh = new THREE.Mesh(geom, mat);
+                scene.add(solidMesh);
+
+                if (state.showWireframe) {
+                    const wireMat = new THREE.MeshBasicMaterial({
+                        color: 0xa5b4fc,
+                        wireframe: true,
+                        transparent: true,
+                        opacity: 0.4
+                    });
+                    wireframeMesh = new THREE.Mesh(geom, wireMat);
+                    scene.add(wireframeMesh);
+                }
+            }
+
+            if (state.showSlice) {
+                const sliceGeom = generateSliceGeometry();
+                const sliceMat = new THREE.MeshStandardMaterial({
+                    color: 0xf59e0b,
+                    emissive: 0x78350f,
+                    metalness: 0.3,
+                    roughness: 0.2,
+                    side: THREE.DoubleSide
+                });
+
+                sliceMesh = new THREE.Mesh(sliceGeom, sliceMat);
+                scene.add(sliceMesh);
+            }
+        }
+
+        // --- 2D Graph Rendering ---
+        function draw2DGraph() {
+            if (!ctx2d) return;
+
+            const width = canvas2d.width;
+            const height = canvas2d.height;
+            ctx2d.clearRect(0, 0, width, height);
+
+            const { a, b, axisType, axisVal } = state;
+
+            // Compute Bounding Box for Coordinate Mapping
+            const xMin = Math.min(a - 1, -1);
+            const xMax = Math.max(b + 1, 4);
+
+            let yMin = -2, yMax = 5;
+            if (axisType === 'horiz') {
+                yMin = Math.min(yMin, axisVal - 1);
+                yMax = Math.max(yMax, axisVal + 2);
+            }
+
+            const toCanvasX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+            const toCanvasY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+            // Draw Grid Lines
+            ctx2d.strokeStyle = '#1e293b';
+            ctx2d.lineWidth = 1;
+            for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+                ctx2d.beginPath();
+                ctx2d.moveTo(toCanvasX(x), 0);
+                ctx2d.lineTo(toCanvasX(x), height);
+                ctx2d.stroke();
+            }
+            for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+                ctx2d.beginPath();
+                ctx2d.moveTo(0, toCanvasY(y));
+                ctx2d.lineTo(width, toCanvasY(y));
+                ctx2d.stroke();
+            }
+
+            // Draw Axes
+            ctx2d.strokeStyle = '#475569';
+            ctx2d.lineWidth = 1.5;
+            // X-axis
+            ctx2d.beginPath();
+            ctx2d.moveTo(0, toCanvasY(0));
+            ctx2d.lineTo(width, toCanvasY(0));
+            ctx2d.stroke();
+            // Y-axis
+            ctx2d.beginPath();
+            ctx2d.moveTo(toCanvasX(0), 0);
+            ctx2d.lineTo(toCanvasX(0), height);
+            ctx2d.stroke();
+
+            // Draw Bounded 2D Region Shading
+            if (state.show2dRegion) {
+                ctx2d.fillStyle = 'rgba(79, 70, 229, 0.25)';
+                ctx2d.beginPath();
+                const steps = 60;
+                for (let i = 0; i <= steps; i++) {
+                    const x = a + (b - a) * (i / steps);
+                    const y = compiledF(x);
+                    if (i === 0) ctx2d.moveTo(toCanvasX(x), toCanvasY(y));
+                    else ctx2d.lineTo(toCanvasX(x), toCanvasY(y));
+                }
+                if (state.numCurves === 2) {
+                    for (let i = steps; i >= 0; i--) {
+                        const x = a + (b - a) * (i / steps);
+                        const y = compiledG(x);
+                        ctx2d.lineTo(toCanvasX(x), toCanvasY(y));
+                    }
+                } else {
+                    ctx2d.lineTo(toCanvasX(b), toCanvasY(0));
+                    ctx2d.lineTo(toCanvasX(a), toCanvasY(0));
+                }
+                ctx2d.closePath();
+                ctx2d.fill();
+            }
+
+            // Plot f(x)
+            ctx2d.strokeStyle = '#38bdf8'; // Blue
+            ctx2d.lineWidth = 2.5;
+            ctx2d.beginPath();
+            for (let xPx = 0; xPx <= width; xPx += 2) {
+                const x = xMin + (xPx / width) * (xMax - xMin);
+                const y = compiledF(x);
+                if (xPx === 0) ctx2d.moveTo(xPx, toCanvasY(y));
+                else ctx2d.lineTo(xPx, toCanvasY(y));
+            }
+            ctx2d.stroke();
+
+            // Plot g(x)
+            if (state.numCurves === 2) {
+                ctx2d.strokeStyle = '#f87171'; // Red
+                ctx2d.lineWidth = 2.5;
+                ctx2d.beginPath();
+                for (let xPx = 0; xPx <= width; xPx += 2) {
+                    const x = xMin + (xPx / width) * (xMax - xMin);
+                    const y = compiledG(x);
+                    if (xPx === 0) ctx2d.moveTo(xPx, toCanvasY(y));
+                    else ctx2d.lineTo(xPx, toCanvasY(y));
+                }
+                ctx2d.stroke();
+            }
+
+            // Draw Axis of Revolution Line
+            ctx2d.strokeStyle = '#c084fc';
+            ctx2d.lineWidth = 2.5;
+            ctx2d.setLineDash([5, 4]);
+            ctx2d.beginPath();
+            if (axisType === 'x-axis') {
+                ctx2d.moveTo(0, toCanvasY(0));
+                ctx2d.lineTo(width, toCanvasY(0));
+            } else if (axisType === 'horiz') {
+                ctx2d.moveTo(0, toCanvasY(axisVal));
+                ctx2d.lineTo(width, toCanvasY(axisVal));
+            } else if (axisType === 'y-axis') {
+                ctx2d.moveTo(toCanvasX(0), 0);
+                ctx2d.lineTo(toCanvasX(0), height);
+            } else if (axisType === 'vert') {
+                ctx2d.moveTo(toCanvasX(axisVal), 0);
+                ctx2d.lineTo(toCanvasX(axisVal), height);
+            }
+            ctx2d.stroke();
+            ctx2d.setLineDash([]); // Reset line dash
+
+            // Draw Bounds Vertical Lines
+            ctx2d.strokeStyle = '#34d399';
+            ctx2d.lineWidth = 1.5;
+            ctx2d.setLineDash([2, 2]);
+            ctx2d.beginPath();
+            ctx2d.moveTo(toCanvasX(a), 0); ctx2d.lineTo(toCanvasX(a), height);
+            ctx2d.moveTo(toCanvasX(b), 0); ctx2d.lineTo(toCanvasX(b), height);
+            ctx2d.stroke();
+            ctx2d.setLineDash([]);
+
+            // Draw Active Slice Line Indicator at x = state.slicePos
+            const xs = state.slicePos;
+            if (xs >= a && xs <= b) {
+                ctx2d.strokeStyle = '#f59e0b';
+                ctx2d.lineWidth = 3;
+                const yf = compiledF(xs);
+                const yg = state.numCurves === 2 ? compiledG(xs) : 0;
+                ctx2d.beginPath();
+                ctx2d.moveTo(toCanvasX(xs), toCanvasY(yf));
+                ctx2d.lineTo(toCanvasX(xs), toCanvasY(yg));
+                ctx2d.stroke();
+
+                // Draw Endpoint Dots
+                ctx2d.fillStyle = '#f59e0b';
+                ctx2d.beginPath();
+                ctx2d.arc(toCanvasX(xs), toCanvasY(yf), 4, 0, Math.PI * 2);
+                ctx2d.arc(toCanvasX(xs), toCanvasY(yg), 4, 0, Math.PI * 2);
+                ctx2d.fill();
+            }
+        }
+
+        // --- Numerical Integration & Calculus Formula Updates ---
+        function updateCalculusFormulas() {
+            const { a, b, axisType, axisVal, slicePos, method, numCurves } = state;
+            const isHorizontal = (axisType === 'x-axis' || axisType === 'horiz');
+            const k = isHorizontal ? (axisType === 'x-axis' ? 0 : axisVal) : 0;
+            const h = !isHorizontal ? (axisType === 'y-axis' ? 0 : axisVal) : 0;
+
+            let volume = 0;
+            const N = 500;
+            const dx = (b - a) / N;
+
+            if (isHorizontal) {
+                // Volume = π ∫ [ R(x)^2 - r(x)^2 ] dx
+                for (let i = 0; i < N; i++) {
+                    const x = a + (i + 0.5) * dx;
+                    const yf = compiledF(x);
+                    const yg = numCurves === 2 ? compiledG(x) : 0;
+                    const Rout = Math.max(Math.abs(yf - k), Math.abs(yg - k));
+                    const Rin  = Math.min(Math.abs(yf - k), Math.abs(yg - k));
+                    volume += Math.PI * (Math.pow(Rout, 2) - Math.pow(Rin, 2)) * dx;
+                }
+            } else {
+                // Volume = 2π ∫ Radius(x) * Height(x) dx
+                for (let i = 0; i < N; i++) {
+                    const x = a + (i + 0.5) * dx;
+                    const radius = Math.abs(x - h);
+                    const height = Math.abs(compiledF(x) - (numCurves === 2 ? compiledG(x) : 0));
+                    volume += 2 * Math.PI * radius * height * dx;
+                }
+            }
+
+            // Update Volume Display
+            document.getElementById('volumeResultValue').textContent = `${volume.toFixed(4)} units³`;
+            document.getElementById('piVolumeValue').textContent = `${(volume / Math.PI).toFixed(3)} π`;
+
+            // Dynamic Math Setup Formula Text
+            const mathEl = document.getElementById('mathIntegralFormula');
+            if (method === 'disk') {
+                const kText = k !== 0 ? (k > 0 ? ` - ${k}` : ` + ${Math.abs(k)}`) : '';
+                mathEl.textContent = `V = π ∫[${a}, ${b}] [ f(x)${kText} ]² dx`;
+            } else if (method === 'washer') {
+                const kText = k !== 0 ? (k > 0 ? ` - ${k}` : ` + ${Math.abs(k)}`) : '';
+                mathEl.textContent = `V = π ∫[${a}, ${b}] ( [R(x)]² - [r(x)]² ) dx`;
+            } else {
+                const hText = h !== 0 ? (h > 0 ? `x - ${h}` : `x + ${Math.abs(h)}`) : `x`;
+                mathEl.textContent = `V = 2π ∫[${a}, ${b}] ( |${hText}| ) · [ f(x) - g(x) ] dx`;
+            }
+
+            // Update Slice Parameter Box
+            document.getElementById('explainXVal').textContent = slicePos.toFixed(2);
+            const paramsEl = document.getElementById('explainSliceParams');
+            const areaEl = document.getElementById('explainSliceArea');
+            const tipEl = document.getElementById('explainTeacherTip');
+
+            const yf_s = compiledF(slicePos);
+            const yg_s = numCurves === 2 ? compiledG(slicePos) : 0;
+
+            if (isHorizontal) {
+                const Rout_s = Math.max(Math.abs(yf_s - k), Math.abs(yg_s - k));
+                const Rin_s  = Math.min(Math.abs(yf_s - k), Math.abs(yg_s - k));
+                const sliceArea = Math.PI * (Math.pow(Rout_s, 2) - Math.pow(Rin_s, 2));
+
+                if (method === 'disk') {
+                    paramsEl.innerHTML = `<div>Radius R(x) = |f(${slicePos.toFixed(1)}) - (${k})| = ${Rout_s.toFixed(2)}</div>`;
+                    areaEl.innerHTML = `<div>A(x) = π R² = ${(Math.PI * Rout_s * Rout_s).toFixed(2)}</div><div>dV = A(x) dx</div>`;
+                    tipEl.textContent = "Disk Method: Revolve a single region around the axis. The slice cross-section is a solid circular disk.";
+                } else {
+                    paramsEl.innerHTML = `<div>Outer R(x) = ${Rout_s.toFixed(2)}</div><div>Inner r(x) = ${Rin_s.toFixed(2)}</div>`;
+                    areaEl.innerHTML = `<div>A(x) = π ( R² - r² ) = ${sliceArea.toFixed(2)}</div><div>dV = A(x) dx</div>`;
+                    tipEl.textContent = "Washer Method: Revolve region between 2 curves. The slice cross-section is a circular ring with a hole.";
+                }
+            } else {
+                const r_s = Math.abs(slicePos - h);
+                const h_s = Math.abs(yf_s - yg_s);
+                const sliceArea = 2 * Math.PI * r_s * h_s;
+
+                paramsEl.innerHTML = `<div>Shell Radius r(x) = |${slicePos.toFixed(1)} - (${h})| = ${r_s.toFixed(2)}</div><div>Shell Height h(x) = |f-g| = ${h_s.toFixed(2)}</div>`;
+                areaEl.innerHTML = `<div>A(x) = 2π · r · h = ${sliceArea.toFixed(2)}</div><div>dV = A(x) dx</div>`;
+                tipEl.textContent = "Shell Method: Slices are parallel to axis of revolution. Summing nested cylindrical shells yields the total volume.";
+            }
+        }
+
+        // Master Update Trigger
+        function updateAll() {
+            updateMethodType();
+            update3DSolid();
+            draw2DGraph();
+            updateCalculusFormulas();
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            // Function F Input
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                const fn = parseFunction(e.target.value);
+                if (fn) {
+                    compiledF = fn;
+                    state.fStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Function G Input
+            document.getElementById('funcGInput').addEventListener('input', (e) => {
+                const fn = parseFunction(e.target.value);
+                if (fn) {
+                    compiledG = fn;
+                    state.gStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Bounds
+            document.getElementById('boundAInput').addEventListener('change', (e) => {
+                state.a = parseFloat(e.target.value) || 0;
+                if (state.slicePos < state.a) state.slicePos = state.a;
+                updateSlicePosSliderBounds();
+                updateAll();
+            });
+            document.getElementById('boundBInput').addEventListener('change', (e) => {
+                state.b = parseFloat(e.target.value) || 2;
+                if (state.slicePos > state.b) state.slicePos = state.b;
+                updateSlicePosSliderBounds();
+                updateAll();
+            });
+
+            // Axis Type
+            const axisSelect = document.getElementById('axisTypeSelect');
+            const customAxisContainer = document.getElementById('customAxisContainer');
+            const customAxisLabel = document.getElementById('customAxisLabel');
+
+            axisSelect.addEventListener('change', (e) => {
+                state.axisType = e.target.value;
+                if (state.axisType === 'horiz') {
+                    customAxisContainer.classList.remove('hidden');
+                    customAxisLabel.textContent = 'Horizontal Line Value (y = k):';
+                } else if (state.axisType === 'vert') {
+                    customAxisContainer.classList.remove('hidden');
+                    customAxisLabel.textContent = 'Vertical Line Value (x = h):';
+                } else {
+                    customAxisContainer.classList.add('hidden');
+                }
+                updateAll();
+            });
+
+            document.getElementById('customAxisValInput').addEventListener('change', (e) => {
+                state.axisVal = parseFloat(e.target.value) || 0;
+                updateAll();
+            });
+
+            // Angle Slider
+            const angleSlider = document.getElementById('angleSlider');
+            angleSlider.addEventListener('input', (e) => {
+                state.maxAngle = parseInt(e.target.value);
+                document.getElementById('angleValueText').textContent = `${state.maxAngle}°`;
+                update3DSolid();
+                updateCalculusFormulas();
+            });
+
+            // Slice Slider
+            const sliceSlider = document.getElementById('slicePosSlider');
+            sliceSlider.addEventListener('input', (e) => {
+                const pct = parseFloat(e.target.value) / 100;
+                state.slicePos = state.a + pct * (state.b - state.a);
+                document.getElementById('slicePosText').textContent = `x = ${state.slicePos.toFixed(2)}`;
+                update3DSolid();
+                draw2DGraph();
+                updateCalculusFormulas();
+            });
+
+            // Toggles
+            document.getElementById('showSolidCheck').addEventListener('change', (e) => {
+                state.showSolid = e.target.checked;
+                update3DSolid();
+            });
+            document.getElementById('showWireframeCheck').addEventListener('change', (e) => {
+                state.showWireframe = e.target.checked;
+                update3DSolid();
+            });
+            document.getElementById('showSliceCheck').addEventListener('change', (e) => {
+                state.showSlice = e.target.checked;
+                update3DSolid();
+            });
+            document.getElementById('show2dRegionCheck').addEventListener('change', (e) => {
+                state.show2dRegion = e.target.checked;
+                draw2DGraph();
+            });
+
+            // Reset Camera
+            document.getElementById('resetCamBtn').addEventListener('click', () => {
+                camera.position.set(5, 4, 7);
+                controls.target.set(0, 0, 0);
+                controls.update();
+            });
+
+            // Play Sweeps Buttons
+            document.getElementById('playSweepBtn').addEventListener('click', toggleAngleAnimation);
+            document.getElementById('playSliceBtn').addEventListener('click', toggleSliceAnimation);
+        }
+
+        function updateSlicePosSliderBounds() {
+            const pct = (state.slicePos - state.a) / (state.b - state.a);
+            document.getElementById('slicePosSlider').value = Math.max(0, Math.min(100, pct * 100));
+            document.getElementById('slicePosText').textContent = `x = ${state.slicePos.toFixed(2)}`;
+        }
+
+        // --- Curves Toggle ---
+        function setNumCurves(n) {
+            state.numCurves = n;
+            const btn1 = document.getElementById('singleCurveBtn');
+            const btn2 = document.getElementById('doubleCurveBtn');
+            const gContainer = document.getElementById('gCurveContainer');
+
+            if (n === 1) {
+                btn1.className = 'px-2 py-0.5 rounded font-medium bg-indigo-600 text-white shadow-sm transition';
+                btn2.className = 'px-2 py-0.5 rounded font-medium text-slate-400 transition';
+                gContainer.classList.add('hidden');
+            } else {
+                btn2.className = 'px-2 py-0.5 rounded font-medium bg-indigo-600 text-white shadow-sm transition';
+                btn1.className = 'px-2 py-0.5 rounded font-medium text-slate-400 transition';
+                gContainer.classList.remove('hidden');
+            }
+            updateAll();
+        }
+
+        // --- Presets Loader ---
+        function loadPreset(key) {
+            if (key === 'parabola') {
+                setNumCurves(1);
+                document.getElementById('funcFInput').value = 'sqrt(x)';
+                compiledF = parseFunction('sqrt(x)');
+                state.a = 0; state.b = 4;
+                document.getElementById('boundAInput').value = 0;
+                document.getElementById('boundBInput').value = 4;
+                document.getElementById('axisTypeSelect').value = 'x-axis';
+                state.axisType = 'x-axis';
+                document.getElementById('customAxisContainer').classList.add('hidden');
+            } else if (key === 'washer') {
+                setNumCurves(2);
+                document.getElementById('funcFInput').value = 'x + 1';
+                document.getElementById('funcGInput').value = 'x^2';
+                compiledF = parseFunction('x + 1');
+                compiledG = parseFunction('x^2');
+                state.a = 0; state.b = 1;
+                document.getElementById('boundAInput').value = 0;
+                document.getElementById('boundBInput').value = 1;
+                document.getElementById('axisTypeSelect').value = 'x-axis';
+                state.axisType = 'x-axis';
+                document.getElementById('customAxisContainer').classList.add('hidden');
+            } else if (key === 'shell') {
+                setNumCurves(1);
+                document.getElementById('funcFInput').value = '4 - x^2';
+                compiledF = parseFunction('4 - x^2');
+                state.a = 0; state.b = 2;
+                document.getElementById('boundAInput').value = 0;
+                document.getElementById('boundBInput').value = 2;
+                document.getElementById('axisTypeSelect').value = 'y-axis';
+                state.axisType = 'y-axis';
+                document.getElementById('customAxisContainer').classList.add('hidden');
+            } else if (key === 'shifted') {
+                setNumCurves(2);
+                document.getElementById('funcFInput').value = 'x^2 + 1';
+                document.getElementById('funcGInput').value = 'x';
+                compiledF = parseFunction('x^2 + 1');
+                compiledG = parseFunction('x');
+                state.a = 0; state.b = 2;
+                document.getElementById('boundAInput').value = 0;
+                document.getElementById('boundBInput').value = 2;
+                document.getElementById('axisTypeSelect').value = 'horiz';
+                state.axisType = 'horiz';
+                state.axisVal = -1;
+                document.getElementById('customAxisValInput').value = -1;
+                document.getElementById('customAxisContainer').classList.remove('hidden');
+                document.getElementById('customAxisLabel').textContent = 'Horizontal Line Value (y = k):';
+            }
+            state.slicePos = (state.a + state.b) / 2;
+            updateSlicePosSliderBounds();
+            updateAll();
+        }
+
+        // --- Animations ---
+        let sweepAnimId = null;
+        function toggleAngleAnimation() {
+            state.isSweeping = !state.isSweeping;
+            const btn = document.getElementById('playSweepBtn');
+            if (state.isSweeping) {
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                state.maxAngle = 5;
+                animSweep();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                cancelAnimationFrame(sweepAnimId);
+            }
+        }
+
+        function animSweep() {
+            if (!state.isSweeping) return;
+            state.maxAngle += 4;
+            if (state.maxAngle > 360) {
+                state.maxAngle = 360;
+                state.isSweeping = false;
+                document.getElementById('playSweepBtn').innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+            }
+            document.getElementById('angleSlider').value = state.maxAngle;
+            document.getElementById('angleValueText').textContent = `${state.maxAngle}°`;
+            update3DSolid();
+            updateCalculusFormulas();
+            if (state.isSweeping) sweepAnimId = requestAnimationFrame(animSweep);
+        }
+
+        let sliceAnimId = null;
+        function toggleSliceAnimation() {
+            state.isSlicing = !state.isSlicing;
+            const btn = document.getElementById('playSliceBtn');
+            if (state.isSlicing) {
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                state.slicePos = state.a;
+                animSlice();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                cancelAnimationFrame(sliceAnimId);
+            }
+        }
+
+        function animSlice() {
+            if (!state.isSlicing) return;
+            state.slicePos += (state.b - state.a) / 120;
+            if (state.slicePos > state.b) {
+                state.slicePos = state.b;
+                state.isSlicing = false;
+                document.getElementById('playSliceBtn').innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+            }
+            updateSlicePosSliderBounds();
+            update3DSolid();
+            draw2DGraph();
+            updateCalculusFormulas();
+            if (state.isSlicing) sliceAnimId = requestAnimationFrame(animSlice);
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // --- Main Three.js Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
