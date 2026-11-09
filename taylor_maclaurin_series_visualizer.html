@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taylor & Maclaurin Series - AP Calculus BC Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Math.js for parsing mathematical expressions and symbolic differentiation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --navy-dark: #001a2c;
+            --navy: #002B49;
+            --navy-light: #003e69;
+            --yellow: #FFC72C;
+            --vegas-gold: #CCCC99;
+            --gold-light: #e6e6c2;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--navy-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--navy-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--navy-light);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--vegas-gold);
+        }
+        .glass-panel {
+            background: rgba(0, 43, 73, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 204, 153, 0.25);
+        }
+        .custom-slider::-webkit-slider-thumb {
+            background-color: var(--yellow);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[#002B49] border-b border-[#CCCC99]/30 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#FFC72C] to-[#CCCC99] flex items-center justify-center text-[#002B49] font-bold shadow-lg shadow-[#FFC72C]/20">
+                <i class="fa-solid text-lg">P_n</i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Taylor & Maclaurin Series Visualizer
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">AP Calculus BC</span>
+                </h1>
+                <p class="text-xs text-[#CCCC99]">Polynomial Approximations, Radius of Convergence & Lagrange Error Bound</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu -->
+        <div class="hidden md:flex items-center space-x-1.5 flex-wrap">
+            <span class="text-xs text-[#CCCC99] font-medium mr-1"><i class="fa-solid fa-bookmark mr-1 text-[#FFC72C]"></i> Presets:</span>
+            <button onclick="loadPreset('exp')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">e^x</button>
+            <button onclick="loadPreset('sin')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">sin(x)</button>
+            <button onclick="loadPreset('cos')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">cos(x)</button>
+            <button onclick="loadPreset('geom_minus')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">1/(1-x)</button>
+            <button onclick="loadPreset('geom_plus')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">1/(1+x)</button>
+            <button onclick="loadPreset('ln')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">ln(1+x)</button>
+            <button onclick="loadPreset('ln_xplus1')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">ln(x+1)</button>
+            <button onclick="loadPreset('atan')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">arctan(x)</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-graduation-cap"></i> Series Theorem Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-full lg:w-96 bg-[#002B49]/95 border-r border-[#CCCC99]/20 flex flex-col overflow-y-auto shrink-0 z-10 p-4 space-y-4">
+            
+            <!-- Series Formula Header Card -->
+            <div id="methodBadgeCard" class="p-3.5 rounded-xl bg-gradient-to-r from-[#001a2c] to-[#002B49] border border-[#FFC72C]/40 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-[#CCCC99]">Taylor Series Definition</div>
+                    <div id="seriesTypeTitle" class="text-base font-bold text-[#FFC72C]">Maclaurin Series (c = 0)</div>
+                </div>
+                <span id="convergenceBadge" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">
+                    Radius R = ∞
+                </span>
+            </div>
+
+            <!-- Function & Center Input Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-root-variable text-[#FFC72C]"></i> Function & Expansion Center
+                </h2>
+
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-[#CCCC99] flex items-center justify-between">
+                        <span>Target Function f(x):</span>
+                        <span class="text-[10px] text-[#CCCC99]/70">e.g. sin(x), e^x, 1/(1-x)</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-[#FFC72C] font-mono font-bold">f(x) =</span>
+                        <input type="text" id="funcFInput" value="sin(x)" class="w-full pl-14 pr-3 py-2 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C] transition">
+                    </div>
+                </div>
+
+                <!-- Expansion Center c -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="text-xs text-[#CCCC99] mb-1 block">Center Point (c):</label>
+                        <input type="number" id="centerCInput" value="0" step="0.5" class="w-full px-3 py-1.5 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                    </div>
+                    <div class="flex items-end">
+                        <button onclick="setCenterZero()" class="w-full py-1.5 text-xs bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] border border-[#CCCC99]/30 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-bullseye"></i> Set c = 0
+                        </button>
+                    </div>
+                </div>
+
+                <div id="functionError" class="hidden text-xs text-rose-300 bg-rose-950/60 p-2 rounded-md border border-rose-800/50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="errorMsg">Invalid Math Syntax</span>
+                </div>
+            </div>
+
+            <!-- Polynomial Degree Slider Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-[#FFC72C]"></i> Polynomial Degree (N)
+                </h2>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-[#CCCC99] font-medium">Degree N:</span>
+                        <span id="degreeNText" class="text-[#FFC72C] font-mono font-bold">N = 5</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="degreeSlider" min="0" max="20" value="5" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+                        <button id="playDegreeBtn" onclick="toggleDegreeAnimation()" title="Animate Degree Progression" class="p-1.5 rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] border border-[#CCCC99]/30 w-8 h-8 flex items-center justify-center transition shrink-0 shadow-sm">
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Fast degree increment buttons -->
+                <div class="flex items-center justify-between gap-1 pt-1">
+                    <button onclick="setDegree(1)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">N=1</button>
+                    <button onclick="setDegree(3)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">N=3</button>
+                    <button onclick="setDegree(5)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">N=5</button>
+                    <button onclick="setDegree(9)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">N=9</button>
+                    <button onclick="setDegree(15)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">N=15</button>
+                    <button onclick="setDegree(20)" class="px-1.5 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] font-bold border border-[#FFC72C]/40 flex-1">N=20</button>
+                </div>
+            </div>
+
+            <!-- Point Evaluator & Lagrange Error Inspector Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-crosshairs text-[#FFC72C]"></i> Point Evaluator (x₀)
+                </h2>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-[#CCCC99] font-medium">Evaluation Point x₀:</span>
+                        <span id="evalXValText" class="text-[#FFC72C] font-mono font-bold">x₀ = 1.50</span>
+                    </div>
+                    <input type="range" id="evalXSlider" min="-4" max="4" step="0.05" value="1.5" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+                </div>
+            </div>
+
+            <!-- Display Toggles Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye text-[#FFC72C]"></i> Visual & Board Options
+                </h2>
+
+                <!-- Line & Curve Thickness Slider -->
+                <div class="space-y-1 pb-2 border-b border-[#CCCC99]/20">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-[#CCCC99] font-medium"><i class="fa-solid fa-border-top-left text-[#FFC72C] mr-1"></i> Curve Thickness:</span>
+                        <span id="thicknessValText" class="text-[#FFC72C] font-mono font-bold">4.0 px</span>
+                    </div>
+                    <input type="range" id="lineWidthSlider" min="1.5" max="15" step="0.5" value="4" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+                    <div class="flex items-center justify-between gap-1 pt-1">
+                        <button onclick="setThickness(2)" class="px-2 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">Fine (2px)</button>
+                        <button onclick="setThickness(5)" class="px-2 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/20 flex-1">Standard (5px)</button>
+                        <button onclick="setThickness(9)" class="px-2 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] font-bold text-[#FFC72C] border border-[#FFC72C]/40 flex-1 shadow-sm"><i class="fa-solid fa-display text-[9px] mr-1"></i> Board (9px)</button>
+                        <button onclick="setThickness(15)" class="px-2 py-1 text-[10px] rounded bg-[#001a2c] hover:bg-[#003e69] font-bold text-[#FFC72C] border border-[#FFC72C]/40 flex-1 shadow-sm"><i class="fa-solid fa-expand text-[9px] mr-1"></i> Ultra (15px)</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showOverlayCheck" class="accent-[#FFC72C] rounded">
+                        <span>Overlay Lower Degrees</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showRadiusCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Show Radius (R)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showErrorGapCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Error Gap Line</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showGridCheck" checked class="accent-[#CCCC99] rounded">
+                        <span>Grid Lines</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Main Workspace -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-[#001a2c]">
+
+            <!-- Graphic Canvas Area -->
+            <div class="flex-1 relative bg-[#001a2c] p-3 flex flex-col overflow-hidden">
+                
+                <div class="absolute top-4 left-4 bg-[#002B49]/85 backdrop-blur border border-[#CCCC99]/30 px-3 py-1.5 rounded-lg text-xs font-medium text-[#CCCC99] flex items-center gap-2 pointer-events-none z-10 shadow-lg">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C] animate-pulse"></span>
+                    Interactive Taylor Series Plot (Scroll/Pinch to Zoom, Drag to Pan)
+                </div>
+
+                <!-- Floating Zoom Controls Overlay -->
+                <div class="absolute top-4 right-4 flex items-center space-x-1 bg-[#002B49]/90 backdrop-blur border border-[#CCCC99]/30 rounded-lg p-1.5 z-10 shadow-lg">
+                    <button onclick="zoomIn()" title="Zoom In (+)" class="w-7 h-7 rounded bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] flex items-center justify-center transition border border-[#CCCC99]/20">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                    <button onclick="zoomOut()" title="Zoom Out (-)" class="w-7 h-7 rounded bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] flex items-center justify-center transition border border-[#CCCC99]/20">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </button>
+                    <button onclick="resetZoom()" title="Reset Zoom & Pan" class="px-2 h-7 rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] hover:text-[#FFC72C] text-xs font-medium flex items-center gap-1 transition border border-[#CCCC99]/20">
+                        <i class="fa-solid fa-rotate-left text-[10px]"></i> Reset
+                    </button>
+                    <span id="zoomPercentText" class="text-xs font-mono text-[#FFC72C] font-bold px-2 border-l border-[#CCCC99]/20">100%</span>
+                </div>
+
+                <!-- Main Canvas -->
+                <div class="flex-1 w-full h-full relative rounded-xl border border-[#CCCC99]/30 bg-[#002B49]/40 overflow-hidden">
+                    <canvas id="mainCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+                </div>
+
+                <!-- Legend Overlay at Canvas Bottom -->
+                <div class="absolute bottom-5 left-5 bg-[#002B49]/90 backdrop-blur border border-[#CCCC99]/30 p-2.5 rounded-lg text-xs text-[#CCCC99] flex flex-wrap items-center gap-4 pointer-events-none z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-1 rounded bg-[#FFC72C]"></span> <span class="font-mono text-white">f(x) Actual Curve</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-1 rounded bg-sky-400"></span> <span class="font-mono text-white">P_N(x) Taylor Poly</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C]"></span> Center (c, f(c))
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Inspection Pt (x₀)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Calculus Analysis & Expanded Series Panel -->
+            <div class="h-auto max-h-64 bg-[#002B49] border-t border-[#CCCC99]/30 p-4 overflow-y-auto shrink-0 space-y-3">
+                
+                <!-- Expanded Polynomial Formula Section -->
+                <div class="bg-[#001a2c] p-3 rounded-xl border border-[#CCCC99]/30 space-y-1">
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-[#CCCC99] flex items-center justify-between">
+                        <span>Expanded Taylor Polynomial P_N(x)</span>
+                        <span class="text-[#FFC72C] font-mono">c = <span id="formulaCenterVal">0</span></span>
+                    </div>
+                    <div id="expandedPolynomialText" class="text-sm font-mono text-[#FFC72C] font-semibold overflow-x-auto whitespace-nowrap py-1">
+                        P₅(x) = x - x³/6 + x⁵/120
+                    </div>
+                </div>
+
+                <!-- Detailed Metrics & Lagrange Error Bound Cards -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    
+                    <!-- Exact vs Polynomial Evaluation Card -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-2">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>Point Evaluation @ x₀ = <span id="evalXCardVal">1.50</span></span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Actual f(x₀)</div>
+                                <div id="actualYText" class="text-base font-mono font-bold text-[#CCCC99]">0.9975</div>
+                            </div>
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Taylor P_N(x₀)</div>
+                                <div id="polyYText" class="text-base font-mono font-bold text-[#FFC72C]">1.0001</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs font-mono pt-1">
+                            <span class="text-[#CCCC99]">Actual Error |f - P_N|:</span>
+                            <span id="actualErrorText" class="text-[#FFC72C] font-bold">0.0026</span>
+                        </div>
+                    </div>
+
+                    <!-- AP Calculus BC Lagrange Error Bound Card -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>Lagrange Error Bound</span>
+                            <span class="text-[10px] font-mono text-[#CCCC99]">|R_N(x)| ≤ M|x-c|ⁿ⁺¹/(N+1)!</span>
+                        </div>
+                        
+                        <div id="lagrangeDetailsContent" class="text-xs font-mono space-y-1 text-[#CCCC99]">
+                            <div>Max Derivative M ≈ 1.000</div>
+                            <div>Term Bound = 1.000 · (1.5)⁶ / 720</div>
+                            <div class="text-[#FFC72C] font-bold border-t border-[#CCCC99]/20 pt-1">Lagrange Bound ≤ 0.0156</div>
+                        </div>
+                    </div>
+
+                    <!-- AP Calculus BC Exam Theorem Insight Card -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-br from-[#001a2c] to-[#002B49] border border-[#FFC72C]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-[#FFC72C]"></i> AP Calculus BC Exam Note
+                        </div>
+                        <div id="apCalculusTheoremText" class="text-xs text-white leading-relaxed font-sans">
+                            As the polynomial degree $N$ increases, Taylor polynomials $P_N(x)$ converge rapidly to $f(x)$ within the <strong>Interval of Convergence</strong>.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#001a2c]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#002B49] border border-[#CCCC99]/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-[#CCCC99] hover:text-[#FFC72C] text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#FFC72C]/20 text-[#FFC72C] flex items-center justify-center font-bold text-xl border border-[#FFC72C]/40">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">AP Calculus BC Taylor & Maclaurin Guide</h3>
+                    <p class="text-xs text-[#CCCC99]">Core Theorems, Series Definitions & Error Bounds</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-[#CCCC99] leading-relaxed max-h-96 overflow-y-auto pr-2">
+                
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">1. Definition of Taylor & Maclaurin Series</span>
+                    <p>The Taylor series for a smooth function $f(x)$ centered at $x = c$ is given by:<br>
+                    <span class="font-mono text-white block my-1">f(x) = ∑ [ f⁽ᵏ⁾(c) / k! ] (x - c)ᵏ = f(c) + f'(c)(x-c) + [f''(c)/2!](x-c)² + ...</span>
+                    When $c = 0$, the series is called a <strong>Maclaurin Series</strong>.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">2. Must-Know AP BC Standard Maclaurin Expansions</span>
+                    <p>
+                    • <strong>e^x:</strong> $1 + x + \frac{x^2}{2!} + \frac{x^3}{3!} + \dots = \sum_{k=0}^{\infty} \frac{x^k}{k!}, \quad (-\infty, \infty)$<br>
+                    • <strong>sin(x):</strong> $x - \frac{x^3}{3!} + \frac{x^5}{5!} - \dots = \sum_{k=0}^{\infty} \frac{(-1)^k x^{2k+1}}{(2k+1)!}, \quad (-\infty, \infty)$<br>
+                    • <strong>cos(x):</strong> $1 - \frac{x^2}{2!} + \frac{x^4}{4!} - \dots = \sum_{k=0}^{\infty} \frac{(-1)^k x^{2k}}{(2k)!}, \quad (-\infty, \infty)$<br>
+                    • <strong>1/(1-x):</strong> $1 + x + x^2 + x^3 + \dots = \sum_{k=0}^{\infty} x^k, \quad (-1, 1)$<br>
+                    • <strong>1/(1+x):</strong> $1 - x + x^2 - x^3 + \dots = \sum_{k=0}^{\infty} (-1)^k x^k, \quad (-1, 1)$<br>
+                    • <strong>ln(1+x):</strong> $x - \frac{x^2}{2} + \frac{x^3}{3} - \dots = \sum_{k=1}^{\infty} \frac{(-1)^{k-1} x^k}{k}, \quad (-1, 1]$<br>
+                    • <strong>arctan(x):</strong> $x - \frac{x^3}{3} + \frac{x^5}{5} - \dots = \sum_{k=0}^{\infty} \frac{(-1)^k x^{2k+1}}{2k+1}, \quad [-1, 1]$
+                    </p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">3. Lagrange Error Bound Theorem</span>
+                    <p>For an $N$-th degree Taylor polynomial $P_N(x)$ centered at $c$, the remainder $R_N(x) = f(x) - P_N(x)$ satisfies:<br>
+                    <span class="font-mono text-white block my-1">|R_N(x)| ≤ [ M / (N+1)! ] |x - c|ⁿ⁺¹</span>
+                    where $M$ is the maximum value of $|f^{(N+1)}(t)|$ for all $t$ between $c$ and $x$.</p>
+                </div>
+
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- Global Application State ---
+        const state = {
+            fStr: 'sin(x)',
+            c: 0,
+            degreeN: 5,
+            evalX: 1.5,
+            strokeWidth: 4.0, // Line thickness in pixels (optimized for projectors/boards)
+            showOverlay: false,
+            showRadius: true,
+            showErrorGap: true,
+            showGrid: true,
+            radiusR: Infinity, // Number or Infinity
+            // Animation state
+            isAnimatingDegree: false,
+            degreeAnimTimer: null,
+            // Zoom & Pan State
+            zoomLevel: 1.0,
+            panOffsetX: 0,
+            panOffsetY: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0
+        };
+
+        // --- Expression Sanitizer for Math.js (converts ln to log & arctan to atan) ---
+        function sanitizeExpression(exprStr) {
+            if (!exprStr) return '';
+            // Math.js uses 'log' for natural log and 'atan' for inverse tangent.
+            // Convert 'ln' -> 'log' and 'arctan' -> 'atan' so standard math notation works seamlessly.
+            return exprStr.replace(/\bln\b/g, 'log').replace(/\barctan\b/g, 'atan');
+        }
+
+        // --- Degree Progression Animation Logic ---
+        function toggleDegreeAnimation() {
+            state.isAnimatingDegree = !state.isAnimatingDegree;
+            const btn = document.getElementById('playDegreeBtn');
+            if (state.isAnimatingDegree) {
+                if (btn) btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                if (state.degreeN >= 20) {
+                    state.degreeN = 0;
+                }
+                stepDegreeAnimation();
+            } else {
+                stopDegreeAnimation();
+            }
+        }
+
+        function stopDegreeAnimation() {
+            state.isAnimatingDegree = false;
+            if (state.degreeAnimTimer) {
+                clearTimeout(state.degreeAnimTimer);
+                state.degreeAnimTimer = null;
+            }
+            const btn = document.getElementById('playDegreeBtn');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+        }
+
+        function stepDegreeAnimation() {
+            if (!state.isAnimatingDegree) return;
+
+            if (state.degreeN < 20) {
+                state.degreeN++;
+                document.getElementById('degreeSlider').value = state.degreeN;
+                document.getElementById('degreeNText').textContent = `N = ${state.degreeN}`;
+                updateAll();
+                state.degreeAnimTimer = setTimeout(stepDegreeAnimation, 650); // 650ms delay per degree for smooth classroom visualization
+            } else {
+                stopDegreeAnimation();
+            }
+        }
+
+        // --- Zoom & Pan Helper Functions ---
+        function zoomIn() {
+            zoomAt(1.25);
+        }
+
+        function zoomOut() {
+            zoomAt(1 / 1.25);
+        }
+
+        function resetZoom() {
+            state.zoomLevel = 1.0;
+            state.panOffsetX = 0;
+            state.panOffsetY = 0;
+            updateZoomUI();
+            drawGraph();
+        }
+
+        function zoomAt(factor, canvasX, canvasY) {
+            const oldZoom = state.zoomLevel;
+            let newZoom = oldZoom * factor;
+            newZoom = Math.max(0.1, Math.min(100.0, newZoom));
+            
+            if (canvasX !== undefined && canvasY !== undefined && canvas) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const rangeXOld = 9 / oldZoom;
+                const rangeYOld = 6 / oldZoom;
+                const rangeXNew = 9 / newZoom;
+                const rangeYNew = 6 / newZoom;
+
+                const mouseGraphX = (state.c + state.panOffsetX - rangeXOld / 2) + (canvasX / width) * rangeXOld;
+                const mouseGraphY = (state.panOffsetY + rangeYOld / 2) - (canvasY / height) * rangeYOld;
+
+                state.zoomLevel = newZoom;
+                state.panOffsetX = mouseGraphX - state.c - (canvasX / width - 0.5) * rangeXNew;
+                state.panOffsetY = mouseGraphY + (canvasY / height - 0.5) * rangeYNew;
+            } else {
+                state.zoomLevel = newZoom;
+            }
+
+            updateZoomUI();
+            drawGraph();
+        }
+
+        function updateZoomUI() {
+            const zoomEl = document.getElementById('zoomPercentText');
+            if (zoomEl) {
+                zoomEl.textContent = `${Math.round(state.zoomLevel * 100)}%`;
+            }
+        }
+
+        // --- Compiled Functions & Derivative Coefficients ---
+        let compiledF = (x) => Math.sin(x);
+        let taylorCoeffs = []; // [a0, a1, a2, ..., aN] where P_N(x) = sum a_k (x-c)^k
+
+        // --- Canvas Globals ---
+        let canvas, ctx;
+
+        // --- Window Onload ---
+        window.onload = function() {
+            // Import 'ln' and 'arctan' aliases into math.js engine
+            if (typeof math !== 'undefined') {
+                try { math.import({ ln: math.log, arctan: math.atan }, { override: true }); } catch(e) {}
+            }
+
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+            resizeCanvas();
+            updateAll();
+        };
+
+        // --- Factorial Helper ---
+        function factorial(n) {
+            if (n <= 1) return 1;
+            let res = 1;
+            for (let i = 2; i <= n; i++) res *= i;
+            return res;
+        }
+
+        // --- Safe Math Evaluator ---
+        function parseFunction(exprStr) {
+            try {
+                const cleanExpr = sanitizeExpression(exprStr);
+                const node = math.parse(cleanExpr);
+                const code = node.compile();
+                return (x) => {
+                    try {
+                        let res = code.evaluate({ x: x });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return NaN;
+                        return res;
+                    } catch (e) {
+                        return NaN;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Compute Taylor Coefficients around center c ---
+        function computeTaylorCoefficients(exprStr, cVal, maxN) {
+            let coeffs = new Array(maxN + 2).fill(0);
+            const cleanExpr = sanitizeExpression(exprStr).replace(/\s+/g, '').toLowerCase();
+
+            // 1. Exact Analytical Closed-Form Coefficients for Standard AP Calculus BC Presets
+            if (cleanExpr === 'e^x' || cleanExpr === 'exp(x)') {
+                const expC = Math.exp(cVal);
+                let fact = 1;
+                for (let k = 0; k <= maxN + 1; k++) {
+                    if (k > 1) fact *= k;
+                    coeffs[k] = expC / fact;
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === 'sin(x)') {
+                let fact = 1;
+                for (let k = 0; k <= maxN + 1; k++) {
+                    if (k > 1) fact *= k;
+                    const derivAtC = Math.sin(cVal + (k * Math.PI) / 2);
+                    coeffs[k] = derivAtC / fact;
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === 'cos(x)') {
+                let fact = 1;
+                for (let k = 0; k <= maxN + 1; k++) {
+                    if (k > 1) fact *= k;
+                    const derivAtC = Math.cos(cVal + (k * Math.PI) / 2);
+                    coeffs[k] = derivAtC / fact;
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === '1/(1-x)') {
+                for (let k = 0; k <= maxN + 1; k++) {
+                    coeffs[k] = Math.pow(1 - cVal, -(k + 1));
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === '1/(1+x)') {
+                for (let k = 0; k <= maxN + 1; k++) {
+                    const sign = (k % 2 === 0) ? 1 : -1;
+                    coeffs[k] = sign * Math.pow(1 + cVal, -(k + 1));
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === 'log(1+x)' || cleanExpr === 'log(x+1)' || cleanExpr === 'ln(1+x)' || cleanExpr === 'ln(x+1)') {
+                if (cVal === 0) {
+                    coeffs[0] = 0;
+                    for (let k = 1; k <= maxN + 1; k++) {
+                        const sign = (k % 2 === 1) ? 1 : -1;
+                        coeffs[k] = sign / k;
+                    }
+                } else {
+                    coeffs[0] = Math.log(1 + cVal);
+                    for (let k = 1; k <= maxN + 1; k++) {
+                        const sign = (k % 2 === 1) ? 1 : -1;
+                        coeffs[k] = (sign / k) * Math.pow(1 + cVal, -k);
+                    }
+                }
+                return coeffs;
+            }
+
+            if (cleanExpr === 'atan(x)' || cleanExpr === 'arctan(x)') {
+                coeffs[0] = Math.atan(cVal);
+                const r2 = cVal * cVal + 1;
+                const phi = Math.atan2(1, cVal);
+                for (let k = 1; k <= maxN + 1; k++) {
+                    const sign = (k % 2 === 1) ? 1 : -1;
+                    coeffs[k] = (sign / (k * Math.pow(r2, k / 2))) * Math.sin(k * phi);
+                }
+                return coeffs;
+            }
+
+            // 2. Custom User Function Symbolic Differentiation (with AST simplification)
+            return computeSymbolicCoefficients(exprStr, cVal, maxN);
+        }
+
+        function computeSymbolicCoefficients(exprStr, cVal, maxN) {
+            let coeffs = [];
+            try {
+                const cleanExpr = sanitizeExpression(exprStr);
+                let parsedNode = math.parse(cleanExpr);
+                let currNode = parsedNode;
+
+                for (let k = 0; k <= maxN + 1; k++) {
+                    let val = currNode.compile().evaluate({ x: cVal });
+                    if (typeof val === 'number' && !isNaN(val) && isFinite(val)) {
+                        coeffs.push(val / factorial(k));
+                    } else {
+                        coeffs.push(0);
+                    }
+
+                    if (k <= maxN) {
+                        try {
+                            // Guard against exponential AST expression growth that freezes the browser
+                            if (currNode.toString().length > 200) {
+                                return computeNumericCoefficients(cVal, maxN);
+                            }
+                            currNode = math.simplify(math.derivative(currNode, 'x'));
+                        } catch (e) {
+                            return computeNumericCoefficients(cVal, maxN);
+                        }
+                    }
+                }
+            } catch (err) {
+                coeffs = computeNumericCoefficients(cVal, maxN);
+            }
+
+            while (coeffs.length < maxN + 2) {
+                coeffs.push(0);
+            }
+            return coeffs;
+        }
+
+        function computeNumericCoefficients(cVal, maxN) {
+            let coeffs = [];
+            const h = 0.005;
+            for (let k = 0; k <= maxN + 1; k++) {
+                let dVal = getFiniteDifferenceDerivative(compiledF, cVal, k, h);
+                coeffs.push(dVal / factorial(k));
+            }
+            return coeffs;
+        }
+
+        function getFiniteDifferenceDerivative(f, x, order, h) {
+            if (order === 0) return f(x);
+            let sum = 0;
+            for (let i = 0; i <= order; i++) {
+                const coef = ((order - i) % 2 === 0 ? 1 : -1) * combinations(order, i);
+                const evalPt = x + (i - order / 2) * h;
+                const val = f(evalPt);
+                if (isNaN(val) || !isFinite(val)) return 0;
+                sum += coef * val;
+            }
+            return sum / Math.pow(h, order);
+        }
+
+        function combinations(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            let c = 1;
+            for (let i = 1; i <= k; i++) {
+                c = (c * (n - i + 1)) / i;
+            }
+            return c;
+        }
+
+        // Evaluate Taylor Polynomial at x given coefficients and center c
+        function evalTaylorPoly(coeffs, cVal, xVal, deg) {
+            const limit = Math.min(deg, coeffs.length - 1);
+            let dx = xVal - cVal;
+            let sum = 0;
+            for (let k = limit; k >= 0; k--) {
+                sum = sum * dx + coeffs[k];
+            }
+            return sum;
+        }
+
+        // Determine Radius of Convergence R for standard functions
+        function detectRadiusOfConvergence(fStr, cVal) {
+            const str = fStr.replace(/\s+/g, '').toLowerCase();
+            if (str.includes('1/(1-x)') || str.includes('1/(1+x)') || str.includes('ln(1+x)') || str.includes('ln(x+1)') || str.includes('log(1+x)') || str.includes('log(x+1)') || str.includes('atan(x)') || str.includes('arctan(x)')) {
+                return 1.0;
+            }
+            if (str.includes('1/x')) {
+                return Math.abs(cVal);
+            }
+            return Infinity;
+        }
+
+        // --- Canvas Resize ---
+        function resizeCanvas() {
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            drawGraph();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Master Update Trigger ---
+        function updateAll() {
+            state.radiusR = detectRadiusOfConvergence(state.fStr, state.c);
+            
+            // Recompute Coefficients up to N+1 (N+1 needed for Lagrange Error Bound)
+            taylorCoeffs = computeTaylorCoefficients(state.fStr, state.c, state.degreeN);
+
+            updateHeaderBadge();
+            updateExpandedPolynomialDisplay();
+            drawGraph();
+            calculatePointEvaluationAndLagrange();
+            updateAPTheoremText();
+        }
+
+        // --- Header Badge & State ---
+        function updateHeaderBadge() {
+            const titleEl = document.getElementById('seriesTypeTitle');
+            const badgeEl = document.getElementById('convergenceBadge');
+
+            if (state.c === 0) {
+                titleEl.textContent = 'Maclaurin Series (c = 0)';
+            } else {
+                titleEl.textContent = `Taylor Series (c = ${state.c})`;
+            }
+
+            document.getElementById('formulaCenterVal').textContent = state.c;
+
+            if (state.radiusR === Infinity) {
+                badgeEl.textContent = 'Radius R = ∞';
+            } else {
+                badgeEl.textContent = `Radius R = ${state.radiusR.toFixed(1)}`;
+            }
+        }
+
+        // --- Format Expanded Polynomial String ---
+        function updateExpandedPolynomialDisplay() {
+            const displayEl = document.getElementById('expandedPolynomialText');
+            const N = state.degreeN;
+            const c = state.c;
+
+            let terms = [];
+            for (let k = 0; k <= N; k++) {
+                let ak = taylorCoeffs[k];
+                if (ak === undefined || Math.abs(ak) < 1e-7) continue;
+
+                let termStr = '';
+                let coeffStr = '';
+                
+                // Format coefficient cleanly
+                let absAk = Math.abs(ak);
+                let signStr = ak < 0 ? ' - ' : (terms.length > 0 ? ' + ' : '');
+
+                if (Math.abs(absAk - 1) < 1e-6 && k > 0) {
+                    coeffStr = '';
+                } else {
+                    coeffStr = absAk.toFixed(4).replace(/\.?0+$/, '');
+                }
+
+                // Format (x - c)^k term
+                let varStr = '';
+                if (k === 0) {
+                    varStr = coeffStr || '1';
+                } else {
+                    let base = c === 0 ? 'x' : `(x - ${c})`;
+                    varStr = k === 1 ? `${coeffStr}${base}` : `${coeffStr}${base}^${k}`;
+                }
+
+                terms.push(`${signStr}${varStr}`);
+            }
+
+            if (terms.length === 0) {
+                displayEl.textContent = `P_${N}(x) = 0`;
+            } else {
+                displayEl.textContent = `P_${N}(x) = ${terms.join('')}`;
+            }
+        }
+
+        // --- Point Evaluation & Lagrange Error Calculation ---
+        function calculatePointEvaluationAndLagrange() {
+            const x0 = state.evalX;
+            const c = state.c;
+            const N = state.degreeN;
+
+            const actualY = compiledF(x0);
+            const polyY = evalTaylorPoly(taylorCoeffs, c, x0, N);
+            const actualError = Math.abs(actualY - polyY);
+
+            document.getElementById('evalXValText').textContent = `x₀ = ${x0.toFixed(2)}`;
+            document.getElementById('evalXCardVal').textContent = x0.toFixed(2);
+            document.getElementById('actualYText').textContent = isNaN(actualY) ? 'Undefined' : actualY.toFixed(4);
+            document.getElementById('polyYText').textContent = isNaN(polyY) ? 'Undefined' : polyY.toFixed(4);
+            document.getElementById('actualErrorText').textContent = isNaN(actualError) ? 'N/A' : actualError.toFixed(6);
+
+            // Compute Lagrange Error Bound: |R_N(x)| <= [ M / (N+1)! ] * |x - c|^(N+1)
+            const coeffN1 = taylorCoeffs[N + 1] !== undefined ? taylorCoeffs[N + 1] : 0;
+            const dist = Math.abs(x0 - c);
+
+            let maxCoeff = Math.abs(coeffN1);
+
+            const sampleSteps = 8;
+            for (let i = 0; i <= sampleSteps; i++) {
+                let t = c + (x0 - c) * (i / sampleSteps);
+                let sampleCoeffs = computeTaylorCoefficients(state.fStr, t, N + 1);
+                let cN1 = Math.abs(sampleCoeffs[N + 1] || 0);
+                if (!isNaN(cN1) && isFinite(cN1) && cN1 > maxCoeff) {
+                    maxCoeff = cN1;
+                }
+            }
+
+            const lagrangeBound = maxCoeff * Math.pow(dist, N + 1);
+            const maxM = maxCoeff * factorial(Math.min(N + 1, 15));
+
+            const lagrangeEl = document.getElementById('lagrangeDetailsContent');
+            lagrangeEl.innerHTML = `
+                <div>Max Derivative M ≈ ${isFinite(maxM) ? maxM.toFixed(3) : 'N/A'}</div>
+                <div>Bound = ${maxCoeff.toFixed(6)} · |${dist.toFixed(2)}|<sup>${N+1}</sup></div>
+                <div class="text-[#FFC72C] font-bold border-t border-[#CCCC99]/20 pt-1">Lagrange Bound ≤ ${isNaN(lagrangeBound) ? 'N/A' : lagrangeBound.toFixed(6)}</div>
+            `;
+        }
+
+        // --- AP Calculus BC Theorem Insights ---
+        function updateAPTheoremText() {
+            const { fStr, c, degreeN, radiusR } = state;
+            const apEl = document.getElementById('apCalculusTheoremText');
+
+            if (radiusR === Infinity) {
+                apEl.innerHTML = `Because the radius of convergence for $f(x) = ${fStr}$ is <strong>$R = \\infty$</strong>, the Taylor polynomial $P_{${degreeN}}(x)$ centered at $c = ${c}$ converges to $f(x)$ for <strong>all real numbers $x \\in (-\\infty, \\infty)$</strong>.`;
+            } else {
+                const leftB = c - radiusR;
+                const rightB = c + radiusR;
+                apEl.innerHTML = `For $f(x) = ${fStr}$, the series has a finite <strong>Radius of Convergence $R = ${radiusR}$</strong>. The Taylor polynomial approximates $f(x)$ accurately <em>only</em> within the interval <strong>$(${leftB.toFixed(1)}, ${rightB.toFixed(1)})$</strong>. Outside this interval, higher-degree polynomials diverge.`;
+            }
+        }
+
+        // --- Graph Rendering Engine (HTML5 Canvas) ---
+        function drawGraph() {
+            if (!ctx) return;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const { c, degreeN, evalX, showOverlay, showRadius, showErrorGap, showGrid, radiusR, zoomLevel, panOffsetX, panOffsetY } = state;
+
+            // Compute Viewport Bounds centered around expansion center c + pan offsets
+            const baseSpanX = 9.0 / zoomLevel;
+            const baseSpanY = 6.0 / zoomLevel;
+
+            const centerX = c + panOffsetX;
+            const centerY = panOffsetY;
+
+            const xMin = centerX - baseSpanX / 2;
+            const xMax = centerX + baseSpanX / 2;
+            const yMin = centerY - baseSpanY / 2;
+            const yMax = centerY + baseSpanY / 2;
+
+            // Canvas coordinate converters
+            const toPxX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+            const toPxY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+            // Adaptive Step size for Grid & Tick Labels
+            const getAdaptiveStep = (range) => {
+                const rawStep = range / 8;
+                const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                const rel = rawStep / mag;
+                if (rel < 1.5) return mag;
+                if (rel < 3.5) return 2 * mag;
+                if (rel < 7.5) return 5 * mag;
+                return 10 * mag;
+            };
+
+            const xStep = getAdaptiveStep(xMax - xMin);
+            const yStep = getAdaptiveStep(yMax - yMin);
+
+            // 1. Draw Grid Lines (Vegas Gold)
+            if (showGrid) {
+                ctx.strokeStyle = 'rgba(204, 204, 153, 0.12)';
+                ctx.lineWidth = 1;
+
+                const firstGridX = Math.floor(xMin / xStep) * xStep;
+                for (let x = firstGridX; x <= xMax; x += xStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(x), 0);
+                    ctx.lineTo(toPxX(x), height);
+                    ctx.stroke();
+                }
+
+                const firstGridY = Math.floor(yMin / yStep) * yStep;
+                for (let y = firstGridY; y <= yMax; y += yStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, toPxY(y));
+                    ctx.lineTo(width, toPxY(y));
+                    ctx.stroke();
+                }
+            }
+
+            // 2. Radius of Convergence Interval Shading & Bounds
+            if (showRadius && radiusR !== Infinity) {
+                const rLeft = c - radiusR;
+                const rRight = c + radiusR;
+
+                const pxLeft = toPxX(rLeft);
+                const pxRight = toPxX(rRight);
+
+                // Shaded region inside convergence interval
+                ctx.fillStyle = 'rgba(255, 199, 44, 0.08)';
+                ctx.fillRect(pxLeft, 0, pxRight - pxLeft, height);
+
+                // Vertical boundary lines
+                ctx.strokeStyle = '#FFC72C';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 4]);
+                
+                ctx.beginPath();
+                ctx.moveTo(pxLeft, 0); ctx.lineTo(pxLeft, height);
+                ctx.moveTo(pxRight, 0); ctx.lineTo(pxRight, height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Labels
+                ctx.fillStyle = '#FFC72C';
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText(`c - R = ${rLeft.toFixed(1)}`, pxLeft + 5, 20);
+                ctx.fillText(`c + R = ${rRight.toFixed(1)}`, pxRight - 75, 20);
+            }
+
+            // 3. Draw Main Axes & Ticks (Vegas Gold)
+            ctx.strokeStyle = '#CCCC99';
+            ctx.lineWidth = 1.5;
+
+            const pxZeroX = toPxX(0);
+            const pxZeroY = toPxY(0);
+
+            // X axis
+            ctx.beginPath();
+            ctx.moveTo(0, pxZeroY);
+            ctx.lineTo(width, pxZeroY);
+            ctx.stroke();
+
+            // Y axis
+            ctx.beginPath();
+            ctx.moveTo(pxZeroX, 0);
+            ctx.lineTo(pxZeroX, height);
+            ctx.stroke();
+
+            // Ticks & Numerical Labels
+            ctx.fillStyle = '#CCCC99';
+            ctx.font = '10px monospace';
+
+            const firstTickX = Math.ceil(xMin / xStep) * xStep;
+            for (let x = firstTickX; x <= xMax; x += xStep) {
+                if (Math.abs(x) < 1e-6) continue;
+                const px = toPxX(x);
+                ctx.beginPath();
+                ctx.moveTo(px, pxZeroY - 3);
+                ctx.lineTo(px, pxZeroY + 3);
+                ctx.stroke();
+
+                const label = Number(x.toFixed(4)).toString();
+                const textY = Math.max(15, Math.min(height - 5, pxZeroY + 14));
+                ctx.fillText(label, px - 8, textY);
+            }
+
+            const firstTickY = Math.ceil(yMin / yStep) * yStep;
+            for (let y = firstTickY; y <= yMax; y += yStep) {
+                if (Math.abs(y) < 1e-6) continue;
+                const py = toPxY(y);
+                ctx.beginPath();
+                ctx.moveTo(pxZeroX - 3, py);
+                ctx.lineTo(pxZeroX + 3, py);
+                ctx.stroke();
+
+                const label = Number(y.toFixed(4)).toString();
+                const textX = Math.max(5, Math.min(width - 30, pxZeroX + 5));
+                ctx.fillText(label, textX, py + 3);
+            }
+
+            // 4. Draw Overlay Lower Degrees (if enabled)
+            if (showOverlay) {
+                const overlayDegrees = [1, 3, 5, 7].filter(d => d < degreeN);
+                const colors = ['rgba(148, 163, 184, 0.4)', 'rgba(56, 189, 248, 0.4)', 'rgba(168, 85, 247, 0.4)', 'rgba(244, 63, 94, 0.4)'];
+                
+                overlayDegrees.forEach((deg, idx) => {
+                    ctx.strokeStyle = colors[idx % colors.length];
+                    ctx.lineWidth = Math.max(1.5, state.strokeWidth * 0.6);
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath();
+                    
+                    const steps = width;
+                    for (let px = 0; px <= steps; px += 2) {
+                        const x = xMin + (px / steps) * (xMax - xMin);
+                        const y = evalTaylorPoly(taylorCoeffs, c, x, deg);
+                        if (!isNaN(y) && isFinite(y) && y >= yMin - 5 && y <= yMax + 5) {
+                            if (px === 0) ctx.moveTo(toPxX(x), toPxY(y));
+                            else ctx.lineTo(toPxX(x), toPxY(y));
+                        }
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                });
+            }
+
+            // 5. Draw Primary Active Taylor Polynomial Curve P_N(x) (Cyan / Sky Blue)
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = state.strokeWidth;
+            ctx.beginPath();
+            const polySteps = width;
+            let startedPoly = false;
+            for (let px = 0; px <= polySteps; px += 2) {
+                const x = xMin + (px / polySteps) * (xMax - xMin);
+                const y = evalTaylorPoly(taylorCoeffs, c, x, degreeN);
+                if (!isNaN(y) && isFinite(y) && y >= yMin - 10 && y <= yMax + 10) {
+                    if (!startedPoly) { ctx.moveTo(toPxX(x), toPxY(y)); startedPoly = true; }
+                    else { ctx.lineTo(toPxX(x), toPxY(y)); }
+                }
+            }
+            ctx.stroke();
+
+            // 6. Draw Actual Target Function Curve f(x) (Vibrant Yellow Curve)
+            ctx.strokeStyle = '#FFC72C';
+            ctx.lineWidth = state.strokeWidth * 1.15;
+            ctx.beginPath();
+            const curveSteps = width;
+            let startedCurve = false;
+            for (let px = 0; px <= curveSteps; px += 2) {
+                const x = xMin + (px / curveSteps) * (xMax - xMin);
+                const y = compiledF(x);
+                if (!isNaN(y) && isFinite(y) && y >= yMin - 10 && y <= yMax + 10) {
+                    if (!startedCurve) { ctx.moveTo(toPxX(x), toPxY(y)); startedCurve = true; }
+                    else { ctx.lineTo(toPxX(x), toPxY(y)); }
+                }
+            }
+            ctx.stroke();
+
+            // 7. Draw Expansion Center Marker (c, f(c))
+            const fc = compiledF(c);
+            if (!isNaN(fc)) {
+                ctx.fillStyle = '#FFC72C';
+                ctx.beginPath();
+                ctx.arc(toPxX(c), toPxY(fc), Math.max(5, state.strokeWidth + 2), 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#002B49';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Vertical dashed guide line at center x = c
+                ctx.strokeStyle = '#CCCC99';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(toPxX(c), 0); ctx.lineTo(toPxX(c), height);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            // 8. Draw Evaluation Point & Error Gap (x₀)
+            if (showErrorGap) {
+                const actualY = compiledF(evalX);
+                const polyY = evalTaylorPoly(taylorCoeffs, c, evalX, degreeN);
+
+                if (!isNaN(actualY) && !isNaN(polyY)) {
+                    // Vertical Error Line connecting f(x₀) and P_N(x₀)
+                    ctx.strokeStyle = '#fb7185'; // Rose color
+                    ctx.lineWidth = Math.max(2, state.strokeWidth * 0.75);
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(evalX), toPxY(actualY));
+                    ctx.lineTo(toPxX(evalX), toPxY(polyY));
+                    ctx.stroke();
+
+                    // Dots at f(x₀) and P_N(x₀)
+                    ctx.fillStyle = '#fb7185';
+                    ctx.beginPath();
+                    const dotRadius = Math.max(4, state.strokeWidth * 1.1);
+                    ctx.arc(toPxX(evalX), toPxY(actualY), dotRadius, 0, Math.PI * 2);
+                    ctx.arc(toPxX(evalX), toPxY(polyY), dotRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Dashed line to X axis
+                    ctx.strokeStyle = 'rgba(251, 113, 133, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 2]);
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(evalX), toPxY(0));
+                    ctx.lineTo(toPxX(evalX), toPxY(actualY));
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
+            }
+
+            // Center Label
+            ctx.fillStyle = '#CCCC99';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText(`Center c = ${c}`, toPxX(c) + 8, toPxY(0) - 10);
+        }
+
+        // --- Presets Loader ---
+        function loadPreset(key) {
+            stopDegreeAnimation();
+            resetZoom();
+            if (key === 'exp') {
+                document.getElementById('funcFInput').value = 'e^x';
+                compiledF = parseFunction('e^x');
+                state.fStr = 'e^x'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'sin') {
+                document.getElementById('funcFInput').value = 'sin(x)';
+                compiledF = parseFunction('sin(x)');
+                state.fStr = 'sin(x)'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'cos') {
+                document.getElementById('funcFInput').value = 'cos(x)';
+                compiledF = parseFunction('cos(x)');
+                state.fStr = 'cos(x)'; state.c = 0; state.degreeN = 6;
+            } else if (key === 'geom_minus') {
+                document.getElementById('funcFInput').value = '1/(1-x)';
+                compiledF = parseFunction('1/(1-x)');
+                state.fStr = '1/(1-x)'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'geom_plus') {
+                document.getElementById('funcFInput').value = '1/(1+x)';
+                compiledF = parseFunction('1/(1+x)');
+                state.fStr = '1/(1+x)'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'ln') {
+                document.getElementById('funcFInput').value = 'ln(1+x)';
+                compiledF = parseFunction('ln(1+x)');
+                state.fStr = 'ln(1+x)'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'ln_xplus1') {
+                document.getElementById('funcFInput').value = 'ln(x+1)';
+                compiledF = parseFunction('ln(x+1)');
+                state.fStr = 'ln(x+1)'; state.c = 0; state.degreeN = 5;
+            } else if (key === 'atan') {
+                document.getElementById('funcFInput').value = 'arctan(x)';
+                compiledF = parseFunction('arctan(x)');
+                state.fStr = 'arctan(x)'; state.c = 0; state.degreeN = 7;
+            }
+
+            document.getElementById('centerCInput').value = state.c;
+            document.getElementById('degreeSlider').value = state.degreeN;
+            document.getElementById('degreeNText').textContent = `N = ${state.degreeN}`;
+
+            updateAll();
+        }
+
+        // --- Helpers ---
+        function setDegree(n) {
+            stopDegreeAnimation();
+            state.degreeN = n;
+            document.getElementById('degreeSlider').value = n;
+            document.getElementById('degreeNText').textContent = `N = ${n}`;
+            updateAll();
+        }
+
+        function setThickness(w) {
+            state.strokeWidth = parseFloat(w);
+            const slider = document.getElementById('lineWidthSlider');
+            if (slider) slider.value = state.strokeWidth;
+            const textEl = document.getElementById('thicknessValText');
+            if (textEl) textEl.textContent = `${state.strokeWidth.toFixed(1)} px`;
+            drawGraph();
+        }
+
+        function setCenterZero() {
+            state.c = 0;
+            document.getElementById('centerCInput').value = 0;
+            updateAll();
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            // Function Input
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                const fn = parseFunction(e.target.value);
+                if (fn) {
+                    compiledF = fn;
+                    state.fStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Center c
+            document.getElementById('centerCInput').addEventListener('change', (e) => {
+                state.c = parseFloat(e.target.value) || 0;
+                updateAll();
+            });
+
+            // Degree Slider
+            document.getElementById('degreeSlider').addEventListener('input', (e) => {
+                stopDegreeAnimation();
+                state.degreeN = parseInt(e.target.value) || 0;
+                document.getElementById('degreeNText').textContent = `N = ${state.degreeN}`;
+                updateAll();
+            });
+
+            // Eval Point Slider
+            document.getElementById('evalXSlider').addEventListener('input', (e) => {
+                state.evalX = parseFloat(e.target.value) || 0;
+                document.getElementById('evalXValText').textContent = `x₀ = ${state.evalX.toFixed(2)}`;
+                drawGraph();
+                calculatePointEvaluationAndLagrange();
+            });
+
+            // Line Thickness Slider
+            document.getElementById('lineWidthSlider').addEventListener('input', (e) => {
+                setThickness(e.target.value);
+            });
+
+            // Toggles
+            document.getElementById('showOverlayCheck').addEventListener('change', (e) => {
+                state.showOverlay = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showRadiusCheck').addEventListener('change', (e) => {
+                state.showRadius = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showErrorGapCheck').addEventListener('change', (e) => {
+                state.showErrorGap = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showGridCheck').addEventListener('change', (e) => {
+                state.showGrid = e.target.checked;
+                drawGraph();
+            });
+
+            // Canvas Mouse Wheel Zooming
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const factor = e.deltaY < 0 ? 1.15 : (1 / 1.15);
+                zoomAt(factor, mouseX, mouseY);
+            }, { passive: false });
+
+            // Canvas Mouse Drag Panning
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    state.isDragging = true;
+                    state.dragStartX = e.clientX;
+                    state.dragStartY = e.clientY;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!state.isDragging) return;
+                const dx = e.clientX - state.dragStartX;
+                const dy = e.clientY - state.dragStartY;
+
+                state.dragStartX = e.clientX;
+                state.dragStartY = e.clientY;
+
+                const baseSpanX = 9.0 / state.zoomLevel;
+                const baseSpanY = 6.0 / state.zoomLevel;
+
+                state.panOffsetX -= (dx / canvas.width) * baseSpanX;
+                state.panOffsetY += (dy / canvas.height) * baseSpanY;
+
+                drawGraph();
+            });
+
+            window.addEventListener('mouseup', () => {
+                state.isDragging = false;
+            });
+
+            // Canvas Touch Panning & Pinch Zoom
+            let initialTouchDist = null;
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    state.isDragging = true;
+                    state.dragStartX = e.touches[0].clientX;
+                    state.dragStartY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    state.isDragging = false;
+                    initialTouchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && state.isDragging) {
+                    const dx = e.touches[0].clientX - state.dragStartX;
+                    const dy = e.touches[0].clientY - state.dragStartY;
+                    state.dragStartX = e.touches[0].clientX;
+                    state.dragStartY = e.touches[0].clientY;
+
+                    const baseSpanX = 9.0 / state.zoomLevel;
+                    const baseSpanY = 6.0 / state.zoomLevel;
+
+                    state.panOffsetX -= (dx / canvas.width) * baseSpanX;
+                    state.panOffsetY += (dy / canvas.height) * baseSpanY;
+                    drawGraph();
+                } else if (e.touches.length === 2 && initialTouchDist) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const factor = dist / initialTouchDist;
+                    initialTouchDist = dist;
+                    zoomAt(factor);
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', () => {
+                state.isDragging = false;
+                initialTouchDist = null;
+            });
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
