@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Average Value of a Function - AP Calculus Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Math.js for parsing mathematical expressions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --navy-dark: #001a2c;
+            --navy: #002B49;
+            --navy-light: #003e69;
+            --yellow: #FFC72C;
+            --vegas-gold: #CCCC99;
+            --gold-light: #e6e6c2;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--navy-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--navy-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--navy-light);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--vegas-gold);
+        }
+        .glass-panel {
+            background: rgba(0, 43, 73, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 204, 153, 0.25);
+        }
+        .custom-slider::-webkit-slider-thumb {
+            background-color: var(--yellow);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[#002B49] border-b border-[#CCCC99]/30 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#FFC72C] to-[#CCCC99] flex items-center justify-center text-[#002B49] font-bold shadow-lg shadow-[#FFC72C]/20">
+                <i class="fa-solid text-base">f<sub>avg</sub></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Average Value of a Function
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">AP Calculus BC</span>
+                </h1>
+                <p class="text-xs text-[#CCCC99]">Mean Value Theorem for Integrals: f<sub>avg</sub> · (b - a) = ∫ f(x) dx</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu -->
+        <div class="hidden md:flex items-center space-x-1.5 flex-wrap">
+            <span class="text-xs text-[#CCCC99] font-medium mr-1"><i class="fa-solid fa-bookmark mr-1 text-[#FFC72C]"></i> Presets:</span>
+            <button onclick="loadPreset('parabola')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">x² on [0, 3]</button>
+            <button onclick="loadPreset('sine')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">sin(x) on [0, π]</button>
+            <button onclick="loadPreset('exponential')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">e^x on [0, 2]</button>
+            <button onclick="loadPreset('sqrt')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">√x on [0, 4]</button>
+            <button onclick="loadPreset('inverted_parabola')" class="px-2 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] border border-[#CCCC99]/30 transition">4 - x² on [-2, 2]</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleSidebar()" id="toggleSidebarBtn" title="Hide/Show Left Controls Sidebar" class="px-2.5 py-1.5 text-xs rounded-lg bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/30 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-table-columns"></i> <span class="hidden sm:inline">Sidebar</span>
+            </button>
+            <button onclick="toggleBottomPanel()" id="toggleBottomBtn" title="Hide/Show Bottom Calculus Panel" class="px-2.5 py-1.5 text-xs rounded-lg bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/30 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-window-minimize"></i> <span class="hidden sm:inline">Bottom Panel</span>
+            </button>
+            <button onclick="togglePresentationMode()" id="togglePresBtn" title="Full Graph Presentation View" class="px-3 py-1.5 text-xs rounded-lg bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-expand"></i> Presentation Mode
+            </button>
+            <button onclick="toggleHelpModal()" class="px-2.5 py-1.5 text-xs rounded-lg bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/30 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-graduation-cap"></i> Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div id="mainContainer" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside id="leftSidebar" class="w-full lg:w-96 bg-[#002B49]/95 border-r border-[#CCCC99]/20 flex flex-col overflow-y-auto shrink-0 z-10 p-4 space-y-4 transition-all duration-150">
+            
+            <!-- Calculus Setup Card -->
+            <div id="methodBadgeCard" class="p-3.5 rounded-xl bg-gradient-to-r from-[#001a2c] to-[#002B49] border border-[#FFC72C]/40 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-[#CCCC99]">MVT for Integrals</div>
+                    <div id="activeFormulaTitle" class="text-sm font-bold text-[#FFC72C]">f<sub>avg</sub> = 1/(b-a) ∫<sub>a</sub><sup>b</sup> f(x) dx</div>
+                </div>
+                <span id="mvtBadge" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40">
+                    Continuous f(x)
+                </span>
+            </div>
+
+            <!-- Function & Bounds Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-root-variable text-[#FFC72C]"></i> Function & Bounds
+                </h2>
+
+                <!-- Function Input -->
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-[#FFC72C] flex items-center justify-between">
+                        <span>Target Function f(x):</span>
+                        <span class="text-[10px] text-[#CCCC99]/70">e.g. x^2, sin(x), e^x</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-xs text-[#FFC72C] font-mono font-bold">f(x) =</span>
+                        <input type="text" id="funcFInput" value="x^2" class="w-full pl-14 pr-3 py-2 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C] transition">
+                    </div>
+                </div>
+
+                <!-- Integration Bounds (a and b) -->
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label class="text-xs text-[#CCCC99] mb-1 block">Lower Limit (a):</label>
+                        <input type="number" id="boundAInput" value="0" step="0.25" class="w-full px-3 py-1.5 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                    </div>
+                    <div>
+                        <label class="text-xs text-[#CCCC99] mb-1 block">Upper Limit (b):</label>
+                        <input type="number" id="boundBInput" value="3" step="0.25" class="w-full px-3 py-1.5 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                    </div>
+                </div>
+
+                <div id="functionError" class="hidden text-xs text-rose-300 bg-rose-950/60 p-2 rounded-md border border-rose-800/50 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="errorMsg">Invalid Math Expression</span>
+                </div>
+            </div>
+
+            <!-- Line Thickness Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                        <i class="fa-solid fa-pen-nib text-[#FFC72C]"></i> Line Thickness (Projector Mode)
+                    </h2>
+                    <span id="thicknessValText" class="text-xs font-mono font-bold text-[#FFC72C]">4.0 px</span>
+                </div>
+
+                <input type="range" id="lineWidthSlider" min="1.5" max="15.0" step="0.5" value="4.0" class="w-full accent-[#FFC72C] bg-[#001a2c] rounded-lg h-2 cursor-pointer custom-slider">
+
+                <div class="flex items-center justify-between text-[11px] text-[#CCCC99]">
+                    <span>Presets:</span>
+                    <div class="flex items-center space-x-1">
+                        <button onclick="setThickness(2.0)" class="px-2 py-0.5 rounded bg-[#001a2c] border border-[#CCCC99]/30 hover:text-[#FFC72C]">Fine (2px)</button>
+                        <button onclick="setThickness(5.0)" class="px-2 py-0.5 rounded bg-[#001a2c] border border-[#CCCC99]/30 hover:text-[#FFC72C]">Std (5px)</button>
+                        <button onclick="setThickness(9.0)" class="px-2 py-0.5 rounded bg-[#001a2c] border border-[#CCCC99]/30 hover:text-[#FFC72C]">Board (9px)</button>
+                        <button onclick="setThickness(15.0)" class="px-2 py-0.5 rounded bg-[#001a2c] border border-[#CCCC99]/30 hover:text-[#FFC72C]">Ultra (15px)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Display Toggles Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-2 text-xs">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] mb-2 flex items-center gap-1.5">
+                    <i class="fa-solid fa-eye text-[#FFC72C]"></i> Display Options
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showCurveAreaCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Curve Area ∫f(x)dx</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showRectangleCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Equal Area Rect</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showAvgLineCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>f<sub>avg</sub> Line</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showMvtPointsCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>MVT Points (c)</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showBalancingCheck" checked class="accent-[#FFC72C] rounded">
+                        <span>Surplus/Deficit Areas</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                        <input type="checkbox" id="showGridCheck" checked class="accent-[#CCCC99] rounded">
+                        <span>Grid Lines</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Vertical Drag Resizer for Sidebar Width -->
+        <div id="sidebarResizer" class="hidden lg:flex w-2 bg-[#001a2c] hover:bg-[#FFC72C] active:bg-[#FFC72C] cursor-col-resize shrink-0 border-r border-[#CCCC99]/20 items-center justify-center group transition-colors z-20" title="Click and drag to resize sidebar width">
+            <div class="w-0.5 h-8 bg-[#CCCC99]/40 group-hover:bg-[#002B49] rounded-full"></div>
+        </div>
+
+        <!-- Right Main Workspace -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-[#001a2c]">
+
+            <!-- Graphic Canvas Area -->
+            <div id="canvasArea" class="flex-1 relative bg-[#001a2c] p-3 flex flex-col overflow-hidden">
+                
+                <!-- Floating Info Overlay -->
+                <div class="absolute top-4 left-4 bg-[#002B49]/85 backdrop-blur border border-[#CCCC99]/30 px-3 py-1.5 rounded-lg text-xs font-medium text-[#CCCC99] flex items-center gap-2 pointer-events-none z-10 shadow-lg">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C] animate-pulse"></span>
+                    Interactive Graph Canvas (Scroll wheel to Zoom, Click & Drag to Pan)
+                </div>
+
+                <!-- Zoom Controls Overlay -->
+                <div class="absolute top-4 right-4 bg-[#002B49]/90 backdrop-blur border border-[#CCCC99]/30 rounded-lg p-1.5 flex items-center space-x-1 z-10 shadow-lg">
+                    <button onclick="zoomIn()" title="Zoom In" class="w-7 h-7 rounded bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] border border-[#CCCC99]/30 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <button onclick="zoomOut()" title="Zoom Out" class="w-7 h-7 rounded bg-[#001a2c] hover:bg-[#003e69] text-[#FFC72C] border border-[#CCCC99]/30 flex items-center justify-center font-bold text-sm">
+                        <i class="fa-solid fa-minus"></i>
+                    </button>
+                    <button onclick="resetZoom()" title="Reset Zoom & Pan" class="px-2 py-1 text-xs rounded bg-[#001a2c] hover:bg-[#003e69] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/30 font-mono">
+                        Reset
+                    </button>
+                    <span id="zoomPercentText" class="text-xs font-mono text-[#FFC72C] px-1.5 font-bold">100%</span>
+                </div>
+
+                <!-- Main Canvas -->
+                <div class="flex-1 w-full h-full relative rounded-xl border border-[#CCCC99]/30 bg-[#002B49]/40 overflow-hidden">
+                    <canvas id="mainCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                </div>
+
+                <!-- Legend Overlay at Canvas Bottom -->
+                <div class="absolute bottom-5 left-5 bg-[#002B49]/90 backdrop-blur border border-[#CCCC99]/30 p-2.5 rounded-lg text-xs text-[#CCCC99] flex flex-wrap items-center gap-4 pointer-events-none z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-1 rounded bg-[#FFC72C]"></span> <span class="font-mono text-white">f(x) Curve</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3.5 h-1 rounded bg-[#38bdf8]"></span> <span class="font-mono text-sky-300">f<sub>avg</sub> Line</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded bg-sky-500/20 border border-[#38bdf8]"></span> Equal Area Rectangle
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C]"></span> MVT Point (c, f<sub>avg</sub>)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horizontal Drag Resizer for Bottom Panel Height -->
+            <div id="bottomResizer" class="h-2 bg-[#001a2c] hover:bg-[#FFC72C] active:bg-[#FFC72C] cursor-row-resize shrink-0 border-t border-b border-[#CCCC99]/20 flex items-center justify-center group transition-colors z-20" title="Click and drag to resize bottom panel height">
+                <div class="h-0.5 w-12 bg-[#CCCC99]/40 group-hover:bg-[#002B49] rounded-full"></div>
+            </div>
+
+            <!-- Bottom Calculus Analysis Panel -->
+            <div id="bottomPanel" class="h-56 bg-[#002B49] border-t border-[#CCCC99]/30 p-4 overflow-y-auto shrink-0 space-y-3 transition-all duration-150">
+                
+                <!-- Expanded Definite Integral Formula Representation Bar -->
+                <div class="p-2.5 rounded-lg bg-[#001a2c] border border-[#CCCC99]/30 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                    <div class="text-xs font-bold text-[#FFC72C] uppercase tracking-wider shrink-0 flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-root-variable text-[#FFC72C]"></i> Definite Integral & Average Value Setup:
+                    </div>
+                    <div id="expandedFormulaText" class="text-xs font-mono text-white overflow-x-auto whitespace-nowrap tracking-wide py-0.5">
+                        f<sub>avg</sub> = 1/(3 - 0) ∫[0, 3] x² dx = (1/3) · [9.0000] = 3.0000
+                    </div>
+                </div>
+
+                <!-- 3-Card Grid for Evaluation, MVT Solutions, and AP Theorem -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    
+                    <!-- Average Value Summary Card -->
+                    <div class="p-3 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>Calculated Metrics</span>
+                            <span id="intervalWidthText" class="text-[10px] font-mono text-[#CCCC99]">b - a = 3.00</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Definite Integral Area</div>
+                                <div id="exactAreaText" class="text-sm font-bold text-[#FFC72C]">9.0000</div>
+                            </div>
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Average Value f<sub>avg</sub></div>
+                                <div id="avgValText" class="text-sm font-bold text-sky-300">3.0000</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs font-mono pt-1 border-t border-[#CCCC99]/20">
+                            <span class="text-[#CCCC99]">Rectangle Area [f<sub>avg</sub> · (b-a)]:</span>
+                            <span id="rectAreaText" class="text-[#FFC72C] font-bold">9.0000</span>
+                        </div>
+                    </div>
+
+                    <!-- MVT for Integrals Solution Card -->
+                    <div class="p-3 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>MVT Point Solution(s)</span>
+                            <span class="text-[10px] font-mono text-[#CCCC99]">f(c) = f<sub>avg</sub></span>
+                        </div>
+                        
+                        <div id="mvtSolutionContent" class="text-xs font-mono space-y-1 text-[#CCCC99]">
+                            <div>c₁ = 1.7321  ⇒  f(1.7321) = 3.0000</div>
+                            <div class="text-[#FFC72C] font-bold border-t border-[#CCCC99]/20 pt-1">1 Interior Point Found in (0, 3)</div>
+                        </div>
+                    </div>
+
+                    <!-- AP Calculus BC Theorem Insights Card -->
+                    <div class="p-3 rounded-xl bg-gradient-to-br from-[#001a2c] to-[#002B49] border border-[#FFC72C]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-[#FFC72C]"></i> AP Calculus FRQ Insight
+                        </div>
+                        <div id="apCalculusTheoremText" class="text-xs text-white leading-relaxed font-sans">
+                            Since $f(x)$ is continuous on $[a, b]$, the <strong>Mean Value Theorem for Integrals</strong> guarantees at least one value $c \in (a, b)$ where $f(c) = f_{\text{avg}}$. Geometrically, the area under the curve equals the area of a rectangle with base $(b-a)$ and height $f(c)$.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#001a2c]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#002B49] border border-[#CCCC99]/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-[#CCCC99] hover:text-[#FFC72C] text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#FFC72C]/20 text-[#FFC72C] flex items-center justify-center font-bold text-xl border border-[#FFC72C]/40">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Average Value of a Function Guide</h3>
+                    <p class="text-xs text-[#CCCC99]">AP Calculus BC Conceptual Derivation</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-[#CCCC99] leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">1. Definition of Average Value</span>
+                    <p>The average value of a continuous function $f(x)$ on $[a, b]$ is $f_{\text{avg}} = \frac{1}{b - a} \int_{a}^{b} f(x)\,dx$. It extends the arithmetic mean of discrete numbers to continuous functions over an interval.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">2. Geometric Interpretation ("Equal Area Rectangle")</span>
+                    <p>Multiplying both sides by $(b - a)$ gives $f_{\text{avg}} \cdot (b - a) = \int_a^b f(x)\,dx$. The area under $y = f(x)$ from $x=a$ to $x=b$ is exactly equal to the area of a rectangle with width $(b-a)$ and height $f_{\text{avg}}$.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">3. Mean Value Theorem (MVT) for Integrals</span>
+                    <p>If $f(x)$ is continuous on $[a, b]$, there exists at least one value $c \in (a, b)$ such that $f(c) = f_{\text{avg}} = \frac{1}{b-a}\int_a^b f(x)\,dx$.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">4. "Area Balancing" Concept</span>
+                    <p>The horizontal line $y = f_{\text{avg}}$ acts as a "water level." The area of the region above $y = f_{\text{avg}}$ where $f(x) > f_{\text{avg}}$ (surplus) exactly equals the missing area below $y = f_{\text{avg}}$ where $f(x) < f_{\text{avg}}$ (deficit).</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- Global Application State ---
+        const state = {
+            fStr: 'x^2',
+            a: 0,
+            b: 3,
+            strokeWidth: 4.0, // Line thickness in pixels (up to 15px)
+            showCurveArea: true,
+            showRectangle: true,
+            showAvgLine: true,
+            showMvtPoints: true,
+            showBalancing: true,
+            showGrid: true,
+            // Zoom & Pan State
+            zoomLevel: 1.0,
+            panOffsetX: 0,
+            panOffsetY: 0,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0
+        };
+
+        // --- Layout Visibility State ---
+        let isSidebarVisible = true;
+        let isBottomPanelVisible = true;
+        let isPresentationMode = false;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('leftSidebar');
+            const resizer = document.getElementById('sidebarResizer');
+            const btn = document.getElementById('toggleSidebarBtn');
+            isSidebarVisible = !isSidebarVisible;
+
+            if (isSidebarVisible) {
+                sidebar.classList.remove('hidden');
+                resizer.classList.remove('hidden');
+                btn.classList.remove('bg-[#FFC72C]/20', 'text-[#FFC72C]');
+            } else {
+                sidebar.classList.add('hidden');
+                resizer.classList.add('hidden');
+                btn.classList.add('bg-[#FFC72C]/20', 'text-[#FFC72C]');
+            }
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function toggleBottomPanel() {
+            const panel = document.getElementById('bottomPanel');
+            const resizer = document.getElementById('bottomResizer');
+            const btn = document.getElementById('toggleBottomBtn');
+            isBottomPanelVisible = !isBottomPanelVisible;
+
+            if (isBottomPanelVisible) {
+                panel.classList.remove('hidden');
+                resizer.classList.remove('hidden');
+                btn.classList.remove('bg-[#FFC72C]/20', 'text-[#FFC72C]');
+            } else {
+                panel.classList.add('hidden');
+                resizer.classList.add('hidden');
+                btn.classList.add('bg-[#FFC72C]/20', 'text-[#FFC72C]');
+            }
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function togglePresentationMode() {
+            isPresentationMode = !isPresentationMode;
+            const presBtn = document.getElementById('togglePresBtn');
+
+            if (isPresentationMode) {
+                document.getElementById('leftSidebar').classList.add('hidden');
+                document.getElementById('sidebarResizer').classList.add('hidden');
+                document.getElementById('bottomPanel').classList.add('hidden');
+                document.getElementById('bottomResizer').classList.add('hidden');
+
+                presBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Exit Presentation';
+                presBtn.classList.remove('bg-[#FFC72C]', 'text-[#002B49]');
+                presBtn.classList.add('bg-rose-500', 'hover:bg-rose-600', 'text-white');
+            } else {
+                if (isSidebarVisible) {
+                    document.getElementById('leftSidebar').classList.remove('hidden');
+                    document.getElementById('sidebarResizer').classList.remove('hidden');
+                }
+                if (isBottomPanelVisible) {
+                    document.getElementById('bottomPanel').classList.remove('hidden');
+                    document.getElementById('bottomResizer').classList.remove('hidden');
+                }
+                presBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Presentation Mode';
+                presBtn.classList.remove('bg-rose-500', 'hover:bg-rose-600', 'text-white');
+                presBtn.classList.add('bg-[#FFC72C]', 'hover:bg-[#e6b328]', 'text-[#002B49]');
+            }
+            setTimeout(resizeCanvas, 50);
+        }
+
+        function setupResizers() {
+            const mainContainer = document.getElementById('mainContainer');
+            const sidebar = document.getElementById('leftSidebar');
+            const sidebarResizer = document.getElementById('sidebarResizer');
+            const bottomPanel = document.getElementById('bottomPanel');
+            const bottomResizer = document.getElementById('bottomResizer');
+
+            let isResizingSidebar = false;
+            let isResizingBottom = false;
+
+            sidebarResizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizingSidebar = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            bottomResizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizingBottom = true;
+                document.body.style.cursor = 'row-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isResizingSidebar) {
+                    const containerRect = mainContainer.getBoundingClientRect();
+                    let newWidth = e.clientX - containerRect.left;
+                    newWidth = Math.max(180, Math.min(650, newWidth));
+                    sidebar.style.width = `${newWidth}px`;
+                    resizeCanvas();
+                } else if (isResizingBottom) {
+                    const containerRect = mainContainer.getBoundingClientRect();
+                    let newHeight = containerRect.bottom - e.clientY;
+                    newHeight = Math.max(40, Math.min(600, newHeight));
+                    bottomPanel.style.height = `${newHeight}px`;
+                    resizeCanvas();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizingSidebar || isResizingBottom) {
+                    isResizingSidebar = false;
+                    isResizingBottom = false;
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    resizeCanvas();
+                }
+            });
+        }
+
+        // --- Expression Sanitizer for Math.js ---
+        function sanitizeExpression(exprStr) {
+            if (!exprStr) return '';
+            return exprStr.replace(/\bln\b/g, 'log').replace(/\barctan\b/g, 'atan');
+        }
+
+        // --- Zoom & Pan Helper Functions ---
+        function zoomIn() {
+            zoomAt(1.25);
+        }
+
+        function zoomOut() {
+            zoomAt(1 / 1.25);
+        }
+
+        function resetZoom() {
+            state.zoomLevel = 1.0;
+            state.panOffsetX = 0;
+            state.panOffsetY = 0;
+            updateZoomUI();
+            drawGraph();
+        }
+
+        function zoomAt(factor, canvasX, canvasY) {
+            const oldZoom = state.zoomLevel;
+            let newZoom = oldZoom * factor;
+            newZoom = Math.max(0.1, Math.min(100.0, newZoom));
+            
+            if (canvasX !== undefined && canvasY !== undefined && canvas) {
+                const width = canvas.width;
+                const height = canvas.height;
+                const midX = (state.a + state.b) / 2;
+                const rangeXOld = 6 / oldZoom;
+                const rangeYOld = 6 / oldZoom;
+                const rangeXNew = 6 / newZoom;
+                const rangeYNew = 6 / newZoom;
+
+                const mouseGraphX = (midX + state.panOffsetX - rangeXOld / 2) + (canvasX / width) * rangeXOld;
+                const mouseGraphY = (state.panOffsetY + rangeYOld / 2) - (canvasY / height) * rangeYOld;
+
+                state.zoomLevel = newZoom;
+                state.panOffsetX = mouseGraphX - midX - (canvasX / width - 0.5) * rangeXNew;
+                state.panOffsetY = mouseGraphY + (canvasY / height - 0.5) * rangeYNew;
+            } else {
+                state.zoomLevel = newZoom;
+            }
+
+            updateZoomUI();
+            drawGraph();
+        }
+
+        function updateZoomUI() {
+            const zoomEl = document.getElementById('zoomPercentText');
+            if (zoomEl) {
+                zoomEl.textContent = `${Math.round(state.zoomLevel * 100)}%`;
+            }
+        }
+
+        // --- Compiled Functions Globals ---
+        let compiledF = (x) => Math.pow(x, 2);
+
+        // --- Canvas Globals ---
+        let canvas, ctx;
+
+        // --- Window Onload ---
+        window.onload = function() {
+            if (typeof math !== 'undefined') {
+                try { math.import({ ln: math.log, arctan: math.atan }, { override: true }); } catch(e) {}
+            }
+
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
+            
+            setupEventListeners();
+            setupResizers();
+            resizeCanvas();
+            updateAll();
+        };
+
+        // --- Safe Math Evaluator ---
+        function parseFunction(exprStr) {
+            try {
+                const cleanExpr = sanitizeExpression(exprStr);
+                const node = math.parse(cleanExpr);
+                const code = node.compile();
+
+                return (x) => {
+                    try {
+                        let res = code.evaluate({ x: x });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return NaN;
+                        return res;
+                    } catch (e) {
+                        return NaN;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- Canvas Resize ---
+        function resizeCanvas() {
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            drawGraph();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- Master Update Trigger ---
+        function updateAll() {
+            drawGraph();
+            calculateAverageValueResults();
+            updateAPTheoremText();
+            updateExpandedFormulaText();
+        }
+
+        // --- Expanded Formula Text ---
+        function updateExpandedFormulaText() {
+            const displayEl = document.getElementById('expandedFormulaText');
+            const { fStr, a, b } = state;
+            
+            const exactArea = computeExactArea(a, b);
+            const width = b - a;
+            const avgVal = width !== 0 ? exactArea / width : 0;
+
+            displayEl.textContent = `f_avg = [1 / (${b} - ${a})] ∫[${a}, ${b}] (${fStr}) dx = [1 / ${width.toFixed(2)}] · (${exactArea.toFixed(4)}) = ${avgVal.toFixed(4)}`;
+        }
+
+        // --- Simpson Numerical Integration Helper ---
+        function computeExactArea(a, b) {
+            const N = 1000;
+            const h = (b - a) / N;
+            let sum = compiledF(a) + compiledF(b);
+            for (let i = 1; i < N; i++) {
+                const x = a + i * h;
+                const val = compiledF(x);
+                if (!isNaN(val) && isFinite(val)) {
+                    sum += (i % 2 === 0 ? 2 : 4) * val;
+                }
+            }
+            return (h / 3) * sum;
+        }
+
+        // --- Solve MVT c-values: f(c) = f_avg for c in (a, b) ---
+        function findMvtPoints(a, b, fAvg) {
+            const cPoints = [];
+            const steps = 400;
+            const h = (b - a) / steps;
+
+            let prevSign = Math.sign(compiledF(a + 0.001) - fAvg);
+
+            for (let i = 1; i <= steps; i++) {
+                const x = a + i * h;
+                const y = compiledF(x);
+                if (isNaN(y) || !isFinite(y)) continue;
+
+                const currSign = Math.sign(y - fAvg);
+                if (prevSign !== 0 && currSign !== prevSign) {
+                    // Bisection Refinement
+                    let left = x - h;
+                    let right = x;
+                    let mid = (left + right) / 2;
+
+                    for (let iter = 0; iter < 15; iter++) {
+                        mid = (left + right) / 2;
+                        const yMid = compiledF(mid);
+                        if (Math.sign(yMid - fAvg) === Math.sign(compiledF(left) - fAvg)) {
+                            left = mid;
+                        } else {
+                            right = mid;
+                        }
+                    }
+                    if (mid > a + 1e-4 && mid < b - 1e-4) {
+                        cPoints.push(mid);
+                    }
+                }
+                prevSign = currSign;
+            }
+
+            return cPoints;
+        }
+
+        // --- Calculations & Results ---
+        function calculateAverageValueResults() {
+            const { a, b } = state;
+            const width = b - a;
+            const exactArea = computeExactArea(a, b);
+            const avgVal = width !== 0 ? exactArea / width : 0;
+            const rectArea = avgVal * width;
+
+            document.getElementById('intervalWidthText').textContent = `b - a = ${width.toFixed(2)}`;
+            document.getElementById('exactAreaText').textContent = isNaN(exactArea) ? 'Undefined' : exactArea.toFixed(4);
+            document.getElementById('avgValText').textContent = isNaN(avgVal) ? 'Undefined' : avgVal.toFixed(4);
+            document.getElementById('rectAreaText').textContent = isNaN(rectArea) ? 'Undefined' : rectArea.toFixed(4);
+
+            // Find MVT Points
+            const cPoints = findMvtPoints(a, b, avgVal);
+            const mvtEl = document.getElementById('mvtSolutionContent');
+
+            if (cPoints.length === 0) {
+                mvtEl.innerHTML = `
+                    <div>No interior points found (check continuity on [${a}, ${b}])</div>
+                `;
+            } else {
+                const pointLines = cPoints.map((c, idx) => 
+                    `<div>c<sub>${idx + 1}</sub> = ${c.toFixed(4)} &nbsp;⇒&nbsp; f(${c.toFixed(4)}) = ${compiledF(c).toFixed(4)}</div>`
+                ).join('');
+
+                mvtEl.innerHTML = `
+                    ${pointLines}
+                    <div class="text-[#FFC72C] font-bold border-t border-[#CCCC99]/20 pt-1">${cPoints.length} Interior Point(s) Found in (${a}, ${b})</div>
+                `;
+            }
+        }
+
+        // --- AP Calculus BC Theorem Insights ---
+        function updateAPTheoremText() {
+            const { fStr, a, b } = state;
+            const exactArea = computeExactArea(a, b);
+            const width = b - a;
+            const avgVal = width !== 0 ? exactArea / width : 0;
+            const apEl = document.getElementById('apCalculusTheoremText');
+
+            apEl.innerHTML = `For $f(x) = ${fStr}$ on $[${a}, ${b}]$, the average value is $f_{\\text{avg}} = \\frac{1}{${width.toFixed(2)}} (${exactArea.toFixed(4)}) = ${avgVal.toFixed(4)}$. By MVT for Integrals, the rectangle area $f_{\\text{avg}} \\cdot (b-a) = ${exactArea.toFixed(4)}$ matches the exact integral $\\int_{${a}}^{${b}} f(x)\\,dx$.`;
+        }
+
+        // --- Graph Rendering Engine (HTML5 Canvas) ---
+        function drawGraph() {
+            if (!ctx) return;
+            const width = canvas.width;
+            const height = canvas.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const { a, b, showCurveArea, showRectangle, showAvgLine, showMvtPoints, showBalancing, showGrid, zoomLevel, panOffsetX, panOffsetY } = state;
+
+            const exactArea = computeExactArea(a, b);
+            const widthVal = b - a;
+            const avgVal = widthVal !== 0 ? exactArea / widthVal : 0;
+
+            // Bounds Calculation
+            const midX = (a + b) / 2;
+            const baseSpanX = (b - a > 0 ? (b - a) * 1.6 : 6.0) / zoomLevel;
+            const baseSpanY = 6.0 / zoomLevel;
+
+            const centerX = midX + panOffsetX;
+            const centerY = panOffsetY;
+
+            const xMin = centerX - baseSpanX / 2;
+            const xMax = centerX + baseSpanX / 2;
+            const yMin = centerY - baseSpanY / 2;
+            const yMax = centerY + baseSpanY / 2;
+
+            const toPxX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+            const toPxY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+            const getAdaptiveStep = (range) => {
+                const rawStep = range / 8;
+                const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+                const rel = rawStep / mag;
+                if (rel < 1.5) return mag;
+                if (rel < 3.5) return 2 * mag;
+                if (rel < 7.5) return 5 * mag;
+                return 10 * mag;
+            };
+
+            const xStep = getAdaptiveStep(xMax - xMin);
+            const yStep = getAdaptiveStep(yMax - yMin);
+
+            // 1. Grid Lines
+            if (showGrid) {
+                ctx.strokeStyle = 'rgba(204, 204, 153, 0.12)';
+                ctx.lineWidth = 1;
+
+                const firstGridX = Math.floor(xMin / xStep) * xStep;
+                for (let x = firstGridX; x <= xMax; x += xStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(x), 0);
+                    ctx.lineTo(toPxX(x), height);
+                    ctx.stroke();
+                }
+
+                const firstGridY = Math.floor(yMin / yStep) * yStep;
+                for (let y = firstGridY; y <= yMax; y += yStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, toPxY(y));
+                    ctx.lineTo(width, toPxY(y));
+                    ctx.stroke();
+                }
+            }
+
+            // 2. Axes
+            ctx.strokeStyle = '#CCCC99';
+            ctx.lineWidth = 1.5;
+
+            const pxZeroX = toPxX(0);
+            const pxZeroY = toPxY(0);
+
+            ctx.beginPath();
+            ctx.moveTo(0, pxZeroY); ctx.lineTo(width, pxZeroY);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(pxZeroX, 0); ctx.lineTo(pxZeroX, height);
+            ctx.stroke();
+
+            // Ticks
+            ctx.fillStyle = '#CCCC99';
+            ctx.font = '10px monospace';
+
+            const firstTickX = Math.ceil(xMin / xStep) * xStep;
+            for (let x = firstTickX; x <= xMax; x += xStep) {
+                if (Math.abs(x) < 1e-6) continue;
+                const px = toPxX(x);
+                ctx.beginPath();
+                ctx.moveTo(px, pxZeroY - 3); ctx.lineTo(px, pxZeroY + 3);
+                ctx.stroke();
+
+                const label = Number(x.toFixed(4)).toString();
+                const textY = Math.max(15, Math.min(height - 5, pxZeroY + 14));
+                ctx.fillText(label, px - 8, textY);
+            }
+
+            const firstTickY = Math.ceil(yMin / yStep) * yStep;
+            for (let y = firstTickY; y <= yMax; y += yStep) {
+                if (Math.abs(y) < 1e-6) continue;
+                const py = toPxY(y);
+                ctx.beginPath();
+                ctx.moveTo(pxZeroX - 3, py); ctx.lineTo(pxZeroX + 3, py);
+                ctx.stroke();
+
+                const label = Number(y.toFixed(4)).toString();
+                const textX = Math.max(5, Math.min(width - 30, pxZeroX + 5));
+                ctx.fillText(label, textX, py + 3);
+            }
+
+            // 3. Shaded Area Under Curve ∫ f(x) dx (Yellow Tint)
+            if (showCurveArea) {
+                ctx.fillStyle = 'rgba(255, 199, 44, 0.18)';
+                ctx.beginPath();
+                ctx.moveTo(toPxX(a), toPxY(0));
+                const steps = 150;
+                for (let i = 0; i <= steps; i++) {
+                    const x = a + (b - a) * (i / steps);
+                    const y = compiledF(x);
+                    ctx.lineTo(toPxX(x), toPxY(y));
+                }
+                ctx.lineTo(toPxX(b), toPxY(0));
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 4. Equal Area Rectangle [a, b] x [0, f_avg] (Sky Blue Tint)
+            if (showRectangle) {
+                const pxA = toPxX(a);
+                const pxB = toPxX(b);
+                const pxZero = toPxY(0);
+                const pxAvg = toPxY(avgVal);
+
+                ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
+                ctx.fillRect(pxA, Math.min(pxZero, pxAvg), pxB - pxA, Math.abs(pxZero - pxAvg));
+
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = Math.max(2, state.strokeWidth * 0.75);
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(pxA, Math.min(pxZero, pxAvg), pxB - pxA, Math.abs(pxZero - pxAvg));
+                ctx.setLineDash([]);
+            }
+
+            // 5. Surplus / Deficit Area Balancing Overlay
+            if (showBalancing) {
+                const steps = 150;
+                // Surplus Area: f(x) > f_avg
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.28)'; // Rose fill for surplus
+                ctx.beginPath();
+                ctx.moveTo(toPxX(a), toPxY(avgVal));
+                for (let i = 0; i <= steps; i++) {
+                    const x = a + (b - a) * (i / steps);
+                    const y = compiledF(x);
+                    if (y >= avgVal) {
+                        ctx.lineTo(toPxX(x), toPxY(y));
+                    } else {
+                        ctx.lineTo(toPxX(x), toPxY(avgVal));
+                    }
+                }
+                ctx.lineTo(toPxX(b), toPxY(avgVal));
+                ctx.closePath();
+                ctx.fill();
+
+                // Deficit Area: f(x) < f_avg
+                ctx.fillStyle = 'rgba(52, 211, 153, 0.28)'; // Emerald fill for deficit
+                ctx.beginPath();
+                ctx.moveTo(toPxX(a), toPxY(avgVal));
+                for (let i = 0; i <= steps; i++) {
+                    const x = a + (b - a) * (i / steps);
+                    const y = compiledF(x);
+                    if (y <= avgVal && y >= 0) {
+                        ctx.lineTo(toPxX(x), toPxY(y));
+                    } else if (y < 0) {
+                        ctx.lineTo(toPxX(x), toPxY(0));
+                    } else {
+                        ctx.lineTo(toPxX(x), toPxY(avgVal));
+                    }
+                }
+                ctx.lineTo(toPxX(b), toPxY(avgVal));
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            // 6. Horizontal Line y = f_avg (Cyan / Sky Blue)
+            if (showAvgLine) {
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = Math.max(2.5, state.strokeWidth * 0.9);
+                ctx.setLineDash([6, 4]);
+                ctx.beginPath();
+                ctx.moveTo(0, toPxY(avgVal));
+                ctx.lineTo(width, toPxY(avgVal));
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.fillStyle = '#38bdf8';
+                ctx.font = 'bold 11px monospace';
+                ctx.fillText(`f_avg = ${avgVal.toFixed(3)}`, Math.max(10, toPxX(a) + 8), toPxY(avgVal) - 6);
+            }
+
+            // 7. Target Function Curve f(x) (Vibrant Yellow)
+            ctx.strokeStyle = '#FFC72C';
+            ctx.lineWidth = state.strokeWidth;
+            ctx.beginPath();
+            const curveSteps = width;
+            let startedCurve = false;
+            for (let px = 0; px <= curveSteps; px += 2) {
+                const x = xMin + (px / curveSteps) * (xMax - xMin);
+                const y = compiledF(x);
+                if (!isNaN(y) && isFinite(y) && y >= yMin - 10 && y <= yMax + 10) {
+                    if (!startedCurve) { ctx.moveTo(toPxX(x), toPxY(y)); startedCurve = true; }
+                    else { ctx.lineTo(toPxX(x), toPxY(y)); }
+                }
+            }
+            ctx.stroke();
+
+            // 8. MVT Interior Points (c, f(c)) and Vertical Lines
+            if (showMvtPoints) {
+                const cPoints = findMvtPoints(a, b, avgVal);
+                cPoints.forEach((c) => {
+                    const pxC = toPxX(c);
+                    const pyC = toPxY(avgVal);
+
+                    // Vertical Line down to x-axis
+                    ctx.strokeStyle = '#FFC72C';
+                    ctx.lineWidth = 1.5;
+                    ctx.setLineDash([3, 3]);
+                    ctx.beginPath();
+                    ctx.moveTo(pxC, toPxY(0));
+                    ctx.lineTo(pxC, pyC);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    // Highlight Point Marker
+                    ctx.fillStyle = '#FFC72C';
+                    ctx.beginPath();
+                    const dotRadius = Math.max(5, state.strokeWidth + 2);
+                    ctx.arc(pxC, pyC, dotRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.strokeStyle = '#002B49';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    // Point Text Label
+                    ctx.fillStyle = '#FFC72C';
+                    ctx.font = 'bold 11px monospace';
+                    ctx.fillText(`c = ${c.toFixed(2)}`, pxC - 20, pyC - 10);
+                });
+            }
+
+            // 9. Bound Lines at x = a and x = b
+            ctx.strokeStyle = '#CCCC99';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+
+            ctx.beginPath();
+            ctx.moveTo(toPxX(a), 0); ctx.lineTo(toPxX(a), height);
+            ctx.moveTo(toPxX(b), 0); ctx.lineTo(toPxX(b), height);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#CCCC99';
+            ctx.font = 'bold 11px monospace';
+            ctx.fillText(`a = ${a}`, toPxX(a) + 5, 20);
+            ctx.fillText(`b = ${b}`, toPxX(b) + 5, 20);
+        }
+
+        // --- Presets Loader ---
+        function loadPreset(key) {
+            resetZoom();
+            if (key === 'parabola') {
+                document.getElementById('funcFInput').value = 'x^2';
+                compiledF = parseFunction('x^2');
+                state.fStr = 'x^2'; state.a = 0; state.b = 3;
+            } else if (key === 'sine') {
+                document.getElementById('funcFInput').value = 'sin(x)';
+                compiledF = parseFunction('sin(x)');
+                state.fStr = 'sin(x)'; state.a = 0; state.b = 3.14159;
+            } else if (key === 'exponential') {
+                document.getElementById('funcFInput').value = 'e^x';
+                compiledF = parseFunction('e^x');
+                state.fStr = 'e^x'; state.a = 0; state.b = 2;
+            } else if (key === 'sqrt') {
+                document.getElementById('funcFInput').value = 'sqrt(x)';
+                compiledF = parseFunction('sqrt(x)');
+                state.fStr = 'sqrt(x)'; state.a = 0; state.b = 4;
+            } else if (key === 'inverted_parabola') {
+                document.getElementById('funcFInput').value = '4 - x^2';
+                compiledF = parseFunction('4 - x^2');
+                state.fStr = '4 - x^2'; state.a = -2; state.b = 2;
+            }
+
+            document.getElementById('boundAInput').value = state.a;
+            document.getElementById('boundBInput').value = state.b;
+
+            updateAll();
+        }
+
+        // --- Helpers ---
+        function setThickness(w) {
+            state.strokeWidth = parseFloat(w);
+            const slider = document.getElementById('lineWidthSlider');
+            if (slider) slider.value = state.strokeWidth;
+            const textEl = document.getElementById('thicknessValText');
+            if (textEl) textEl.textContent = `${state.strokeWidth.toFixed(1)} px`;
+            drawGraph();
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                const fn = parseFunction(e.target.value);
+                if (fn) {
+                    compiledF = fn;
+                    state.fStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            document.getElementById('boundAInput').addEventListener('change', (e) => {
+                state.a = parseFloat(e.target.value) || 0;
+                updateAll();
+            });
+
+            document.getElementById('boundBInput').addEventListener('change', (e) => {
+                state.b = parseFloat(e.target.value) || 1;
+                updateAll();
+            });
+
+            document.getElementById('lineWidthSlider').addEventListener('input', (e) => {
+                setThickness(e.target.value);
+            });
+
+            document.getElementById('showCurveAreaCheck').addEventListener('change', (e) => {
+                state.showCurveArea = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showRectangleCheck').addEventListener('change', (e) => {
+                state.showRectangle = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showAvgLineCheck').addEventListener('change', (e) => {
+                state.showAvgLine = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showMvtPointsCheck').addEventListener('change', (e) => {
+                state.showMvtPoints = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showBalancingCheck').addEventListener('change', (e) => {
+                state.showBalancing = e.target.checked;
+                drawGraph();
+            });
+            document.getElementById('showGridCheck').addEventListener('change', (e) => {
+                state.showGrid = e.target.checked;
+                drawGraph();
+            });
+
+            // Canvas Mouse Wheel Zooming
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+
+                const factor = e.deltaY < 0 ? 1.15 : (1 / 1.15);
+                zoomAt(factor, mouseX, mouseY);
+            }, { passive: false });
+
+            // Canvas Mouse Drag Panning
+            canvas.addEventListener('mousedown', (e) => {
+                if (e.button === 0) {
+                    state.isDragging = true;
+                    state.dragStartX = e.clientX;
+                    state.dragStartY = e.clientY;
+                }
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (!state.isDragging) return;
+                const dx = e.clientX - state.dragStartX;
+                const dy = e.clientY - state.dragStartY;
+
+                state.dragStartX = e.clientX;
+                state.dragStartY = e.clientY;
+
+                const midX = (state.a + state.b) / 2;
+                const baseSpanX = (state.b - state.a > 0 ? (state.b - state.a) * 1.6 : 6.0) / state.zoomLevel;
+                const baseSpanY = 6.0 / state.zoomLevel;
+
+                state.panOffsetX -= (dx / canvas.width) * baseSpanX;
+                state.panOffsetY += (dy / canvas.height) * baseSpanY;
+
+                drawGraph();
+            });
+
+            window.addEventListener('mouseup', () => {
+                state.isDragging = false;
+            });
+
+            // Touch Panning & Pinch Zoom
+            let initialTouchDist = null;
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    state.isDragging = true;
+                    state.dragStartX = e.touches[0].clientX;
+                    state.dragStartY = e.touches[0].clientY;
+                } else if (e.touches.length === 2) {
+                    state.isDragging = false;
+                    initialTouchDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1 && state.isDragging) {
+                    const dx = e.touches[0].clientX - state.dragStartX;
+                    const dy = e.touches[0].clientY - state.dragStartY;
+                    state.dragStartX = e.touches[0].clientX;
+                    state.dragStartY = e.touches[0].clientY;
+
+                    const baseSpanX = (state.b - state.a > 0 ? (state.b - state.a) * 1.6 : 6.0) / state.zoomLevel;
+                    const baseSpanY = 6.0 / state.zoomLevel;
+
+                    state.panOffsetX -= (dx / canvas.width) * baseSpanX;
+                    state.panOffsetY += (dy / canvas.height) * baseSpanY;
+                    drawGraph();
+                } else if (e.touches.length === 2 && initialTouchDist) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    const factor = dist / initialTouchDist;
+                    initialTouchDist = dist;
+                    zoomAt(factor);
+                }
+            }, { passive: true });
+
+            canvas.addEventListener('touchend', () => {
+                state.isDragging = false;
+                initialTouchDist = null;
+            });
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
