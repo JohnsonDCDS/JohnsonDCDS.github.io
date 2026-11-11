@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Anatomy & Neuropsychology - AP Psychology Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js for 3D Brain Geometry -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --slate-dark: #090d16;
+            --slate-panel: #111827;
+            --purple-accent: #a855f7;
+            --cyan-accent: #06b6d4;
+            --rose-accent: #f43f5e;
+            --amber-accent: #f59e0b;
+            --emerald-accent: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--slate-dark);
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            background-color: var(--purple-accent);
+        }
+
+        .region-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .region-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(168, 85, 247, 0.5);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-slate-900/90 border-b border-slate-800 px-4 py-3 flex items-center justify-between shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-purple-600 to-cyan-400 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-500/20">
+                <i class="fa-solid fa-brain text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Brain Anatomy & Biological Bases of Behavior
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">AP Psychology</span>
+                </h1>
+                <p class="text-xs text-slate-400">3D Interactive Cerebral Cortex, Limbic System & Famous Neuro Case Studies</p>
+            </div>
+        </div>
+
+        <!-- Presets & Case Studies Menu -->
+        <div class="hidden md:flex items-center space-x-1.5 flex-wrap">
+            <span class="text-xs text-slate-400 font-medium mr-1"><i class="fa-solid fa-folder-open mr-1 text-purple-400"></i> AP Case Studies:</span>
+            <button onclick="loadCaseStudy('phineas_gage')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-[#f43f5e] fa-user-ninja text-rose-400"></i> Phineas Gage
+            </button>
+            <button onclick="loadCaseStudy('patient_hm')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-memory text-cyan-400"></i> Patient H.M.
+            </button>
+            <button onclick="loadCaseStudy('tan_broca')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-comment-slash text-amber-400"></i> Broca's "Tan"
+            </button>
+            <button onclick="loadCaseStudy('split_brain')" class="px-2.5 py-1 text-xs rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center gap-1">
+                <i class="fa-solid fa-scissors text-purple-400"></i> Split-Brain (Sperry)
+            </button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button onclick="toggleQuizMode()" id="toggleQuizBtn" class="px-3 py-1.5 text-xs rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-clipboard-question"></i> <span id="quizBtnText">AP Quiz Challenge</span>
+            </button>
+            <button onclick="resetCameraView()" class="px-2.5 py-1.5 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-rotate-left"></i> Reset View
+            </button>
+            <button onclick="togglePresentationMode()" id="togglePresBtn" class="px-3 py-1.5 text-xs rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-expand"></i> Presentation Mode
+            </button>
+            <button onclick="toggleHelpModal()" class="px-2.5 py-1.5 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-graduation-cap"></i> Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Layout -->
+    <div id="mainContainer" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Sidebar Controls -->
+        <aside id="leftSidebar" class="w-full lg:w-96 bg-slate-900/95 border-r border-slate-800 flex flex-col overflow-y-auto shrink-0 z-10 p-4 space-y-4 transition-all duration-150">
+            
+            <!-- Category Filter Tabs -->
+            <div class="glass-panel p-2 rounded-xl flex items-center gap-1 text-xs">
+                <button onclick="setCategoryFilter('all')" id="tabAll" class="flex-1 py-1.5 rounded-lg font-bold transition bg-purple-600 text-white shadow-sm">All</button>
+                <button onclick="setCategoryFilter('cortex')" id="tabCortex" class="flex-1 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">Cortex</button>
+                <button onclick="setCategoryFilter('limbic')" id="tabLimbic" class="flex-1 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">Limbic</button>
+                <button onclick="setCategoryFilter('stem')" id="tabStem" class="flex-1 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white">Hind/Stem</button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                <input type="text" id="searchInput" placeholder="Search structure (e.g. Amygdala, Broca)..." onkeyup="filterStructureList()" class="w-full pl-9 pr-3 py-2 text-xs bg-slate-950 border border-slate-800 rounded-lg text-slate-100 focus:outline-none focus:border-purple-500 transition">
+            </div>
+
+            <!-- Brain Structure Quick Selector Grid -->
+            <div class="glass-panel p-3.5 rounded-xl space-y-2">
+                <div class="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
+                    <span>Select Brain Structure</span>
+                    <span id="regionCountText" class="text-purple-400">14 Structures</span>
+                </div>
+
+                <div id="structureListContainer" class="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+                    <!-- Dynamic Structure Cards injected by JS -->
+                </div>
+            </div>
+
+            <!-- Layer & Visibilities Controls -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-layer-group text-purple-400"></i> 3D Layer Visibility Controls
+                </h2>
+
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showCortexCheck" checked onchange="toggleLayer('cortex', this.checked)" class="accent-purple-500 rounded">
+                        <span>Cerebral Cortex</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showLimbicCheck" checked onchange="toggleLayer('limbic', this.checked)" class="accent-cyan-500 rounded">
+                        <span>Limbic System</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showStemCheck" checked onchange="toggleLayer('stem', this.checked)" class="accent-emerald-500 rounded">
+                        <span>Brainstem / Cerebellum</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="showCallosumCheck" checked onchange="toggleLayer('callosum', this.checked)" class="accent-amber-500 rounded">
+                        <span>Corpus Callosum</span>
+                    </label>
+                </div>
+
+                <!-- Hemispheres Split Slider -->
+                <div class="pt-2 space-y-1 border-t border-slate-800">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-slate-300 font-medium">Hemisphere Separation (Split-Brain):</span>
+                        <span id="splitValueText" class="text-purple-400 font-mono font-bold">0.0 cm</span>
+                    </div>
+                    <input type="range" id="hemisphereSplitSlider" min="0" max="3" step="0.1" value="0" oninput="updateHemisphereSplit(this.value)" class="w-full accent-purple-500 bg-slate-800 rounded-lg h-2 cursor-pointer custom-slider">
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Vertical Drag Resizer -->
+        <div id="sidebarResizer" class="hidden lg:flex w-2 bg-slate-950 hover:bg-purple-500 active:bg-purple-500 cursor-col-resize shrink-0 border-r border-slate-800 items-center justify-center group transition-colors z-20" title="Drag to resize sidebar width">
+            <div class="w-0.5 h-8 bg-slate-700 group-hover:bg-slate-900 rounded-full"></div>
+        </div>
+
+        <!-- Right Main Workspace -->
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-950">
+
+            <!-- 3D Three.js Viewport Canvas -->
+            <div id="canvasArea" class="flex-1 relative bg-slate-950 p-3 flex flex-col overflow-hidden">
+                
+                <!-- Floating Info Overlay -->
+                <div class="absolute top-4 left-4 bg-slate-900/85 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-300 flex items-center gap-2 pointer-events-none z-10 shadow-lg">
+                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse"></span>
+                    Interactive 3D Brain Viewport (Click any region to inspect)
+                </div>
+
+                <!-- Quiz Mode Floating Banner (Hidden by default) -->
+                <div id="quizBanner" class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur border border-emerald-500/50 px-6 py-2 rounded-xl text-xs z-20 shadow-2xl flex items-center gap-4">
+                    <div class="flex items-center gap-2 text-emerald-400 font-bold">
+                        <i class="fa-solid fa-bullseye text-base"></i>
+                        <span>AP PSYCH QUIZ:</span>
+                    </div>
+                    <div id="quizQuestionText" class="text-white font-medium">Click the brain region responsible for forming new long-term declarative memories.</div>
+                    <div id="quizScoreText" class="bg-emerald-950 text-emerald-300 px-2.5 py-1 rounded-md font-mono font-bold border border-emerald-800">Score: 0 / 0</div>
+                </div>
+
+                <!-- 3D Canvas Container -->
+                <div class="flex-1 w-full h-full relative rounded-xl border border-slate-800 bg-slate-950 overflow-hidden">
+                    <div id="canvas3d" class="w-full h-full block"></div>
+                </div>
+
+                <!-- Legend & Color Code Overlay -->
+                <div class="absolute bottom-5 left-5 bg-slate-900/90 backdrop-blur border border-slate-800 p-2.5 rounded-lg text-xs text-slate-300 flex flex-wrap items-center gap-4 pointer-events-none z-10">
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-indigo-500"></span> Frontal Lobe
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-blue-500"></span> Parietal Lobe
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-amber-500"></span> Occipital Lobe
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Temporal Lobe
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-cyan-400"></span> Limbic Core
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-rose-500"></span> Brainstem / Cerebellum
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horizontal Drag Resizer -->
+            <div id="bottomResizer" class="h-2 bg-slate-950 hover:bg-purple-500 active:bg-purple-500 cursor-row-resize shrink-0 border-t border-b border-slate-800 flex items-center justify-center group transition-colors z-20" title="Drag to resize bottom panel height">
+                <div class="h-0.5 w-12 bg-slate-700 group-hover:bg-slate-900 rounded-full"></div>
+            </div>
+
+            <!-- Bottom AP Psychology Structure Deep-Dive Panel -->
+            <div id="bottomPanel" class="h-64 bg-slate-900 border-t border-slate-800 p-4 overflow-y-auto shrink-0 space-y-3 transition-all duration-150">
+                
+                <!-- Selected Structure Header Bar -->
+                <div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div class="flex items-center space-x-3">
+                        <div id="selectedColorDot" class="w-4 h-4 rounded-full bg-purple-500 shadow-lg"></div>
+                        <div>
+                            <h2 id="selectedRegionName" class="text-base font-bold text-white flex items-center gap-2">
+                                Hippocampus 
+                                <span id="selectedCategoryTag" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Limbic System</span>
+                            </h2>
+                            <p id="selectedLocationText" class="text-xs text-slate-400 font-mono">Location: Deep Medial Temporal Lobe</p>
+                        </div>
+                    </div>
+
+                    <!-- AP Mnemonic Badge -->
+                    <div id="mnemonicBox" class="bg-purple-950/60 border border-purple-800/50 px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-300 flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-purple-400"></i>
+                        <span>AP Mnemonic: <span id="mnemonicText" class="text-white font-normal">"If you saw a Hippo on Campus, you'd REMEMBER it!"</span></span>
+                    </div>
+                </div>
+
+                <!-- 3-Card Grid for Primary Function, Lesion Damage, and AP Exam FRQ Keywords -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 text-xs">
+                    
+                    <!-- Card 1: Core Function -->
+                    <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-gear"></i> Primary Function & Role
+                        </div>
+                        <p id="functionDescText" class="text-slate-300 leading-relaxed font-sans">
+                            Consolidates short-term memories into long-term explicit (declarative) memories. Essential for spatial navigation and episodic memory processing.
+                        </p>
+                    </div>
+
+                    <!-- Card 2: Clinical Lesion / Damage Effect -->
+                    <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-slash"></i> Damage / Lesion Impact (AP Clinical)
+                        </div>
+                        <p id="lesionDescText" class="text-slate-300 leading-relaxed font-sans">
+                            <strong>Anterograde Amnesia:</strong> Inability to form new explicit long-term memories (e.g. Patient H.M.). Procedural/implicit memory remains intact.
+                        </p>
+                    </div>
+
+                    <!-- Card 3: AP Exam Key Terms & Neurotransmitters -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-br from-slate-950 to-slate-900 border border-purple-500/30 space-y-1.5">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-key"></i> AP Exam Key Terms & Neurotransmitters
+                        </div>
+                        <div id="keyTermsContent" class="text-slate-300 space-y-1 font-mono text-[11px]">
+                            <div>• Explicit / Declarative Memory</div>
+                            <div>• Acetylcholine (ACh) & Alzheimer's</div>
+                            <div>• Anterograde vs. Retrograde Amnesia</div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold text-xl border border-purple-500/40">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">AP Psychology Brain Anatomy Guide</h3>
+                    <p class="text-xs text-slate-400">Unit 2: Biological Bases of Behavior</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-slate-300 leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-purple-400 block">1. 3D Brain Navigation</span>
+                    <p>Click & drag to rotate the 3D brain model. Scroll to zoom in on subcortical structures like the Amygdala and Thalamus. Click any region directly to load its AP Psychology breakdown.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-purple-400 block">2. Famous AP Psychology Case Studies</span>
+                    <p>• <strong>Phineas Gage:</strong> Prefrontal cortex tamping iron injury (personality shift, impulse control).<br>
+                    • <strong>Patient H.M. (Henry Molaison):</strong> Bilateral hippocampal removal (anterograde amnesia).<br>
+                    • <strong>Louis Victor Leborgne ("Tan"):</strong> Broca's area lesion (expressive aphasia).<br>
+                    • <strong>Split-Brain Patients (Sperry & Gazzaniga):</strong> Corpus callosum severed to treat epilepsy; visual field/hemispheric lateralization experiments.</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-purple-400 block">3. AP Exam Mnemonics</span>
+                    <p>Every structure includes high-yield AP Psychology memory tricks (e.g., <em>"Amyg-DALA = Emotional DANGER!"</em> or <em>"Pons = PONdS of Dreams & Sleep"</em>).</p>
+                </div>
+
+                <div class="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
+                    <span class="font-bold text-purple-400 block">4. AP Quiz Challenge</span>
+                    <p>Click <strong>AP Quiz Challenge</strong> in the top bar to test your structure identification against AP Psychology exam FRQ and MCQ style prompts.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- AP Psychology Brain Structure Database ---
+        const BRAIN_STRUCTURES = {
+            'frontal': {
+                id: 'frontal',
+                name: 'Frontal Lobe',
+                category: 'cortex',
+                color: 0x6366f1, // Indigo
+                colorHex: '#6366f1',
+                location: 'Anterior Cerebral Cortex',
+                mnemonic: 'Frontal = FRONT seat driver (Decision making & Planning!)',
+                function: 'Higher cognitive functions: reasoning, planning, decision-making, emotional regulation, and voluntary motor control (Motor Cortex). Contains Broca\'s Area in left hemisphere.',
+                lesion: 'Impaired judgment, personality changes, loss of impulse control, executive dysfunction (e.g. Phineas Gage case).',
+                keyTerms: ['• Prefrontal Cortex', '• Executive Function', '• Motor Cortex', '• Broca\'s Area (Speech production)']
+            },
+            'motor_cortex': {
+                id: 'motor_cortex',
+                name: 'Primary Motor Cortex',
+                category: 'cortex',
+                color: 0x818cf8, // Light Indigo
+                colorHex: '#818cf8',
+                location: 'Precentral Gyrus (Rear of Frontal Lobe)',
+                mnemonic: 'Motor = MOVES your muscles!',
+                function: 'Executes voluntary bodily movements. Topographically mapped as the Motor Homunculus (more cortical area dedicated to hands/face).',
+                lesion: 'Contralateral paralysis or loss of fine motor control on the opposite side of the body.',
+                keyTerms: ['• Motor Homunculus', '• Contralateral Control', '• Voluntary Movement']
+            },
+            'parietal': {
+                id: 'parietal',
+                name: 'Parietal Lobe',
+                category: 'cortex',
+                color: 0x3b82f6, // Blue
+                colorHex: '#3b82f6',
+                location: 'Superior-Posterior Cerebral Cortex',
+                mnemonic: 'Parietal = PARENT touching your shoulder (Sensory touch!)',
+                function: 'Processes tactile sensory input (touch, pressure, temperature, pain) via Somatosensory Cortex. Responsible for spatial orientation and body awareness.',
+                lesion: 'Loss of bodily sensation, spatial neglect (ignoring one side of visual/body field), tactile agnosia.',
+                keyTerms: ['• Somatosensory Cortex', '• Sensory Homunculus', '• Spatial Processing']
+            },
+            'occipital': {
+                id: 'occipital',
+                name: 'Occipital Lobe',
+                category: 'cortex',
+                color: 0xf59e0b, // Amber
+                colorHex: '#f59e0b',
+                location: 'Posterior Cerebral Cortex (Back of head)',
+                mnemonic: 'Occipital = OPTICAL / Eyes in the back of your head!',
+                function: 'Primary Visual Cortex (V1). Processes visual stimuli (shapes, colors, motion, angles). Left visual field processed by right occipital lobe.',
+                lesion: 'Cortical blindness, visual agnosia, visual hallucinations or blind spots (scotoma).',
+                keyTerms: ['• Primary Visual Cortex', '• Feature Detectors (Hubel & Wiesel)', '• Visual Field Crossover']
+            },
+            'temporal': {
+                id: 'temporal',
+                name: 'Temporal Lobe',
+                category: 'cortex',
+                color: 0x10b981, // Emerald
+                colorHex: '#10b981',
+                location: 'Lateral Sides of Cortex (Near temples/ears)',
+                mnemonic: 'Temporal = TEMPO / Listen to music with your ears!',
+                function: 'Processes auditory information via Primary Auditory Cortex. Involved in language comprehension (Wernicke\'s area) and facial recognition (Fusiform Gyrus).',
+                lesion: 'Wernicke\'s Aphasia (fluent nonsense speech), prosopagnosia (inability to recognize familiar faces), auditory deficits.',
+                keyTerms: ['• Primary Auditory Cortex', '• Wernicke\'s Area (Comprehension)', '• Fusiform Face Area']
+            },
+            'broca': {
+                id: 'broca',
+                name: 'Broca\'s Area',
+                category: 'cortex',
+                color: 0xa855f7, // Purple
+                colorHex: '#a855f7',
+                location: 'Left Frontal Lobe (Inferior Gyrus)',
+                mnemonic: 'Broca = BROKEN SPEECH (Can understand, but can\'t speak!)',
+                function: 'Controls motor functions involved in speech production and muscle articulation required to form words.',
+                lesion: 'Broca\'s Aphasia: Struggling to speak or produce fluent sentences, though language comprehension remains mostly intact.',
+                keyTerms: ['• Expressive Aphasia', '• Speech Articulation', '• Left Hemisphere Specialization']
+            },
+            'wernicke': {
+                id: 'wernicke',
+                name: 'Wernicke\'s Area',
+                category: 'cortex',
+                color: 0x06b6d4, // Cyan
+                colorHex: '#06b6d4',
+                location: 'Left Temporal Lobe (Posterior Superior Gyrus)',
+                mnemonic: 'Wernicke = WHAT DID YOU SAY? (Can\'t comprehend language!)',
+                function: 'Responsible for language comprehension, interpreting spoken and written words, and formulating coherent sentences.',
+                lesion: 'Wernicke\'s Aphasia: Person speaks fluently but sentences make no sense ("word salad"), and struggles to understand language.',
+                keyTerms: ['• Receptive Aphasia', '• Word Salad', '• Language Interpretation']
+            },
+            'hippocampus': {
+                id: 'hippocampus',
+                name: 'Hippocampus',
+                category: 'limbic',
+                color: 0x06b6d4, // Cyan
+                colorHex: '#06b6d4',
+                location: 'Medial Temporal Lobe (Limbic System)',
+                mnemonic: 'Hippo on Campus = Remember the hippo!',
+                function: 'Consolidates short-term memories into long-term explicit (declarative) memories. Crucial for episodic memory and spatial navigation.',
+                lesion: 'Anterograde Amnesia: Inability to form new explicit long-term memories (Patient H.M.). Procedural memory remains functional.',
+                keyTerms: ['• Explicit/Declarative Memory', '• Anterograde Amnesia', '• Acetylcholine (ACh)']
+            },
+            'amygdala': {
+                id: 'amygdala',
+                name: 'Amygdala',
+                category: 'limbic',
+                color: 0xec4899, // Pink
+                colorHex: '#ec4899',
+                location: 'Almond-shaped clusters in Limbic System',
+                mnemonic: 'Amygdala = Amy is FEARFUL and ANGRY!',
+                function: 'Processes fear, aggression, emotional responses, and emotional memory tag attachment.',
+                lesion: 'Klüver-Bucy Syndrome: Placid/tame behavior, lack of fear response, inability to recognize facial expressions of fear.',
+                keyTerms: ['• Fight-or-flight emotions', '• Fear Conditioning', '• Emotional Memory']
+            },
+            'thalamus': {
+                id: 'thalamus',
+                name: 'Thalamus',
+                category: 'limbic',
+                color: 0xf43f5e, // Rose
+                colorHex: '#f43f5e',
+                location: 'Top of Brainstem (Center of Brain)',
+                mnemonic: 'Thalamus = Sensory RELAY SWITCHBOARD (Everything except Smell!)',
+                function: 'Brain\'s sensory relay station. Directs incoming sensory signals (vision, hearing, touch, taste) to corresponding cortical areas.',
+                lesion: 'Sensory confusion, synesthesia, coma, or sensory deficits (excluding olfaction).',
+                keyTerms: ['• Sensory Relay Station', '• Olfaction Exception (Smell bypasses)', '• Thalamic Gating']
+            },
+            'hypothalamus': {
+                id: 'hypothalamus',
+                name: 'Hypothalamus',
+                category: 'limbic',
+                color: 0xeab308, // Yellow-Gold
+                colorHex: '#eab308',
+                location: 'Below the Thalamus',
+                mnemonic: 'Hypothalamus = 4 F\'s: Fighting, Fleeing, Feeding, & Reproduction!',
+                function: 'Maintains homeostasis: regulates hunger, thirst, body temperature, circadian rhythms, and controls the Pituitary Gland (Endocrine System).',
+                lesion: 'Lateral Hypothalamus lesion = Starvation (no hunger signal); Ventromedial Hypothalamus lesion = Hyperphagia (overeating).',
+                keyTerms: ['• Homeostasis', '• Pituitary Control', '• Lateral (Lesion=Lean) & Ventromedial (Lesion=Very Fat)']
+            },
+            'cerebellum': {
+                id: 'cerebellum',
+                name: 'Cerebellum',
+                category: 'stem',
+                color: 0x14b8a6, // Teal
+                colorHex: '#14b8a6',
+                location: 'Rear base of skull behind Brainstem',
+                mnemonic: 'Cerebellum = SARAH BALANCES on a tightrope!',
+                function: 'Controls balance, posture, fine motor coordination, and procedural/implicit motor memory (e.g. riding a bike).',
+                lesion: 'Ataxia: Loss of balance, jerky uncoordinated movements, difficulty walking in a straight line.',
+                keyTerms: ['• Balance & Coordination', '• Procedural/Implicit Memory', '• Ataxia']
+            },
+            'medulla': {
+                id: 'medulla',
+                name: 'Medulla (Oblongata)',
+                category: 'stem',
+                color: 0xe11d48, // Dark Rose
+                colorHex: '#e11d48',
+                location: 'Base of Brainstem (Above spinal cord)',
+                mnemonic: 'Medulla = MEDAL hangs over your Heart & Lungs!',
+                function: 'Controls autonomic vital survival functions: heart rate, breathing, blood pressure, coughing, and swallowing.',
+                lesion: 'Fatal respiratory or cardiovascular failure (brain death).',
+                keyTerms: ['• Autonomic Vital Functions', '• Heart Rate & Respiration', '• Brainstem Reflexes']
+            },
+            'pons': {
+                id: 'pons',
+                name: 'Pons',
+                category: 'stem',
+                color: 0xf97316, // Orange
+                colorHex: '#f97316',
+                location: 'Bulge on Brainstem above Medulla',
+                mnemonic: 'Pons = PONdS of Dreams & Sleep!',
+                function: 'Relays information between cortex and cerebellum. Regulates sleep cycles, REM sleep paralysis, facial expressions, and dreaming.',
+                lesion: 'Sleep disturbances, REM sleep behavior disorder, Locked-in Syndrome.',
+                keyTerms: ['• REM Sleep & Dreams', '• Cerebellar Relay', '• Facial Movement']
+            },
+            'reticular': {
+                id: 'reticular',
+                name: 'Reticular Formation',
+                category: 'stem',
+                color: 0x8b5cf6, // Violet
+                colorHex: '#8b5cf6',
+                location: 'Nerve network running through Brainstem',
+                mnemonic: 'Reticular = RE-TICKLE brings ALERTNESS!',
+                function: 'Filters incoming sensory stimulation and controls arousal, alertness, wakefulness, and attention.',
+                lesion: 'Irreversible coma or chronic drowsiness.',
+                keyTerms: ['• Arousal & Alertness', '• Coma Induction', '• Sensory Filter']
+            },
+            'callosum': {
+                id: 'callosum',
+                name: 'Corpus Callosum',
+                category: 'callosum',
+                color: 0xd97706, // Amber Gold
+                colorHex: '#d97706',
+                location: 'Thick neural band joining Left & Right Hemispheres',
+                mnemonic: 'Corpus Callosum = CALL SOMEONE across hemispheres!',
+                function: 'Bundle of over 200 million axon fibers connecting left and right cerebral hemispheres, facilitating interhemispheric communication.',
+                lesion: 'Split-Brain Syndrome: Hemispheres act independently. Objects in left visual field cannot be named aloud (processed right hemisphere) but can be drawn with left hand.',
+                keyTerms: ['• Split-Brain (Sperry & Gazzaniga)', '• Interhemispheric Transfer', '• Hemispheric Lateralization']
+            }
+        };
+
+        // --- Application State ---
+        const state = {
+            activeRegionId: 'hippocampus',
+            categoryFilter: 'all',
+            searchQuery: '',
+            splitDistance: 0.0,
+            layers: {
+                cortex: true,
+                limbic: true,
+                stem: true,
+                callosum: true
+            },
+            quizMode: false,
+            quizScore: 0,
+            quizTotal: 0,
+            currentQuizQuestion: null
+        };
+
+        // --- Three.js Scene Globals ---
+        let scene, camera, renderer, controls;
+        let brainMeshGroup = new THREE.Group();
+        let regionMeshes = {};
+        let raycaster, mouse;
+        let hoveredMesh = null;
+
+        // --- Window Onload ---
+        window.onload = function() {
+            initThree();
+            renderStructureList();
+            setupResizers();
+            selectRegion('hippocampus');
+            animate();
+        };
+
+        // --- Three.js Initialization ---
+        function initThree() {
+            const container = document.getElementById('canvas3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x090d16);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(6, 4, 8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+
+            // Lighting Setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.9);
+            dirLight1.position.set(10, 15, 10);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0xa855f7, 0.5);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
+
+            // Raycaster for Mouse Interactivity
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Build Procedural 3D Brain Model
+            build3DBrainModel();
+            scene.add(brainMeshGroup);
+
+            // Canvas Mouse Events
+            renderer.domElement.addEventListener('pointermove', onPointerMove);
+            renderer.domElement.addEventListener('pointerdown', onPointerDown);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // --- Procedural 3D Brain Mesh Builder ---
+        function build3DBrainModel() {
+            // Helper for stylized smooth brain lobes & structures
+            const createRegionMesh = (id, geometry, materialProps, position, scale = [1, 1, 1], rotation = [0, 0, 0]) => {
+                const info = BRAIN_STRUCTURES[id];
+                const mat = new THREE.MeshStandardMaterial({
+                    color: info ? info.color : 0xcccccc,
+                    roughness: 0.35,
+                    metalness: 0.1,
+                    transparent: true,
+                    opacity: 0.9,
+                    ...materialProps
+                });
+
+                const mesh = new THREE.Mesh(geometry, mat);
+                mesh.position.set(...position);
+                mesh.scale.set(...scale);
+                mesh.rotation.set(...rotation);
+                mesh.userData = { id: id };
+
+                regionMeshes[id] = mesh;
+                brainMeshGroup.add(mesh);
+                return mesh;
+            };
+
+            // 1. Frontal Lobe (Left & Right)
+            const frontalGeom = new THREE.SphereGeometry(1.3, 32, 24);
+            createRegionMesh('frontal', frontalGeom, {}, [0, 0.6, 0.9], [1.1, 0.9, 1.0]);
+
+            // 2. Motor Cortex Strip
+            const motorGeom = new THREE.CylinderGeometry(0.2, 0.2, 2.2, 16);
+            createRegionMesh('motor_cortex', motorGeom, {}, [0, 1.2, 0.2], [1.0, 1.0, 0.8], [0, 0, Math.PI / 2]);
+
+            // 3. Parietal Lobe
+            const parietalGeom = new THREE.SphereGeometry(1.2, 32, 24);
+            createRegionMesh('parietal', parietalGeom, {}, [0, 0.8, -0.6], [1.05, 0.9, 0.9]);
+
+            // 4. Occipital Lobe
+            const occipitalGeom = new THREE.SphereGeometry(0.95, 32, 24);
+            createRegionMesh('occipital', occipitalGeom, {}, [0, 0.1, -1.7], [0.95, 0.85, 0.85]);
+
+            // 5. Temporal Lobe
+            const temporalGeom = new THREE.SphereGeometry(0.9, 32, 24);
+            createRegionMesh('temporal', temporalGeom, {}, [0, -0.2, 0.2], [1.5, 0.75, 0.95]);
+
+            // 6. Broca's Area (Left Frontal Node)
+            const brocaGeom = new THREE.SphereGeometry(0.35, 16, 16);
+            createRegionMesh('broca', brocaGeom, { emissive: 0x331144 }, [0.95, 0.2, 0.9], [1, 1, 1]);
+
+            // 7. Wernicke's Area (Left Temporal Node)
+            const wernickeGeom = new THREE.SphereGeometry(0.35, 16, 16);
+            createRegionMesh('wernicke', wernickeGeom, { emissive: 0x003344 }, [1.05, -0.1, -0.3], [1, 1, 1]);
+
+            // 8. Limbic System Core: Thalamus
+            const thalamusGeom = new THREE.SphereGeometry(0.55, 24, 24);
+            createRegionMesh('thalamus', thalamusGeom, {}, [0, 0.1, 0.0], [1.1, 0.85, 0.95]);
+
+            // 9. Hypothalamus
+            const hypoGeom = new THREE.SphereGeometry(0.32, 20, 20);
+            createRegionMesh('hypothalamus', hypoGeom, {}, [0, -0.35, 0.25], [1, 0.8, 1]);
+
+            // 10. Hippocampus Arch
+            const hippoGeom = new THREE.TorusGeometry(0.65, 0.16, 16, 32, Math.PI * 1.2);
+            createRegionMesh('hippocampus', hippoGeom, {}, [0, -0.1, -0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
+
+            // 11. Amygdala Nodes
+            const amygdalaGeom = new THREE.SphereGeometry(0.24, 16, 16);
+            createRegionMesh('amygdala', amygdalaGeom, {}, [0.55, -0.35, 0.45], [1.2, 1, 1]);
+
+            // 12. Corpus Callosum Crescent Bridge
+            const callosumGeom = new THREE.TorusGeometry(0.9, 0.18, 16, 32, Math.PI * 0.95);
+            createRegionMesh('callosum', callosumGeom, {}, [0, 0.35, 0.1], [0.3, 1, 1], [0, Math.PI / 2, 0]);
+
+            // 13. Cerebellum
+            const cerebellumGeom = new THREE.SphereGeometry(0.9, 32, 24);
+            createRegionMesh('cerebellum', cerebellumGeom, {}, [0, -1.0, -1.2], [1.2, 0.75, 0.95]);
+
+            // 14. Brainstem: Pons, Medulla, Reticular Formation
+            const ponsGeom = new THREE.CylinderGeometry(0.4, 0.35, 0.6, 20);
+            createRegionMesh('pons', ponsGeom, {}, [0, -0.9, -0.2]);
+
+            const medullaGeom = new THREE.CylinderGeometry(0.32, 0.25, 0.8, 20);
+            createRegionMesh('medulla', medullaGeom, {}, [0, -1.5, -0.2]);
+
+            const reticularGeom = new THREE.CylinderGeometry(0.12, 0.12, 1.4, 16);
+            createRegionMesh('reticular', reticularGeom, { emissive: 0x220044 }, [0, -1.1, -0.18]);
+        }
+
+        // --- Render Sidebar Structure Cards ---
+        function renderStructureList() {
+            const container = document.getElementById('structureListContainer');
+            container.innerHTML = '';
+
+            let count = 0;
+            Object.keys(BRAIN_STRUCTURES).forEach(id => {
+                const item = BRAIN_STRUCTURES[id];
+                
+                // Filter by category
+                if (state.categoryFilter !== 'all' && item.category !== state.categoryFilter) return;
+
+                // Filter by search query
+                if (state.searchQuery && !item.name.toLowerCase().includes(state.searchQuery) && !item.mnemonic.toLowerCase().includes(state.searchQuery)) return;
+
+                count++;
+                const isSelected = id === state.activeRegionId;
+
+                const card = document.createElement('div');
+                card.className = `region-card p-2.5 rounded-lg cursor-pointer border flex items-center justify-between transition ${
+                    isSelected ? 'bg-purple-950/80 border-purple-500 shadow-md' : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-800/60'
+                }`;
+                card.onclick = () => selectRegion(id);
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-2.5 overflow-hidden">
+                        <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${item.colorHex}"></span>
+                        <div class="truncate">
+                            <div class="text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'}">${item.name}</div>
+                            <div class="text-[10px] text-slate-400 truncate">${item.location}</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-[10px] ${isSelected ? 'text-purple-400' : 'text-slate-600'}"></i>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('regionCountText').textContent = `${count} Structures`;
+        }
+
+        // --- Region Selection Handler ---
+        function selectRegion(id) {
+            state.activeRegionId = id;
+            const info = BRAIN_STRUCTURES[id];
+            if (!info) return;
+
+            // Highlight 3D Meshes
+            Object.keys(regionMeshes).forEach(mId => {
+                const mesh = regionMeshes[mId];
+                if (mId === id) {
+                    mesh.material.opacity = 1.0;
+                    mesh.material.emissive.setHex(0x5522aa);
+                    mesh.scale.multiplyScalar(1.05); // Subtle pop
+                } else {
+                    mesh.material.opacity = 0.55;
+                    mesh.material.emissive.setHex(0x000000);
+                    mesh.scale.set(1, 1, 1); // Reset
+                }
+            });
+
+            // Re-apply scale overrides
+            resetMeshScaleOverrides();
+
+            // Update Bottom Panel Info
+            document.getElementById('selectedRegionName').innerHTML = `
+                ${info.name}
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">${info.category.toUpperCase()}</span>
+            `;
+            document.getElementById('selectedLocationText').textContent = `Location: ${info.location}`;
+            document.getElementById('selectedColorDot').style.backgroundColor = info.colorHex;
+            document.getElementById('mnemonicText').textContent = info.mnemonic;
+            document.getElementById('functionDescText').textContent = info.function;
+            document.getElementById('lesionDescText').innerHTML = info.lesion;
+
+            const keyTermsContainer = document.getElementById('keyTermsContent');
+            keyTermsContainer.innerHTML = info.keyTerms.map(term => `<div>${term}</div>`).join('');
+
+            renderStructureList();
+        }
+
+        function resetMeshScaleOverrides() {
+            if (regionMeshes['frontal']) regionMeshes['frontal'].scale.set(1.1, 0.9, 1.0);
+            if (regionMeshes['parietal']) regionMeshes['parietal'].scale.set(1.05, 0.9, 0.9);
+            if (regionMeshes['occipital']) regionMeshes['occipital'].scale.set(0.95, 0.85, 0.85);
+            if (regionMeshes['temporal']) regionMeshes['temporal'].scale.set(1.5, 0.75, 0.95);
+            if (regionMeshes['thalamus']) regionMeshes['thalamus'].scale.set(1.1, 0.85, 0.95);
+            if (regionMeshes['hypothalamus']) regionMeshes['hypothalamus'].scale.set(1, 0.8, 1);
+            if (regionMeshes['amygdala']) regionMeshes['amygdala'].scale.set(1.2, 1, 1);
+            if (regionMeshes['callosum']) regionMeshes['callosum'].scale.set(0.3, 1, 1);
+            if (regionMeshes['cerebellum']) regionMeshes['cerebellum'].scale.set(1.2, 0.75, 0.95);
+        }
+
+        // --- Pointer Move Hover & Click Raycasting ---
+        function onPointerMove(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(Object.values(regionMeshes));
+
+            if (intersects.length > 0) {
+                const hitMesh = intersects[0].object;
+                if (hoveredMesh !== hitMesh) {
+                    renderer.domElement.style.cursor = 'pointer';
+                    hoveredMesh = hitMesh;
+                }
+            } else {
+                renderer.domElement.style.cursor = 'default';
+                hoveredMesh = null;
+            }
+        }
+
+        function onPointerDown(event) {
+            if (hoveredMesh && hoveredMesh.userData.id) {
+                const clickedId = hoveredMesh.userData.id;
+                selectRegion(clickedId);
+
+                // Handle Quiz Verification
+                if (state.quizMode && state.currentQuizQuestion) {
+                    verifyQuizAnswer(clickedId);
+                }
+            }
+        }
+
+        // --- Category Filters ---
+        function setCategoryFilter(cat) {
+            state.categoryFilter = cat;
+            ['all', 'cortex', 'limbic', 'stem'].forEach(c => {
+                const tab = document.getElementById(`tab${c.charAt(0).toUpperCase() + c.slice(1)}`);
+                if (c === cat) {
+                    tab.className = 'flex-1 py-1.5 rounded-lg font-bold transition bg-purple-600 text-white shadow-sm';
+                } else {
+                    tab.className = 'flex-1 py-1.5 rounded-lg font-medium transition text-slate-400 hover:text-white';
+                }
+            });
+            renderStructureList();
+        }
+
+        function filterStructureList() {
+            state.searchQuery = document.getElementById('searchInput').value.toLowerCase();
+            renderStructureList();
+        }
+
+        // --- 3D Layer Toggles ---
+        function toggleLayer(layerKey, isVisible) {
+            state.layers[layerKey] = isVisible;
+            Object.keys(regionMeshes).forEach(id => {
+                const info = BRAIN_STRUCTURES[id];
+                if (info && info.category === layerKey) {
+                    regionMeshes[id].visible = isVisible;
+                }
+            });
+        }
+
+        // --- Hemisphere Split-Brain Slider ---
+        function updateHemisphereSplit(val) {
+            const dist = parseFloat(val);
+            state.splitDistance = dist;
+            document.getElementById('splitValueText').textContent = `${dist.toFixed(1)} cm`;
+
+            // Separate Broca & Wernicke (Left Hemisphere) from right hemisphere items
+            if (regionMeshes['broca']) regionMeshes['broca'].position.x = 0.95 + dist;
+            if (regionMeshes['wernicke']) regionMeshes['wernicke'].position.x = 1.05 + dist;
+            if (regionMeshes['amygdala']) regionMeshes['amygdala'].position.x = 0.55 + dist;
+        }
+
+        // --- Case Studies Loader ---
+        function loadCaseStudy(studyKey) {
+            resetCameraView();
+            if (studyKey === 'phineas_gage') {
+                selectRegion('frontal');
+            } else if (studyKey === 'patient_hm') {
+                selectRegion('hippocampus');
+            } else if (studyKey === 'tan_broca') {
+                selectRegion('broca');
+            } else if (studyKey === 'split_brain') {
+                selectRegion('callosum');
+                document.getElementById('hemisphereSplitSlider').value = 1.5;
+                updateHemisphereSplit(1.5);
+            }
+        }
+
+        // --- AP Quiz Mode Engine ---
+        const QUIZ_QUESTIONS = [
+            { question: "Identify the structure that consolidates short-term memory into long-term declarative memory (Patient H.M.).", targetId: "hippocampus" },
+            { question: "Click the region involved in executive planning, reasoning, and personality (Phineas Gage lesion).", targetId: "frontal" },
+            { question: "Select the structure responsible for speech production (Expressive Aphasia when damaged).", targetId: "broca" },
+            { question: "Select the primary emotional center processing fear, threat detection, and aggression.", targetId: "amygdala" },
+            { question: "Click the sensory relay station that routes vision, auditory, and touch signals (except smell).", targetId: "thalamus" },
+            { question: "Select the structure maintaining homeostasis (hunger, thirst, body temperature, 4 F's).", targetId: "hypothalamus" },
+            { question: "Identify the posterior lobe housing the Primary Visual Cortex (Hubel & Wiesel feature detectors).", targetId: "occipital" },
+            { question: "Click the brainstem structure controlling vital autonomic functions like heart rate and respiration.", targetId: "medulla" },
+            { question: "Identify the region regulating balance, fine motor coordination, and procedural memory.", targetId: "cerebellum" },
+            { question: "Click the neural fiber bundle connecting the left and right hemispheres (severed in split-brain surgery).", targetId: "callosum" }
+        ];
+
+        function toggleQuizMode() {
+            state.quizMode = !state.quizMode;
+            const banner = document.getElementById('quizBanner');
+            const btnText = document.getElementById('quizBtnText');
+
+            if (state.quizMode) {
+                banner.classList.remove('hidden');
+                btnText.textContent = 'Exit Quiz Mode';
+                state.quizScore = 0;
+                state.quizTotal = 0;
+                nextQuizQuestion();
+            } else {
+                banner.classList.add('hidden');
+                btnText.textContent = 'AP Quiz Challenge';
+            }
+        }
+
+        function nextQuizQuestion() {
+            const randomIndex = Math.floor(Math.random() * QUIZ_QUESTIONS.length);
+            state.currentQuizQuestion = QUIZ_QUESTIONS[randomIndex];
+            document.getElementById('quizQuestionText').textContent = state.currentQuizQuestion.question;
+            document.getElementById('quizScoreText').textContent = `Score: ${state.quizScore} / ${state.quizTotal}`;
+        }
+
+        function verifyQuizAnswer(clickedId) {
+            if (!state.currentQuizQuestion) return;
+            state.quizTotal++;
+
+            if (clickedId === state.currentQuizQuestion.targetId) {
+                state.quizScore++;
+                alertFeedback(true, `Correct! ${BRAIN_STRUCTURES[clickedId].name} is right!`);
+            } else {
+                alertFeedback(false, `Incorrect. You selected ${BRAIN_STRUCTURES[clickedId].name}. Target was ${BRAIN_STRUCTURES[state.currentQuizQuestion.targetId].name}.`);
+            }
+
+            nextQuizQuestion();
+        }
+
+        function alertFeedback(isCorrect, msg) {
+            const banner = document.getElementById('quizBanner');
+            const origColor = banner.className;
+            banner.className = `absolute top-4 left-1/2 -translate-x-1/2 backdrop-blur px-6 py-2 rounded-xl text-xs z-20 shadow-2xl flex items-center gap-4 transition-all ${
+                isCorrect ? 'bg-emerald-900/90 border border-emerald-400 text-emerald-200' : 'bg-rose-900/90 border border-rose-400 text-rose-200'
+            }`;
+
+            setTimeout(() => {
+                banner.className = 'absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur border border-emerald-500/50 px-6 py-2 rounded-xl text-xs z-20 shadow-2xl flex items-center gap-4';
+            }, 1400);
+        }
+
+        // --- Layout Visibility Toggles ---
+        let isSidebarVisible = true;
+        let isBottomPanelVisible = true;
+        let isPresentationMode = false;
+
+        function togglePresentationMode() {
+            isPresentationMode = !isPresentationMode;
+            const presBtn = document.getElementById('togglePresBtn');
+
+            if (isPresentationMode) {
+                document.getElementById('leftSidebar').classList.add('hidden');
+                document.getElementById('sidebarResizer').classList.add('hidden');
+                document.getElementById('bottomPanel').classList.add('hidden');
+                document.getElementById('bottomResizer').classList.add('hidden');
+
+                presBtn.innerHTML = '<i class="fa-solid fa-compress"></i> Exit Presentation';
+                presBtn.classList.remove('bg-purple-600');
+                presBtn.classList.add('bg-rose-600', 'hover:bg-rose-500');
+            } else {
+                document.getElementById('leftSidebar').classList.remove('hidden');
+                document.getElementById('sidebarResizer').classList.remove('hidden');
+                document.getElementById('bottomPanel').classList.remove('hidden');
+                document.getElementById('bottomResizer').classList.remove('hidden');
+
+                presBtn.innerHTML = '<i class="fa-solid fa-expand"></i> Presentation Mode';
+                presBtn.classList.remove('bg-rose-600', 'hover:bg-rose-500');
+                presBtn.classList.add('bg-purple-600', 'hover:bg-purple-500');
+            }
+            setTimeout(onWindowResize, 50);
+        }
+
+        function resetCameraView() {
+            camera.position.set(6, 4, 8);
+            controls.target.set(0, 0, 0);
+            controls.update();
+        }
+
+        function setupResizers() {
+            const mainContainer = document.getElementById('mainContainer');
+            const sidebar = document.getElementById('leftSidebar');
+            const sidebarResizer = document.getElementById('sidebarResizer');
+            const bottomPanel = document.getElementById('bottomPanel');
+            const bottomResizer = document.getElementById('bottomResizer');
+
+            let isResizingSidebar = false;
+            let isResizingBottom = false;
+
+            sidebarResizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizingSidebar = true;
+                document.body.style.cursor = 'col-resize';
+            });
+
+            bottomResizer.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                isResizingBottom = true;
+                document.body.style.cursor = 'row-resize';
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isResizingSidebar) {
+                    const containerRect = mainContainer.getBoundingClientRect();
+                    let newWidth = e.clientX - containerRect.left;
+                    newWidth = Math.max(200, Math.min(600, newWidth));
+                    sidebar.style.width = `${newWidth}px`;
+                    onWindowResize();
+                } else if (isResizingBottom) {
+                    const containerRect = mainContainer.getBoundingClientRect();
+                    let newHeight = containerRect.bottom - e.clientY;
+                    newHeight = Math.max(60, Math.min(500, newHeight));
+                    bottomPanel.style.height = `${newHeight}px`;
+                    onWindowResize();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                if (isResizingSidebar || isResizingBottom) {
+                    isResizingSidebar = false;
+                    isResizingBottom = false;
+                    document.body.style.cursor = '';
+                    onWindowResize();
+                }
+            });
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas3d');
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // --- Main Three.js Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Gentle continuous rotation when idle
+            if (!controls.state === -1) {
+                brainMeshGroup.rotation.y += 0.002;
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
