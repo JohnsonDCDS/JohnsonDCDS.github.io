@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Congruent Triangles Explorer | High School Geometry</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        schoolNavy: {
+                            DEFAULT: '#002B49',
+                            dark: '#001729',
+                            card: '#002038',
+                            border: '#003A63',
+                            light: '#00406C'
+                        },
+                        schoolYellow: {
+                            DEFAULT: '#FFC72C',
+                            hover: '#e6b222',
+                            light: '#ffda6e'
+                        },
+                        schoolGold: {
+                            DEFAULT: '#CCCC99',
+                            dark: '#b3b37d',
+                            light: '#e6e6cc'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            background-color: #001729;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #001729;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #003A63;
+            border-radius: 3px;
+        }
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image: 
+                linear-gradient(to right, rgba(204, 204, 153, 0.07) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(204, 204, 153, 0.07) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body class="bg-schoolNavy-dark text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Header Navigation -->
+    <header class="bg-schoolNavy border-b border-schoolNavy-border sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-schoolYellow/20 border border-schoolYellow/40 rounded-xl text-schoolYellow">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19L12 4l8 15H4z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-lg text-white leading-tight tracking-wide flex items-center gap-2">
+                        Congruent Triangles Explorer
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-schoolYellow/20 text-schoolYellow border border-schoolYellow/30 font-mono">HIGH SCHOOL GEOMETRY</span>
+                    </h1>
+                    <p class="text-xs text-schoolGold font-medium">Navy (#002B49) • Yellow (#FFC72C) • Vegas Gold (#CCCC99)</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation Buttons -->
+            <nav id="nav-links" class="flex items-center gap-1 bg-schoolNavy-card p-1.5 rounded-xl border border-schoolNavy-border overflow-x-auto max-w-full">
+                <button onclick="switchTab('shortcuts')" id="tab-shortcuts" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-2 bg-schoolYellow text-schoolNavy shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h6M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Congruence Shortcuts
+                </button>
+                <button onclick="switchTab('superposition')" id="tab-superposition" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-schoolGold hover:text-white transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                    Rigid Motion & Overlay
+                </button>
+                <button onclick="switchTab('ssa-trap')" id="tab-ssa-trap" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-schoolGold hover:text-white transition flex items-center gap-2">
+                    <svg class="w-4 h-4 text-schoolYellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    The SSA Counterexample
+                </button>
+                <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn px-3.5 py-1.5 rounded-lg text-xs font-bold text-schoolGold hover:text-white transition flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Student Quiz Mode
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Classroom Presentation & Section Controls Bar -->
+    <div class="bg-schoolNavy-dark border-b border-schoolNavy-border/80 py-2 px-4 sticky top-[61px] z-40 bg-opacity-95 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-schoolGold font-semibold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-schoolYellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    Classroom Display Options:
+                </span>
+                <button onclick="togglePanel('panel-controls')" class="px-2.5 py-1 rounded bg-schoolNavy-card border border-schoolNavy-border text-slate-200 hover:border-schoolYellow/50 transition flex items-center gap-1">
+                    <span id="label-btn-controls">Hide Controls Sidebar</span>
+                </button>
+                <button onclick="togglePanel('panel-proof')" class="px-2.5 py-1 rounded bg-schoolNavy-card border border-schoolNavy-border text-slate-200 hover:border-schoolYellow/50 transition flex items-center gap-1">
+                    <span id="label-btn-proof">Hide Lower Proof Panel</span>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-schoolGold font-semibold">Canvas Height:</span>
+                <button onclick="setCanvasHeight('compact')" id="btn-h-compact" class="px-2 py-0.5 rounded bg-schoolNavy-card border border-schoolNavy-border text-xs text-slate-300 hover:text-white">Compact</button>
+                <button onclick="setCanvasHeight('standard')" id="btn-h-standard" class="px-2 py-0.5 rounded bg-schoolYellow text-schoolNavy font-bold">Standard</button>
+                <button onclick="setCanvasHeight('tall')" id="btn-h-tall" class="px-2 py-0.5 rounded bg-schoolNavy-card border border-schoolNavy-border text-xs text-slate-300 hover:text-white">Tall</button>
+
+                <div class="h-4 w-px bg-schoolNavy-border mx-1"></div>
+
+                <button onclick="togglePresentationMode()" id="btn-pres-mode" class="px-3 py-1 rounded bg-schoolYellow text-schoolNavy font-bold hover:bg-schoolYellow-hover transition shadow flex items-center gap-1.5">
+                    📺 Presentation Mode
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col gap-4">
+
+        <!-- ================= TAB 1: CONGRUENCE SHORTCUTS ================= -->
+        <div id="view-shortcuts" class="view-panel grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Controls & Options Panel -->
+            <div id="panel-controls" class="lg:col-span-4 flex flex-col gap-4 transition-all duration-300">
+                
+                <!-- Criteria Selector Buttons -->
+                <div id="box-1-criteria" class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xs font-extrabold text-schoolGold uppercase tracking-wider">
+                            1. Select Criteria
+                        </h2>
+                        <button onclick="togglePanel('panel-controls')" class="text-xs text-schoolGold/60 hover:text-schoolYellow font-mono">[Hide] ✕</button>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-2">
+                        <button onclick="setCriteria('SSS')" id="btn-SSS" class="criteria-btn p-3 rounded-xl border text-left transition flex flex-col justify-between bg-schoolYellow/20 border-schoolYellow text-schoolYellow">
+                            <span class="font-extrabold text-base">SSS</span>
+                            <span class="text-[10px] text-schoolGold">Side-Side-Side</span>
+                        </button>
+                        <button onclick="setCriteria('SAS')" id="btn-SAS" class="criteria-btn p-3 rounded-xl border text-left transition flex flex-col justify-between bg-schoolNavy border-schoolNavy-border text-slate-300 hover:border-schoolYellow/50">
+                            <span class="font-extrabold text-base">SAS</span>
+                            <span class="text-[10px] text-schoolGold">Side-Angle-Side</span>
+                        </button>
+                        <button onclick="setCriteria('ASA')" id="btn-ASA" class="criteria-btn p-3 rounded-xl border text-left transition flex flex-col justify-between bg-schoolNavy border-schoolNavy-border text-slate-300 hover:border-schoolYellow/50">
+                            <span class="font-extrabold text-base">ASA</span>
+                            <span class="text-[10px] text-schoolGold">Angle-Side-Angle</span>
+                        </button>
+                        <button onclick="setCriteria('AAS')" id="btn-AAS" class="criteria-btn p-3 rounded-xl border text-left transition flex flex-col justify-between bg-schoolNavy border-schoolNavy-border text-slate-300 hover:border-schoolYellow/50">
+                            <span class="font-extrabold text-base">AAS</span>
+                            <span class="text-[10px] text-schoolGold">Angle-Angle-Side</span>
+                        </button>
+                        <button onclick="setCriteria('HL')" id="btn-HL" class="criteria-btn p-3 rounded-xl border text-left transition flex flex-col justify-between bg-schoolNavy border-schoolNavy-border text-slate-300 hover:border-schoolYellow/50 col-span-2 sm:col-span-1 lg:col-span-2">
+                            <div class="flex items-center justify-between">
+                                <span class="font-extrabold text-base">HL</span>
+                                <span class="px-1.5 py-0.5 bg-schoolYellow/20 text-schoolYellow text-[9px] rounded font-bold border border-schoolYellow/30">Right Δ Only</span>
+                            </div>
+                            <span class="text-[10px] text-schoolGold">Hypotenuse-Leg</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sliders for Geometry Parameters -->
+                <div id="box-2-sliders" class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider mb-3 flex items-center justify-between">
+                        <span>2. Adjust Given Parts</span>
+                        <span id="param-badge" class="text-[10px] bg-schoolNavy text-schoolYellow px-2 py-0.5 rounded-md font-mono border border-schoolNavy-border">SSS Active</span>
+                    </h2>
+                    
+                    <div id="sliders-container" class="space-y-4">
+                        <!-- Dynamic Sliders injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Display Visibility Toggles -->
+                <div id="box-3-display" class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider mb-3">3. Display Controls</h2>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-schoolNavy/70 border border-schoolNavy-border cursor-pointer hover:border-schoolYellow/40">
+                            <input type="checkbox" id="toggle-ticks" checked onchange="updateVisuals()" class="accent-schoolYellow rounded">
+                            <span class="text-slate-300 font-medium">Tick Marks</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-schoolNavy/70 border border-schoolNavy-border cursor-pointer hover:border-schoolYellow/40">
+                            <input type="checkbox" id="toggle-values" checked onchange="updateVisuals()" class="accent-schoolYellow rounded">
+                            <span class="text-slate-300 font-medium">Numerical Values</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-schoolNavy/70 border border-schoolNavy-border cursor-pointer hover:border-schoolYellow/40">
+                            <input type="checkbox" id="toggle-labels" checked onchange="updateVisuals()" class="accent-schoolYellow rounded">
+                            <span class="text-slate-300 font-medium">Vertex Labels</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 rounded-lg bg-schoolNavy/70 border border-schoolNavy-border cursor-pointer hover:border-schoolYellow/40">
+                            <input type="checkbox" id="toggle-grid" checked onchange="toggleGridDisplay()" class="accent-schoolYellow rounded">
+                            <span class="text-slate-300 font-medium">Background Grid</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Visualization Canvas & Proof Breakdown -->
+            <div id="panel-canvas-container" class="lg:col-span-8 flex flex-col gap-4">
+                
+                <!-- SVG Canvas Card -->
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl flex flex-col gap-3 relative">
+                    <div class="flex items-center justify-between border-b border-schoolNavy-border pb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-schoolGold inline-block"></span>
+                            <span class="text-xs font-semibold text-slate-300">Reference Triangle <span class="font-bold text-schoolGold">ΔABC</span></span>
+                        </div>
+                        <span class="text-[11px] text-schoolGold font-medium flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5 text-schoolYellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7 11.5a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                            Drag any triangle to reposition
+                        </span>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-schoolYellow inline-block"></span>
+                            <span class="text-xs font-semibold text-slate-300">Target Triangle <span class="font-bold text-schoolYellow">ΔDEF</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Interactive SVG Box -->
+                    <div id="svg-shortcuts-wrapper" class="w-full h-96 bg-schoolNavy-dark rounded-xl relative overflow-hidden grid-bg border border-schoolNavy-border flex items-center justify-center transition-all duration-300 cursor-grab active:cursor-grabbing">
+                        <svg id="svg-shortcuts" class="w-full h-full" viewBox="0 0 700 360" preserveAspectRatio="xMidYMid meet">
+                            <!-- SVG Content dynamically rendered -->
+                        </svg>
+                    </div>
+
+                    <!-- Dynamic Theorem Description Banner -->
+                    <div id="theorem-banner" class="p-3 bg-schoolNavy border border-schoolYellow/30 rounded-xl text-xs text-schoolGold flex items-start gap-3">
+                        <div class="p-1.5 bg-schoolYellow/20 rounded-lg text-schoolYellow mt-0.5 shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <span class="font-bold text-white block text-sm" id="banner-title">SSS (Side-Side-Side) Postulate</span>
+                            <span id="banner-desc">If three sides of one triangle are equal to three sides of another triangle, then the two triangles are congruent.</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deconstruct & Reassemble Control Card (Directly below triangle screen) -->
+                <div id="box-4-deconstruct" class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider">4. Snap Apart & Reassemble</h2>
+                        <span id="shortcut-deconstruct-status" class="text-[10px] bg-schoolNavy text-schoolYellow px-2.5 py-0.5 rounded font-mono border border-schoolNavy-border">Intact (0°)</span>
+                    </div>
+                    <div id="box-4-buttons-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button onclick="triggerShortcutExplode('apart')" class="p-2.5 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-2 hover:border-schoolYellow/50">
+                            <span class="text-base">💥</span>
+                            <span>Snap Apart</span>
+                        </button>
+                        <button onclick="triggerShortcutExplode('rearrange')" class="p-2.5 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-2 hover:border-schoolYellow/50">
+                            <span class="text-base">🔄</span>
+                            <span>Rearrange</span>
+                        </button>
+                        <button onclick="triggerShortcutExplode('assemble')" class="p-2.5 bg-schoolYellow text-schoolNavy font-bold rounded-xl text-xs hover:bg-schoolYellow-hover transition shadow flex items-center justify-center gap-2">
+                            <span class="text-base">🧲</span>
+                            <span>Snap Back</span>
+                        </button>
+                        <button onclick="resetShortcutTransform()" class="p-2.5 bg-schoolNavy hover:bg-schoolNavy-light text-slate-300 rounded-xl font-semibold text-xs transition border border-schoolNavy-border hover:border-schoolYellow/50 flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4 text-schoolYellow shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            <span>Reset Position</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Proof Breakdown / Corresponding Parts Card -->
+                <div id="panel-proof" class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl transition-all duration-300">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-extrabold text-schoolGold uppercase tracking-wider">Corresponding Parts (Proof Statements)</h3>
+                        <button onclick="togglePanel('panel-proof')" class="text-xs text-schoolGold/60 hover:text-schoolYellow font-mono">[Hide Section] ✕</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="proof-statements-grid">
+                        <!-- Given items populated dynamically -->
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-schoolNavy-border flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div class="text-slate-300 font-medium">
+                            Conclusion: <span class="font-bold text-schoolNavy font-mono text-sm bg-schoolYellow px-2.5 py-1 rounded shadow" id="conclusion-statement">ΔABC ≅ ΔDEF</span>
+                        </div>
+                        <div class="text-schoolGold text-right font-medium">
+                            CPCTC applies to all remaining corresponding parts!
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: RIGID MOTION & SUPERPOSITION ================= -->
+        <div id="view-superposition" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <!-- Rigid Controls Left -->
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl space-y-4">
+                    <div>
+                        <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider mb-1">Superposition Concept</h2>
+                        <p class="text-xs text-slate-300">
+                            By definition, two figures are <b>congruent</b> if one can be mapped exactly onto the other using <b>rigid motions</b> (Translation, Rotation, Reflection).
+                        </p>
+                    </div>
+
+                    <!-- Transformation Controls -->
+                    <div class="space-y-4 pt-2 border-t border-schoolNavy-border">
+                        <!-- Rotation Slider -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300 font-medium">Rotation Angle</span>
+                                <span class="text-schoolYellow font-mono font-bold" id="rotate-val">0°</span>
+                            </div>
+                            <input type="range" id="slider-rotate" min="0" max="360" value="0" oninput="updateSuperposition()" class="w-full accent-schoolYellow h-1.5 bg-schoolNavy rounded-lg cursor-pointer">
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="flipSuperposition('H')" class="p-2 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                Flip Horizontal
+                            </button>
+                            <button onclick="flipSuperposition('V')" class="p-2 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-xs font-semibold text-slate-200 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                                Flip Vertical
+                            </button>
+                        </div>
+
+                        <!-- Snap Apart & Reassemble Section -->
+                        <div class="pt-3 border-t border-schoolNavy-border space-y-2">
+                            <h3 class="text-xs font-bold text-schoolGold uppercase tracking-wider flex items-center justify-between">
+                                <span>Triangle Deconstruction & Reassembly</span>
+                                <span id="deconstruct-status-badge" class="text-[9px] bg-schoolNavy text-schoolYellow px-2 py-0.5 rounded font-mono border border-schoolNavy-border">Intact</span>
+                            </h3>
+                            <div class="grid grid-cols-3 gap-1.5">
+                                <button onclick="triggerExplode('apart')" class="p-2 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-[11px] font-semibold text-slate-200 transition flex flex-col items-center gap-1 hover:border-schoolYellow/50">
+                                    <span class="text-base">💥</span>
+                                    <span>Snap Apart</span>
+                                </button>
+                                <button onclick="triggerExplode('rearrange')" class="p-2 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl text-[11px] font-semibold text-slate-200 transition flex flex-col items-center gap-1 hover:border-schoolYellow/50">
+                                    <span class="text-base">🔄</span>
+                                    <span>Rearrange</span>
+                                </button>
+                                <button onclick="triggerExplode('assemble')" class="p-2 bg-schoolYellow text-schoolNavy font-bold rounded-xl text-[11px] hover:bg-schoolYellow-hover transition shadow flex flex-col items-center gap-1">
+                                    <span class="text-base">🧲</span>
+                                    <span>Snap Back</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button onclick="snapToSuperposition()" class="w-full py-2.5 bg-schoolYellow hover:bg-schoolYellow-hover text-schoolNavy font-bold rounded-xl text-xs transition shadow flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            Auto-Snap & Test Alignment
+                        </button>
+                        <button onclick="resetSuperposition()" class="w-full py-2 bg-schoolNavy hover:bg-schoolNavy-light text-slate-300 rounded-xl font-medium text-xs transition border border-schoolNavy-border">
+                            Reset Position & Orientation
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Guidance Box -->
+                <div class="bg-schoolNavy border border-schoolYellow/30 rounded-2xl p-4 text-xs text-schoolGold space-y-2">
+                    <span class="font-bold text-schoolYellow block flex items-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7 11.5a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0z"/></svg>
+                        Interactive Dragging:
+                    </span>
+                    <p class="text-slate-300">
+                        Click and drag the yellow target triangle <b class="text-schoolYellow">ΔDEF</b> on the canvas to translate it onto fixed gold reference triangle <b class="text-schoolGold">ΔABC</b>.
+                    </p>
+                </div>
+            </div>
+
+            <!-- SVG Superposition Playground -->
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl relative flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-semibold text-slate-300">Overlay Superposition Sandbox</span>
+                        <div id="superposition-status" class="text-xs px-3 py-1 rounded-full bg-schoolNavy text-slate-400 border border-schoolNavy-border font-mono">
+                            Distance Gap: <span id="distance-val" class="text-schoolYellow font-bold">---</span>
+                        </div>
+                    </div>
+
+                    <div id="svg-super-wrapper" class="w-full h-96 bg-schoolNavy-dark rounded-xl relative overflow-hidden grid-bg border border-schoolNavy-border cursor-grab active:cursor-grabbing">
+                        <svg id="svg-superposition" class="w-full h-full" viewBox="0 0 700 420" preserveAspectRatio="xMidYMid meet">
+                            <!-- Rendered dynamically -->
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB 3: THE SSA TRAP ================= -->
+        <div id="view-ssa-trap" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl space-y-3">
+                    <div class="flex items-center gap-2 text-schoolYellow font-bold text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        Why SSA is NOT a Theorem!
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        <b>SSA (Side-Side-Angle)</b> specifies two side lengths and a <i>non-included</i> angle. This is also known as the <b>Ambiguous Case</b>.
+                    </p>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Because the side opposite the angle acts like a swinging arm on a hinge, it can form <b>TWO non-congruent triangles</b> with exact same given measurements!
+                    </p>
+
+                    <!-- SSA Arm Swing Controls -->
+                    <div class="pt-3 border-t border-schoolNavy-border space-y-3">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Swinging Side Angle</span>
+                                <span class="text-schoolYellow font-mono font-bold" id="ssa-angle-val">0°</span>
+                            </div>
+                            <input type="range" id="slider-ssa-swing" min="-45" max="45" value="-25" oninput="drawSSATrap()" class="w-full accent-schoolYellow h-1.5 bg-schoolNavy rounded-lg cursor-pointer">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setSSAPosition(1)" class="p-2 bg-schoolNavy border border-schoolGold/40 text-schoolGold rounded-xl text-xs font-semibold hover:border-schoolYellow transition">
+                                Position 1 (Obtuse Δ)
+                            </button>
+                            <button onclick="setSSAPosition(2)" class="p-2 bg-schoolNavy border border-schoolYellow/40 text-schoolYellow rounded-xl text-xs font-semibold hover:border-schoolYellow transition">
+                                Position 2 (Acute Δ)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classroom Tip Card -->
+                <div class="bg-schoolNavy border border-schoolYellow/30 rounded-2xl p-4 text-xs text-schoolGold space-y-2">
+                    <span class="font-bold text-schoolYellow block">💡 Teacher Memory Trick:</span>
+                    <p class="text-slate-300">
+                        SSA spelled backwards is <b>ASS</b>. Remind students: "Don't be an ASS—SSA does NOT prove triangle congruence!" (Except for Right Triangles, where it is called <b>HL</b>).
+                    </p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-schoolNavy-border pb-2">
+                        <span class="text-xs font-semibold text-slate-300">Swinging Arm Interactive Demonstration</span>
+                        <span class="text-xs text-schoolYellow font-medium">Dotted Arc = Path of swinging side</span>
+                    </div>
+
+                    <div id="svg-ssa-wrapper" class="w-full h-96 bg-schoolNavy-dark rounded-xl relative overflow-hidden grid-bg border border-schoolNavy-border flex items-center justify-center">
+                        <svg id="svg-ssa" class="w-full h-full" viewBox="0 0 700 380" preserveAspectRatio="xMidYMid meet">
+                            <!-- Rendered by JS -->
+                        </svg>
+                    </div>
+
+                    <div class="p-3 bg-schoolNavy rounded-xl text-xs text-slate-300 grid grid-cols-1 sm:grid-cols-2 gap-3 border border-schoolNavy-border">
+                        <div>
+                            <span class="text-schoolGold font-bold block">Triangle 1 (ΔAB C₁):</span>
+                            Has Side 1, Side 2, and Angle θ. (Obtuse shape)
+                        </div>
+                        <div>
+                            <span class="text-schoolYellow font-bold block">Triangle 2 (ΔAB C₂):</span>
+                            Has exact SAME Side 1, Side 2, and Angle θ! (Acute shape)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB 4: STUDENT QUIZ MODE ================= -->
+        <div id="view-quiz" class="view-panel hidden grid grid-cols-1 lg:grid-cols-12 gap-4">
+            
+            <div class="lg:col-span-4 flex flex-col gap-4">
+                <!-- Scoreboard -->
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider">Scoreboard</h2>
+                        <button onclick="resetQuiz()" class="text-[10px] text-slate-400 hover:text-white underline">Reset Score</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="bg-schoolNavy border border-schoolNavy-border p-3 rounded-xl">
+                            <span class="text-xs text-slate-400 block mb-1">Score</span>
+                            <span id="quiz-score" class="text-2xl font-black text-schoolYellow font-mono">0 / 0</span>
+                        </div>
+                        <div class="bg-schoolNavy border border-schoolNavy-border p-3 rounded-xl">
+                            <span class="text-xs text-slate-400 block mb-1">Streak</span>
+                            <span id="quiz-streak" class="text-2xl font-black text-schoolGold font-mono">0 🔥</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Answer Choices -->
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl">
+                    <h2 class="text-xs font-bold text-schoolGold uppercase tracking-wider mb-3">Select the Correct Reason:</h2>
+                    <div class="grid grid-cols-2 gap-2" id="quiz-options">
+                        <button onclick="checkAnswer('SSS')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-slate-200 transition">SSS</button>
+                        <button onclick="checkAnswer('SAS')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-slate-200 transition">SAS</button>
+                        <button onclick="checkAnswer('ASA')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-slate-200 transition">ASA</button>
+                        <button onclick="checkAnswer('AAS')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-slate-200 transition">AAS</button>
+                        <button onclick="checkAnswer('HL')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-slate-200 transition">HL</button>
+                        <button onclick="checkAnswer('NONE')" class="quiz-opt-btn p-3 bg-schoolNavy hover:bg-schoolNavy-light border border-schoolNavy-border rounded-xl font-bold text-sm text-schoolYellow transition">Not Congruent / Not Enough Info</button>
+                    </div>
+
+                    <button onclick="nextQuizQuestion()" id="btn-next-question" class="w-full mt-4 py-2.5 bg-schoolYellow hover:bg-schoolYellow-hover text-schoolNavy rounded-xl font-bold text-xs transition shadow flex items-center justify-center gap-2">
+                        Next Problem ➔
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Figure Display -->
+            <div class="lg:col-span-8 flex flex-col gap-4">
+                <div class="bg-schoolNavy-card border border-schoolNavy-border rounded-2xl p-4 shadow-xl flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-schoolNavy-border pb-2">
+                        <span class="text-xs font-semibold text-slate-300">Given Markings & Tick Marks</span>
+                        <span class="text-xs text-slate-400">Determine if ΔABC ≅ ΔDEF</span>
+                    </div>
+
+                    <div id="svg-quiz-wrapper" class="w-full h-96 bg-schoolNavy-dark rounded-xl relative overflow-hidden grid-bg border border-schoolNavy-border flex items-center justify-center">
+                        <svg id="svg-quiz" class="w-full h-full" viewBox="0 0 700 360" preserveAspectRatio="xMidYMid meet">
+                            <!-- Quiz SVG Content -->
+                        </svg>
+                    </div>
+
+                    <!-- Feedback Box -->
+                    <div id="quiz-feedback" class="p-3 bg-schoolNavy border border-schoolNavy-border rounded-xl text-xs text-slate-300 min-h-[50px] flex items-center gap-3">
+                        <span class="text-slate-400 italic">Select your answer from the choices on the left!</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-schoolNavy border-t border-schoolNavy-border py-3 text-center text-xs text-schoolGold mt-auto">
+        Interactive Geometry Classroom Tool • High School Geometry Congruent Triangles
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // ================= GLOBAL STATE DECLARATIONS =================
+        let currentCriteria = 'SSS';
+        let activeTab = 'shortcuts';
+        let isPresentationMode = false;
+
+        let params = {
+            s1: 140,
+            s2: 120,
+            s3: 110,
+            angleA: 50,
+            angleB: 60,
+            hlLeg: 100,
+            hlHyp: 160
+        };
+
+        let shortcutDeconstruct = {
+            progress: 0,
+            targetProgress: 0,
+            presetIndex: 0,
+            orientIndex: 0,
+            status: 'intact',
+            animId: null
+        };
+
+        let shortcutDragState = {
+            t1Offset: { x: 0, y: 0 },
+            t2Offset: { x: 0, y: 0 },
+            isDragging: false,
+            targetTriangle: null,
+            startX: 0,
+            startY: 0,
+            initialT1Offset: { x: 0, y: 0 },
+            initialT2Offset: { x: 0, y: 0 }
+        };
+
+        // Assembled Target Orientation Presets for ΔDEF
+        const orientationPresets = [
+            { label: "Standard 0°", angle: 0, flipH: 1, flipV: 1 },
+            { label: "Rotated 90°", angle: Math.PI / 2, flipH: 1, flipV: 1 },
+            { label: "Flipped & Tilted 45°", angle: Math.PI / 4, flipH: -1, flipV: 1 },
+            { label: "Inverted 180°", angle: Math.PI, flipH: 1, flipV: 1 },
+            { label: "Rotated -120°", angle: -Math.PI * 2 / 3, flipH: 1, flipV: 1 },
+            { label: "Reflected & 150°", angle: Math.PI * 5 / 6, flipH: 1, flipV: -1 }
+        ];
+
+        let superState = {
+            x: 400,
+            y: 260,
+            rotate: 0,
+            flipH: 1,
+            flipV: 1,
+            isDragging: false,
+            dragStartX: 0,
+            dragStartY: 0
+        };
+
+        let deconstruct = {
+            progress: 0,
+            targetProgress: 0,
+            presetIndex: 0,
+            status: 'intact',
+            animId: null
+        };
+
+        let quizState = {
+            score: 0,
+            total: 0,
+            streak: 0,
+            answered: false,
+            currentAnswer: '',
+            explanation: ''
+        };
+
+        // Spatial Scatter Presets for Rearranging Segments (Flips, Inversions & Translations)
+        const scatterPresets = [
+            [
+                { offset: { x: -45, y: 50 }, angle: Math.PI * 0.15, label: "Base Segment" },
+                { offset: { x: -55, y: -50 }, angle: -Math.PI * 0.2, label: "Left Side" },
+                { offset: { x: 65, y: -20 }, angle: Math.PI * 0.25, label: "Right Side" }
+            ],
+            [
+                { offset: { x: -90, y: -75 }, angle: Math.PI * 0.85, label: "Flipped 150°" },
+                { offset: { x: 105, y: -45 }, angle: -Math.PI * 0.75, label: "Vertical Flip" },
+                { offset: { x: 30, y: 95 }, angle: Math.PI * 1.2, label: "Inverted 215°" }
+            ],
+            [
+                { offset: { x: -120, y: 40 }, angle: Math.PI * 0.5, label: "Turned 90°" },
+                { offset: { x: 0, y: -105 }, angle: Math.PI, label: "Upside Down" },
+                { offset: { x: 120, y: 55 }, angle: -Math.PI * 0.45, label: "Tilted -80°" }
+            ],
+            [
+                { offset: { x: 85, y: -80 }, angle: -Math.PI * 0.9, label: "Rotated -160°" },
+                { offset: { x: -95, y: -35 }, angle: Math.PI * 0.65, label: "Turned 115°" },
+                { offset: { x: 10, y: 110 }, angle: -Math.PI * 1.3, label: "End-to-End Swap" }
+            ]
+        ];
+
+        // Web Audio Synthesizer for Snap / Correct / Wrong Sounds
+        function playSound(type) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                const now = ctx.currentTime;
+
+                if (type === 'snap') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.15);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(554.37, now + 0.1);
+                    osc.frequency.setValueAtTime(659.25, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(150, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) {}
+        }
+
+        // Transforms triangle vertices based on orientation preset around centroid
+        function getOrientedTriangle(pts, orientIndex) {
+            const cfg = orientationPresets[orientIndex || 0];
+            if (cfg.angle === 0 && cfg.flipH === 1 && cfg.flipV === 1) return pts;
+
+            const M = {
+                x: (pts.A.x + pts.B.x + pts.C.x) / 3,
+                y: (pts.A.y + pts.B.y + pts.C.y) / 3
+            };
+
+            function transformPt(P) {
+                let dx = (P.x - M.x) * cfg.flipH;
+                let dy = (P.y - M.y) * cfg.flipV;
+
+                const cos = Math.cos(cfg.angle);
+                const sin = Math.sin(cfg.angle);
+
+                const rx = dx * cos - dy * sin;
+                const ry = dx * sin + dy * cos;
+
+                return { x: M.x + rx, y: M.y + ry };
+            }
+
+            return {
+                A: transformPt(pts.A),
+                B: transformPt(pts.B),
+                C: transformPt(pts.C)
+            };
+        }
+
+        // Calculate Triangle Points mathematically given parameters
+        function calculateTrianglePoints(crit, p, startX, startY) {
+            let A = { x: startX, y: startY };
+            let B, C;
+
+            if (crit === 'SSS') {
+                let c = Math.max(40, Math.min(320, p.s1));
+                let b = Math.max(40, Math.min(320, p.s2));
+                let a = Math.max(40, Math.min(320, p.s3));
+
+                if (a + b <= c) a = c - b + 10;
+                if (a + c <= b) b = a + c - 10;
+                if (b + c <= a) c = b + c - 10;
+
+                B = { x: A.x + c, y: A.y };
+                let cosA = (b * b + c * c - a * a) / (2 * b * c);
+                cosA = Math.max(-1, Math.min(1, cosA));
+                let sinA = Math.sqrt(1 - cosA * cosA);
+                C = { x: A.x + b * cosA, y: A.y - b * sinA };
+            } else if (crit === 'SAS') {
+                let c = Math.max(40, Math.min(320, p.s1));
+                let b = Math.max(40, Math.min(320, p.s2));
+                let radA = (p.angleA * Math.PI) / 180;
+                B = { x: A.x + c, y: A.y };
+                C = { x: A.x + b * Math.cos(radA), y: A.y - b * Math.sin(radA) };
+            } else if (crit === 'ASA' || crit === 'AAS') {
+                let c = Math.max(40, Math.min(320, p.s1));
+                let radA = (p.angleA * Math.PI) / 180;
+                let radB = (p.angleB * Math.PI) / 180;
+                if (radA + radB >= Math.PI - 0.1) radB = Math.PI - radA - 0.2;
+                let radC = Math.PI - (radA + radB);
+                let b = (c * Math.sin(radB)) / Math.sin(radC);
+                B = { x: A.x + c, y: A.y };
+                C = { x: A.x + b * Math.cos(radA), y: A.y - b * Math.sin(radA) };
+            } else if (crit === 'HL') {
+                let c = Math.max(40, Math.min(280, p.hlLeg));
+                let b = Math.max(c + 20, Math.min(340, p.hlHyp));
+                let a = Math.sqrt(b * b - c * c);
+                B = { x: A.x + c, y: A.y };
+                C = { x: B.x, y: B.y - a };
+            }
+
+            return { A, B, C };
+        }
+
+        // Navigation Tabs & Controls
+        function switchTab(tabId) {
+            activeTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-schoolYellow', 'text-schoolNavy', 'shadow-md');
+                btn.classList.add('text-schoolGold', 'hover:text-white');
+            });
+            const activeNav = document.getElementById(`tab-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.remove('text-schoolGold', 'hover:text-white');
+                activeNav.classList.add('bg-schoolYellow', 'text-schoolNavy', 'shadow-md');
+            }
+
+            document.querySelectorAll('.view-panel').forEach(panel => panel.classList.add('hidden'));
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            if (tabId === 'shortcuts') renderShortcuts();
+            if (tabId === 'superposition') renderSuperposition();
+            if (tabId === 'ssa-trap') drawSSATrap();
+            if (tabId === 'quiz') nextQuizQuestion();
+        }
+
+        function togglePanel(panelId) {
+            const panel = document.getElementById(panelId);
+            const label = document.getElementById(`label-btn-${panelId === 'panel-controls' ? 'controls' : 'proof'}`);
+            if (panel) {
+                panel.classList.toggle('hidden');
+                const isHidden = panel.classList.contains('hidden');
+                if (label) {
+                    label.innerText = isHidden ? 
+                        `Show ${panelId === 'panel-controls' ? 'Controls Sidebar' : 'Proof Panel'}` : 
+                        `Hide ${panelId === 'panel-controls' ? 'Controls Sidebar' : 'Proof Panel'}`;
+                }
+            }
+        }
+
+        function setCanvasHeight(size) {
+            const wrappers = [
+                document.getElementById('svg-shortcuts-wrapper'),
+                document.getElementById('svg-super-wrapper'),
+                document.getElementById('svg-ssa-wrapper'),
+                document.getElementById('svg-quiz-wrapper')
+            ];
+            
+            let hClass = 'h-96';
+            if (size === 'compact') hClass = 'h-72';
+            if (size === 'tall') hClass = 'h-[500px]';
+
+            wrappers.forEach(w => {
+                if (w) {
+                    w.className = w.className.replace(/h-72|h-96|h-\[500px\]/g, hClass);
+                }
+            });
+
+            ['h-compact', 'h-standard', 'h-tall'].forEach(id => {
+                const btn = document.getElementById(`btn-${id}`);
+                if (btn) {
+                    btn.className = id === `h-${size}` ? 
+                        'px-2 py-0.5 rounded bg-schoolYellow text-schoolNavy font-bold' : 
+                        'px-2 py-0.5 rounded bg-schoolNavy-card border border-schoolNavy-border text-xs text-slate-300 hover:text-white';
+                }
+            });
+        }
+
+        function togglePresentationMode() {
+            isPresentationMode = !isPresentationMode;
+            const controls = document.getElementById('panel-controls');
+            const box1 = document.getElementById('box-1-criteria');
+            const box3 = document.getElementById('box-3-display');
+            const box4 = document.getElementById('box-4-deconstruct');
+            const box4Grid = document.getElementById('box-4-buttons-grid');
+            const canvasContainer = document.getElementById('panel-canvas-container');
+            const proof = document.getElementById('panel-proof');
+            const btn = document.getElementById('btn-pres-mode');
+            const labelControls = document.getElementById('label-btn-controls');
+            const labelProof = document.getElementById('label-btn-proof');
+
+            if (isPresentationMode) {
+                if (controls) controls.classList.remove('hidden');
+                if (box1) box1.classList.add('hidden');
+                if (box3) box3.classList.add('hidden');
+                if (controls && box4) {
+                    controls.appendChild(box4);
+                }
+                if (box4Grid) {
+                    box4Grid.className = 'grid grid-cols-2 gap-2';
+                }
+                if (proof) proof.classList.add('hidden');
+                if (labelControls) labelControls.innerText = 'Hide Controls Sidebar';
+                if (labelProof) labelProof.innerText = 'Show Proof Panel';
+                if (btn) btn.innerText = 'Exit Presentation Mode ✕';
+                setCanvasHeight('tall');
+            } else {
+                if (controls) controls.classList.remove('hidden');
+                if (box1) box1.classList.remove('hidden');
+                if (box3) box3.classList.remove('hidden');
+                if (canvasContainer && box4 && proof) {
+                    canvasContainer.insertBefore(box4, proof);
+                }
+                if (box4Grid) {
+                    box4Grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
+                }
+                if (proof) proof.classList.remove('hidden');
+                if (labelControls) labelControls.innerText = 'Hide Controls Sidebar';
+                if (labelProof) labelProof.innerText = 'Hide Lower Proof Panel';
+                if (btn) btn.innerText = '📺 Presentation Mode';
+                setCanvasHeight('standard');
+            }
+        }
+
+        function setCriteria(crit) {
+            currentCriteria = crit;
+            shortcutDeconstruct.progress = 0;
+            shortcutDeconstruct.targetProgress = 0;
+            shortcutDeconstruct.presetIndex = 0;
+            shortcutDeconstruct.orientIndex = 0;
+            shortcutDeconstruct.status = 'intact';
+
+            const deconstructBadge = document.getElementById('shortcut-deconstruct-status');
+            if (deconstructBadge) deconstructBadge.innerText = 'Intact (0°)';
+
+            document.querySelectorAll('.criteria-btn').forEach(btn => {
+                btn.classList.remove('bg-schoolYellow/20', 'border-schoolYellow', 'text-schoolYellow');
+                btn.classList.add('bg-schoolNavy', 'border-schoolNavy-border', 'text-slate-300');
+            });
+
+            const activeBtn = document.getElementById(`btn-${crit}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-schoolNavy', 'border-schoolNavy-border', 'text-slate-300');
+                activeBtn.classList.add('bg-schoolYellow/20', 'border-schoolYellow', 'text-schoolYellow');
+            }
+
+            const paramBadge = document.getElementById('param-badge');
+            if (paramBadge) paramBadge.innerText = `${crit} Active`;
+
+            buildSliders();
+            renderShortcuts();
+        }
+
+        function buildSliders() {
+            const container = document.getElementById('sliders-container');
+            if (!container) return;
+
+            let html = '';
+            if (currentCriteria === 'SSS') {
+                html += makeSliderHTML('s1', 'Side 1 (AB)', params.s1, 40, 300, 'px');
+                html += makeSliderHTML('s2', 'Side 2 (AC)', params.s2, 40, 300, 'px');
+                html += makeSliderHTML('s3', 'Side 3 (BC)', params.s3, 40, 300, 'px');
+            } else if (currentCriteria === 'SAS') {
+                html += makeSliderHTML('s1', 'Side 1 (AB)', params.s1, 40, 300, 'px');
+                html += makeSliderHTML('angleA', 'Included Angle A', params.angleA, 25, 120, '°');
+                html += makeSliderHTML('s2', 'Side 2 (AC)', params.s2, 40, 300, 'px');
+            } else if (currentCriteria === 'ASA') {
+                html += makeSliderHTML('angleA', 'Angle A', params.angleA, 25, 100, '°');
+                html += makeSliderHTML('s1', 'Included Side (AB)', params.s1, 40, 300, 'px');
+                html += makeSliderHTML('angleB', 'Angle B', params.angleB, 25, 100, '°');
+            } else if (currentCriteria === 'AAS') {
+                html += makeSliderHTML('angleA', 'Angle A', params.angleA, 25, 100, '°');
+                html += makeSliderHTML('angleB', 'Angle B', params.angleB, 25, 100, '°');
+                html += makeSliderHTML('s2', 'Non-Included Side (BC)', params.s2, 40, 300, 'px');
+            } else if (currentCriteria === 'HL') {
+                html += makeSliderHTML('hlLeg', 'Leg (AB)', params.hlLeg, 40, 260, 'px');
+                html += makeSliderHTML('hlHyp', 'Hypotenuse (AC)', params.hlHyp, 60, 340, 'px');
+            }
+            container.innerHTML = html;
+        }
+
+        function makeSliderHTML(key, label, val, min, max, unit) {
+            return `
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300 font-medium">${label}</span>
+                        <span class="text-schoolYellow font-mono font-bold" id="val-${key}">${val}${unit}</span>
+                    </div>
+                    <input type="range" id="slider-${key}" min="${min}" max="${max}" value="${val}" 
+                        oninput="updateParam('${key}', this.value)" 
+                        class="w-full accent-schoolYellow h-1.5 bg-schoolNavy rounded-lg cursor-pointer">
+                </div>
+            `;
+        }
+
+        function updateParam(key, val) {
+            params[key] = parseFloat(val);
+            const label = document.getElementById(`val-${key}`);
+            if (label) {
+                const unit = (key.includes('angle')) ? '°' : 'px';
+                label.innerText = `${val}${unit}`;
+            }
+            renderShortcuts();
+        }
+
+        function updateVisuals() {
+            renderShortcuts();
+        }
+
+        function toggleGridDisplay() {
+            const gridEl = document.getElementById('toggle-grid');
+            const wrappers = document.querySelectorAll('.grid-bg');
+            wrappers.forEach(w => {
+                if (gridEl && !gridEl.checked) {
+                    w.style.backgroundImage = 'none';
+                } else {
+                    w.style.backgroundImage = '';
+                }
+            });
+        }
+
+        function triggerShortcutExplode(action) {
+            const badge = document.getElementById('shortcut-deconstruct-status');
+            if (action === 'apart') {
+                shortcutDeconstruct.presetIndex = 0;
+                shortcutDeconstruct.targetProgress = 1;
+                shortcutDeconstruct.status = 'apart';
+                const orientLabel = orientationPresets[shortcutDeconstruct.orientIndex].label;
+                if (badge) badge.innerText = `Snapped Apart (${orientLabel})`;
+            } else if (action === 'rearrange') {
+                shortcutDeconstruct.presetIndex = (shortcutDeconstruct.presetIndex % (scatterPresets.length - 1)) + 1;
+                shortcutDeconstruct.orientIndex = (shortcutDeconstruct.orientIndex + 1) % orientationPresets.length;
+                shortcutDeconstruct.targetProgress = 1;
+                shortcutDeconstruct.status = 'rearranged';
+                const orientLabel = orientationPresets[shortcutDeconstruct.orientIndex].label;
+                if (badge) badge.innerText = `Target: ${orientLabel}`;
+            } else if (action === 'assemble') {
+                shortcutDeconstruct.targetProgress = 0;
+                shortcutDeconstruct.status = 'assembling';
+                if (badge) badge.innerText = 'Snapping...';
+            }
+            animateShortcutDeconstruct();
+        }
+
+        function resetShortcutTransform() {
+            shortcutDeconstruct.orientIndex = 0;
+            shortcutDeconstruct.progress = 0;
+            shortcutDeconstruct.targetProgress = 0;
+            shortcutDeconstruct.status = 'intact';
+            shortcutDragState.t1Offset = { x: 0, y: 0 };
+            shortcutDragState.t2Offset = { x: 0, y: 0 };
+            const badge = document.getElementById('shortcut-deconstruct-status');
+            if (badge) badge.innerText = 'Intact (0°)';
+            renderShortcuts();
+        }
+
+        function resetShortcutOrientation() {
+            resetShortcutTransform();
+        }
+
+        function animateShortcutDeconstruct() {
+            if (shortcutDeconstruct.animId) cancelAnimationFrame(shortcutDeconstruct.animId);
+
+            function step() {
+                let diffP = shortcutDeconstruct.targetProgress - shortcutDeconstruct.progress;
+
+                if (Math.abs(diffP) > 0.005) {
+                    shortcutDeconstruct.progress += diffP * 0.14;
+                    renderShortcuts();
+                    shortcutDeconstruct.animId = requestAnimationFrame(step);
+                } else {
+                    shortcutDeconstruct.progress = shortcutDeconstruct.targetProgress;
+                    renderShortcuts();
+
+                    const badge = document.getElementById('shortcut-deconstruct-status');
+                    if (shortcutDeconstruct.targetProgress === 0 && shortcutDeconstruct.status === 'assembling') {
+                        shortcutDeconstruct.status = 'intact';
+                        const orientLabel = orientationPresets[shortcutDeconstruct.orientIndex].label;
+                        if (badge) badge.innerText = `Assembled (${orientLabel})`;
+                        playSound('snap');
+                        confetti({ particleCount: 45, spread: 60, origin: { y: 0.6 } });
+                    }
+                }
+            }
+            step();
+        }
+
+        function renderShortcuts() {
+            const svg = document.getElementById('svg-shortcuts');
+            if (!svg) return;
+
+            const ticksEl = document.getElementById('toggle-ticks');
+            const valuesEl = document.getElementById('toggle-values');
+            const labelsEl = document.getElementById('toggle-labels');
+
+            const showTicks = ticksEl ? ticksEl.checked : true;
+            const showValues = valuesEl ? valuesEl.checked : true;
+            const showLabels = labelsEl ? labelsEl.checked : true;
+
+            const t1Raw = calculateTrianglePoints(currentCriteria, params, 70, 270);
+            const t1 = {
+                A: { x: t1Raw.A.x + shortcutDragState.t1Offset.x, y: t1Raw.A.y + shortcutDragState.t1Offset.y },
+                B: { x: t1Raw.B.x + shortcutDragState.t1Offset.x, y: t1Raw.B.y + shortcutDragState.t1Offset.y },
+                C: { x: t1Raw.C.x + shortcutDragState.t1Offset.x, y: t1Raw.C.y + shortcutDragState.t1Offset.y }
+            };
+
+            const rawT2 = calculateTrianglePoints(currentCriteria, params, 400, 270);
+            const t2Oriented = getOrientedTriangle(rawT2, shortcutDeconstruct.orientIndex);
+            const t2 = {
+                A: { x: t2Oriented.A.x + shortcutDragState.t2Offset.x, y: t2Oriented.A.y + shortcutDragState.t2Offset.y },
+                B: { x: t2Oriented.B.x + shortcutDragState.t2Offset.x, y: t2Oriented.B.y + shortcutDragState.t2Offset.y },
+                C: { x: t2Oriented.C.x + shortcutDragState.t2Offset.x, y: t2Oriented.C.y + shortcutDragState.t2Offset.y }
+            };
+
+            let html = '';
+
+            // Draw Triangle 1 (Gold/Navy Reference)
+            html += renderTriangleSVG(t1, 'reference', ['A', 'B', 'C'], currentCriteria, showTicks, showValues, showLabels);
+            
+            // Draw Triangle 2 (Yellow Target) or Exploded Target Triangle
+            if (shortcutDeconstruct.progress > 0.001) {
+                html += renderExplodedShortcutTriangle(t2, ['D', 'E', 'F'], currentCriteria, showTicks, showValues, showLabels);
+            } else {
+                html += renderTriangleSVG(t2, 'target', ['D', 'E', 'F'], currentCriteria, showTicks, showValues, showLabels);
+            }
+
+            svg.innerHTML = html;
+
+            // Update Banner & Proof statements
+            updateBannerAndProof(t1);
+        }
+
+        function renderExplodedShortcutTriangle(t2, labels, crit, showTicks, showValues, showLabels) {
+            const p = shortcutDeconstruct.progress;
+            const presets = scatterPresets[shortcutDeconstruct.presetIndex];
+            const strokeColor = '#FFC72C';
+
+            const segments = [
+                { P1: t2.A, P2: t2.B, ticks: (crit === 'SSS' || crit === 'SAS' || crit === 'ASA' || crit === 'HL') ? 1 : 0 },
+                { P1: t2.A, P2: t2.C, ticks: (crit === 'SSS' || crit === 'SAS' || crit === 'HL') ? (crit === 'HL' ? 3 : 2) : 0 },
+                { P1: t2.B, P2: t2.C, ticks: (crit === 'SSS' || crit === 'AAS') ? 3 : 0 }
+            ];
+
+            let html = '';
+
+            segments.forEach((seg, idx) => {
+                const sc = presets[idx];
+                const midX = (seg.P1.x + seg.P2.x) / 2;
+                const midY = (seg.P1.y + seg.P2.y) / 2;
+
+                const curCenterX = midX + p * sc.offset.x;
+                const curCenterY = midY + p * sc.offset.y;
+
+                const dx = seg.P2.x - seg.P1.x;
+                const dy = seg.P2.y - seg.P1.y;
+                const origAngle = Math.atan2(dy, dx);
+                const curAngle = origAngle + p * sc.angle;
+
+                const halfLen = Math.hypot(dx, dy) / 2;
+
+                const curP1 = {
+                    x: curCenterX - halfLen * Math.cos(curAngle),
+                    y: curCenterY - halfLen * Math.sin(curAngle)
+                };
+                const curP2 = {
+                    x: curCenterX + halfLen * Math.cos(curAngle),
+                    y: curCenterY + halfLen * Math.sin(curAngle)
+                };
+
+                // Trajectory Lines showing snap path
+                if (p > 0.05) {
+                    html += `<line x1="${curP1.x}" y1="${curP1.y}" x2="${seg.P1.x}" y2="${seg.P1.y}" stroke="#CCCC99" stroke-width="2" stroke-dasharray="4,4" opacity="0.7" />`;
+                    html += `<line x1="${curP2.x}" y1="${curP2.y}" x2="${seg.P2.x}" y2="${seg.P2.y}" stroke="#CCCC99" stroke-width="2" stroke-dasharray="4,4" opacity="0.7" />`;
+                }
+
+                // Render Scattered Segment Line (Thicker stroke)
+                html += `<line x1="${curP1.x}" y1="${curP1.y}" x2="${curP2.x}" y2="${curP2.y}" stroke="${strokeColor}" stroke-width="5" stroke-linecap="round" />`;
+
+                // Joints
+                html += `<circle cx="${curP1.x}" cy="${curP1.y}" r="5" fill="#FFC72C" />`;
+                html += `<circle cx="${curP2.x}" cy="${curP2.y}" r="5" fill="#FFC72C" />`;
+
+                // Tick marks on scattered segments
+                if (showTicks && seg.ticks > 0) {
+                    html += drawSideTicks(curP1, curP2, seg.ticks, strokeColor);
+                }
+
+                // Segment Preset Tag Label
+                if (p > 0.4) {
+                    html += `<text x="${curCenterX}" y="${curCenterY - 14}" fill="#CCCC99" font-size="11" font-weight="bold" text-anchor="middle" class="code-font">${sc.label}</text>`;
+                }
+            });
+
+            return html;
+        }
+
+        function renderTriangleSVG(pts, colorTheme, labels, crit, showTicks, showValues, showLabels) {
+            const { A, B, C } = pts;
+            const isReference = colorTheme === 'reference';
+            const strokeColor = isReference ? '#CCCC99' : '#FFC72C';
+            const fillColor = isReference ? 'rgba(0, 43, 73, 0.45)' : 'rgba(255, 199, 44, 0.18)';
+            const textColor = isReference ? '#CCCC99' : '#FFC72C';
+
+            const ab = dist(A, B);
+            const bc = dist(B, C);
+            const ca = dist(C, A);
+
+            const M = { x: (A.x + B.x + C.x) / 3, y: (A.y + B.y + C.y) / 3 };
+
+            function getOutwardLabelPos(V, offset = 20) {
+                const dx = V.x - M.x;
+                const dy = V.y - M.y;
+                const len = Math.hypot(dx, dy) || 1;
+                return { x: V.x + (dx / len) * offset, y: V.y + (dy / len) * offset + 5 };
+            }
+
+            let html = `
+                <polygon points="${A.x},${A.y} ${B.x},${B.y} ${C.x},${C.y}" 
+                    fill="${fillColor}" stroke="${strokeColor}" stroke-width="5" stroke-linejoin="round" />
+            `;
+
+            if (showLabels) {
+                const posA = getOutwardLabelPos(A);
+                const posB = getOutwardLabelPos(B);
+                const posC = getOutwardLabelPos(C);
+                html += `
+                    <text x="${posA.x}" y="${posA.y}" fill="${textColor}" font-weight="bold" font-size="15" text-anchor="middle">${labels[0]}</text>
+                    <text x="${posB.x}" y="${posB.y}" fill="${textColor}" font-weight="bold" font-size="15" text-anchor="middle">${labels[1]}</text>
+                    <text x="${posC.x}" y="${posC.y}" fill="${textColor}" font-weight="bold" font-size="15" text-anchor="middle">${labels[2]}</text>
+                `;
+            }
+
+            const highlightSideAB = crit === 'SSS' || crit === 'SAS' || crit === 'ASA' || crit === 'HL';
+            const highlightSideAC = crit === 'SSS' || crit === 'SAS';
+            const highlightSideBC = crit === 'SSS' || crit === 'AAS';
+
+            const highlightAngleA = crit === 'SAS' || crit === 'ASA' || crit === 'AAS';
+            const highlightAngleB = crit === 'ASA' || crit === 'AAS';
+
+            if (showTicks) {
+                if (highlightSideAB) html += drawSideTicks(A, B, 1, strokeColor);
+                if (highlightSideAC) html += drawSideTicks(A, C, 2, strokeColor);
+                if (highlightSideBC) html += drawSideTicks(B, C, 3, strokeColor);
+                if (crit === 'HL') html += drawSideTicks(A, C, 3, strokeColor);
+            }
+
+            if (showTicks) {
+                if (highlightAngleA) html += drawAngleArc(A, B, C, 1, strokeColor);
+                if (highlightAngleB && crit !== 'HL') html += drawAngleArc(B, A, C, 2, strokeColor);
+                if (crit === 'HL') html += drawRightAngleBox(B, A, C, strokeColor);
+            }
+
+            if (showValues) {
+                const midAB = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+                const midAC = { x: (A.x + C.x) / 2, y: (A.y + C.y) / 2 };
+                const midBC = { x: (B.x + C.x) / 2, y: (B.y + C.y) / 2 };
+
+                html += `<text x="${midAB.x}" y="${midAB.y}" fill="#CCCC99" font-size="12" font-weight="bold" text-anchor="middle">${Math.round(ab)}</text>`;
+                html += `<text x="${midAC.x}" y="${midAC.y}" fill="#CCCC99" font-size="12" font-weight="bold" text-anchor="middle">${Math.round(ca)}</text>`;
+                html += `<text x="${midBC.x}" y="${midBC.y}" fill="#CCCC99" font-size="12" font-weight="bold" text-anchor="middle">${Math.round(bc)}</text>`;
+            }
+
+            return html;
+        }
+
+        function drawSideTicks(P1, P2, numTicks, color) {
+            const midX = (P1.x + P2.x) / 2;
+            const midY = (P1.y + P2.y) / 2;
+            const dx = P2.x - P1.x;
+            const dy = P2.y - P1.y;
+            const len = Math.hypot(dx, dy) || 1;
+
+            const nx = -dy / len;
+            const ny = dx / len;
+
+            const px = dx / len;
+            const py = dy / len;
+
+            const tickLen = 9;
+            const spacing = 6;
+            let res = '';
+
+            const startOffset = -((numTicks - 1) * spacing) / 2;
+
+            for (let i = 0; i < numTicks; i++) {
+                const offset = startOffset + i * spacing;
+                const cx = midX + px * offset;
+                const cy = midY + py * offset;
+
+                const x1 = cx + nx * tickLen;
+                const y1 = cy + ny * tickLen;
+                const x2 = cx - nx * tickLen;
+                const y2 = cy - ny * tickLen;
+
+                res += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="3.5" stroke-linecap="round" />`;
+            }
+            return res;
+        }
+
+        function drawAngleArc(V, P1, P2, numArcs, color) {
+            const rad1 = Math.atan2(P1.y - V.y, P1.x - V.x);
+            const rad2 = Math.atan2(P2.y - V.y, P2.x - V.x);
+
+            let diff = rad2 - rad1;
+            while (diff > Math.PI) diff -= 2 * Math.PI;
+            while (diff < -Math.PI) diff += 2 * Math.PI;
+
+            const sweep = diff > 0 ? 1 : 0;
+
+            let res = '';
+            for (let i = 0; i < numArcs; i++) {
+                const r = 22 + i * 6;
+                const x1 = V.x + r * Math.cos(rad1);
+                const y1 = V.y + r * Math.sin(rad1);
+                const x2 = V.x + r * Math.cos(rad2);
+                const y2 = V.y + r * Math.sin(rad2);
+
+                res += `<path d="M ${x1} ${y1} A ${r} ${r} 0 0 ${sweep} ${x2} ${y2}" fill="none" stroke="${color}" stroke-width="3" />`;
+            }
+            return res;
+        }
+
+        function drawRightAngleBox(V, P1, P2, color) {
+            const size = 16;
+            const dx1 = P1.x - V.x, dy1 = P1.y - V.y;
+            const len1 = Math.hypot(dx1, dy1) || 1;
+            const u1 = { x: dx1 / len1, y: dy1 / len1 };
+
+            const dx2 = P2.x - V.x, dy2 = P2.y - V.y;
+            const len2 = Math.hypot(dx2, dy2) || 1;
+            const u2 = { x: dx2 / len2, y: dy2 / len2 };
+
+            const p1 = { x: V.x + u1.x * size, y: V.y + u1.y * size };
+            const p2 = { x: V.x + u1.x * size + u2.x * size, y: V.y + u1.y * size + u2.y * size };
+            const p3 = { x: V.x + u2.x * size, y: V.y + u2.y * size };
+
+            return `<path d="M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}" fill="none" stroke="${color}" stroke-width="3" />`;
+        }
+
+        function updateBannerAndProof(t1) {
+            const titleEl = document.getElementById('banner-title');
+            const descEl = document.getElementById('banner-desc');
+            const grid = document.getElementById('proof-statements-grid');
+            if (!titleEl || !descEl || !grid) return;
+
+            const ab = Math.round(dist(t1.A, t1.B));
+            const ac = Math.round(dist(t1.A, t1.C));
+            const bc = Math.round(dist(t1.B, t1.C));
+
+            if (currentCriteria === 'SSS') {
+                titleEl.innerText = 'SSS (Side-Side-Side) Congruence Postulate';
+                descEl.innerText = 'If three sides of one triangle are congruent to three sides of another triangle, then the triangles are congruent.';
+                grid.innerHTML = `
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">1. AB ≅ DE (${ab}px)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">2. AC ≅ DF (${ac}px)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">3. BC ≅ EF (${bc}px)</div>
+                `;
+            } else if (currentCriteria === 'SAS') {
+                titleEl.innerText = 'SAS (Side-Angle-Side) Congruence Postulate';
+                descEl.innerText = 'If two sides and the INCLUDED angle of one triangle are congruent to two sides and the included angle of another, the triangles are congruent.';
+                grid.innerHTML = `
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">1. AB ≅ DE (${ab}px)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">2. ∠A ≅ ∠D (${params.angleA}°)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">3. AC ≅ DF (${ac}px)</div>
+                `;
+            } else if (currentCriteria === 'ASA') {
+                titleEl.innerText = 'ASA (Angle-Side-Angle) Congruence Postulate';
+                descEl.innerText = 'If two angles and the INCLUDED side of one triangle are congruent to two angles and the included side of another, the triangles are congruent.';
+                grid.innerHTML = `
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">1. ∠A ≅ ∠D (${params.angleA}°)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">2. AB ≅ DE (${ab}px)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">3. ∠B ≅ ∠E (${params.angleB}°)</div>
+                `;
+            } else if (currentCriteria === 'AAS') {
+                titleEl.innerText = 'AAS (Angle-Angle-Side) Congruence Theorem';
+                descEl.innerText = 'If two angles and a NON-INCLUDED side of one triangle are congruent to two angles and the corresponding non-included side of another, the triangles are congruent.';
+                grid.innerHTML = `
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">1. ∠A ≅ ∠D (${params.angleA}°)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">2. ∠B ≅ ∠E (${params.angleB}°)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">3. BC ≅ EF (${bc}px)</div>
+                `;
+            } else if (currentCriteria === 'HL') {
+                titleEl.innerText = 'HL (Hypotenuse-Leg) Congruence Theorem';
+                descEl.innerText = 'If the hypotenuse and one leg of a RIGHT triangle are congruent to the hypotenuse and leg of another right triangle, the triangles are congruent.';
+                grid.innerHTML = `
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow">1. ∠B & ∠E are 90° (Right Δs)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolGold">2. Leg AB ≅ DE (${params.hlLeg}px)</div>
+                    <div class="p-2.5 bg-schoolNavy border border-schoolNavy-border rounded-xl font-mono text-xs text-schoolYellow font-bold">3. Hyp AC ≅ DF (${params.hlHyp}px)</div>
+                `;
+            }
+        }
+
+        // ================= TAB 2: SUPERPOSITION LOGIC =================
+        function triggerExplode(action) {
+            const badge = document.getElementById('deconstruct-status-badge');
+            if (action === 'apart') {
+                deconstruct.presetIndex = 0;
+                deconstruct.targetProgress = 1;
+                deconstruct.status = 'apart';
+                if (badge) badge.innerText = 'Snapped Apart';
+            } else if (action === 'rearrange') {
+                deconstruct.presetIndex = (deconstruct.presetIndex % (scatterPresets.length - 1)) + 1;
+                deconstruct.targetProgress = 1;
+                deconstruct.status = 'rearranged';
+                
+                const angles = [45, 90, 135, 180, 220];
+                superState.rotate = angles[deconstruct.presetIndex % angles.length];
+                superState.flipH = (deconstruct.presetIndex % 2 === 0) ? 1 : -1;
+                document.getElementById('slider-rotate').value = superState.rotate;
+                document.getElementById('rotate-val').innerText = `${superState.rotate}°`;
+
+                if (badge) badge.innerText = `Rearranged (${superState.rotate}°)`;
+            } else if (action === 'assemble') {
+                deconstruct.targetProgress = 0;
+                deconstruct.status = 'assembling';
+                if (badge) badge.innerText = 'Snapping...';
+            }
+            animateDeconstruct();
+        }
+
+        function animateDeconstruct() {
+            if (deconstruct.animId) cancelAnimationFrame(deconstruct.animId);
+
+            function step() {
+                let diffP = deconstruct.targetProgress - deconstruct.progress;
+
+                if (Math.abs(diffP) > 0.005) {
+                    deconstruct.progress += diffP * 0.14;
+                    renderSuperposition();
+                    deconstruct.animId = requestAnimationFrame(step);
+                } else {
+                    deconstruct.progress = deconstruct.targetProgress;
+                    renderSuperposition();
+
+                    const badge = document.getElementById('deconstruct-status-badge');
+                    if (deconstruct.targetProgress === 0 && deconstruct.status === 'assembling') {
+                        deconstruct.status = 'intact';
+                        if (badge) badge.innerText = 'Assembled (Intact)';
+                        playSound('snap');
+                        confetti({ particleCount: 45, spread: 60, origin: { y: 0.6 } });
+                    }
+                }
+            }
+            step();
+        }
+
+        function updateSuperposition() {
+            superState.rotate = parseFloat(document.getElementById('slider-rotate').value);
+            document.getElementById('rotate-val').innerText = `${superState.rotate}°`;
+            renderSuperposition();
+        }
+
+        function flipSuperposition(dir) {
+            if (dir === 'H') superState.flipH *= -1;
+            if (dir === 'V') superState.flipV *= -1;
+            renderSuperposition();
+        }
+
+        function snapToSuperposition() {
+            superState.x = 120;
+            superState.y = 270;
+            superState.rotate = 0;
+            superState.flipH = 1;
+            superState.flipV = 1;
+
+            document.getElementById('slider-rotate').value = 0;
+            document.getElementById('rotate-val').innerText = '0°';
+
+            playSound('snap');
+            confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            renderSuperposition();
+        }
+
+        function resetSuperposition() {
+            superState = { x: 440, y: 220, rotate: 45, flipH: 1, flipV: 1, isDragging: false, dragStartX: 0, dragStartY: 0 };
+            document.getElementById('slider-rotate').value = 45;
+            document.getElementById('rotate-val').innerText = '45°';
+            renderSuperposition();
+        }
+
+        function renderSuperposition() {
+            const svg = document.getElementById('svg-superposition');
+            if (!svg) return;
+
+            const t1 = calculateTrianglePoints('SAS', { s1: 140, s2: 120, angleA: 50 }, 120, 270);
+            const rawT2 = calculateTrianglePoints('SAS', { s1: 140, s2: 120, angleA: 50 }, 0, 0);
+
+            const M2 = {
+                x: (rawT2.A.x + rawT2.B.x + rawT2.C.x) / 3,
+                y: (rawT2.A.y + rawT2.B.y + rawT2.C.y) / 3
+            };
+
+            function transformSuperPt(P) {
+                let dx = (P.x - M2.x) * superState.flipH;
+                let dy = (P.y - M2.y) * superState.flipV;
+
+                const rad = (superState.rotate * Math.PI) / 180;
+                const cos = Math.cos(rad);
+                const sin = Math.sin(rad);
+
+                const rx = dx * cos - dy * sin;
+                const ry = dx * sin + dy * cos;
+
+                return {
+                    x: superState.x + rx,
+                    y: superState.y + ry
+                };
+            }
+
+            const t2 = {
+                A: transformSuperPt(rawT2.A),
+                B: transformSuperPt(rawT2.B),
+                C: transformSuperPt(rawT2.C)
+            };
+
+            const gap = Math.round(dist(t1.A, t2.A));
+            const distEl = document.getElementById('distance-val');
+            if (distEl) {
+                distEl.innerText = `${gap} px ${gap < 15 && Math.abs(superState.rotate % 360) < 5 ? ' (ALIGNED!)' : ''}`;
+                distEl.className = gap < 15 && Math.abs(superState.rotate % 360) < 5 ? 'text-emerald-400 font-bold' : 'text-schoolYellow font-bold';
+            }
+
+            let html = '';
+
+            // Reference Triangle ABC (Gold)
+            html += renderTriangleSVG(t1, 'reference', ['A', 'B', 'C'], 'SSS', true, false, true);
+
+            // Target Triangle DEF (Yellow)
+            if (deconstruct.progress > 0.001) {
+                html += renderExplodedSuperpositionTriangle(t2, ['D', 'E', 'F']);
+            } else {
+                html += renderTriangleSVG(t2, 'target', ['D', 'E', 'F'], 'SSS', true, false, true);
+            }
+
+            svg.innerHTML = html;
+        }
+
+        function renderExplodedSuperpositionTriangle(t2, labels) {
+            const p = deconstruct.progress;
+            const presets = scatterPresets[deconstruct.presetIndex];
+            const strokeColor = '#FFC72C';
+
+            const segments = [
+                { P1: t2.A, P2: t2.B, label: `${labels[0]}${labels[1]}` },
+                { P1: t2.A, P2: t2.C, label: `${labels[0]}${labels[2]}` },
+                { P1: t2.B, P2: t2.C, label: `${labels[1]}${labels[2]}` }
+            ];
+
+            let html = '';
+
+            segments.forEach((seg, idx) => {
+                const sc = presets[idx];
+                const midX = (seg.P1.x + seg.P2.x) / 2;
+                const midY = (seg.P1.y + seg.P2.y) / 2;
+
+                const curCenterX = midX + p * sc.offset.x;
+                const curCenterY = midY + p * sc.offset.y;
+
+                const dx = seg.P2.x - seg.P1.x;
+                const dy = seg.P2.y - seg.P1.y;
+                const origAngle = Math.atan2(dy, dx);
+                const curAngle = origAngle + p * sc.angle;
+
+                const halfLen = Math.hypot(dx, dy) / 2;
+
+                const curP1 = {
+                    x: curCenterX - halfLen * Math.cos(curAngle),
+                    y: curCenterY - halfLen * Math.sin(curAngle)
+                };
+                const curP2 = {
+                    x: curCenterX + halfLen * Math.cos(curAngle),
+                    y: curCenterY + halfLen * Math.sin(curAngle)
+                };
+
+                if (p > 0.05) {
+                    html += `<line x1="${curP1.x}" y1="${curP1.y}" x2="${seg.P1.x}" y2="${seg.P1.y}" stroke="#CCCC99" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6" />`;
+                    html += `<line x1="${curP2.x}" y1="${curP2.y}" x2="${seg.P2.x}" y2="${seg.P2.y}" stroke="#CCCC99" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.6" />`;
+                }
+
+                html += `<line x1="${curP1.x}" y1="${curP1.y}" x2="${curP2.x}" y2="${curP2.y}" stroke="${strokeColor}" stroke-width="3.5" stroke-linecap="round" />`;
+
+                html += `<circle cx="${curP1.x}" cy="${curP1.y}" r="4" fill="#FFC72C" />`;
+                html += `<circle cx="${curP2.x}" cy="${curP2.y}" r="4" fill="#FFC72C" />`;
+            });
+
+            return html;
+        }
+
+        // Helper to convert screen pixel coordinates to SVG viewBox coordinates
+        function getSVGCoords(svg, clientX, clientY) {
+            const pt = svg.createSVGPoint();
+            pt.x = clientX;
+            pt.y = clientY;
+            const ctm = svg.getScreenCTM();
+            if (!ctm) return { x: clientX, y: clientY };
+            return pt.matrixTransform(ctm.inverse());
+        }
+
+        // Setup Drag Mouse & Touch Listeners for Superposition Canvas
+        const superWrapper = document.getElementById('svg-super-wrapper');
+        if (superWrapper) {
+            superWrapper.addEventListener('mousedown', (e) => {
+                superState.isDragging = true;
+                superState.dragStartX = e.clientX - superState.x;
+                superState.dragStartY = e.clientY - superState.y;
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (superState.isDragging && activeTab === 'superposition') {
+                    superState.x = e.clientX - superState.dragStartX;
+                    superState.y = e.clientY - superState.dragStartY;
+                    renderSuperposition();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                superState.isDragging = false;
+            });
+        }
+
+        // Setup Drag Mouse & Touch Listeners for Shortcuts Tab Canvas
+        const shortcutWrapper = document.getElementById('svg-shortcuts-wrapper');
+        if (shortcutWrapper) {
+            function handleShortcutDragStart(clientX, clientY) {
+                const svg = document.getElementById('svg-shortcuts');
+                if (!svg) return;
+                const pt = getSVGCoords(svg, clientX, clientY);
+
+                // Calculate centroids of current t1 and t2 in SVG coordinates
+                const t1Raw = calculateTrianglePoints(currentCriteria, params, 70, 270);
+                const c1 = {
+                    x: (t1Raw.A.x + t1Raw.B.x + t1Raw.C.x)/3 + shortcutDragState.t1Offset.x,
+                    y: (t1Raw.A.y + t1Raw.B.y + t1Raw.C.y)/3 + shortcutDragState.t1Offset.y
+                };
+
+                const rawT2 = calculateTrianglePoints(currentCriteria, params, 400, 270);
+                const t2Oriented = getOrientedTriangle(rawT2, shortcutDeconstruct.orientIndex);
+                const c2 = {
+                    x: (t2Oriented.A.x + t2Oriented.B.x + t2Oriented.C.x)/3 + shortcutDragState.t2Offset.x,
+                    y: (t2Oriented.A.y + t2Oriented.B.y + t2Oriented.C.y)/3 + shortcutDragState.t2Offset.y
+                };
+
+                const dist1 = Math.hypot(pt.x - c1.x, pt.y - c1.y);
+                const dist2 = Math.hypot(pt.x - c2.x, pt.y - c2.y);
+
+                shortcutDragState.isDragging = true;
+                shortcutDragState.targetTriangle = dist1 <= dist2 ? 't1' : 't2';
+                shortcutDragState.startX = pt.x;
+                shortcutDragState.startY = pt.y;
+                shortcutDragState.initialT1Offset = { ...shortcutDragState.t1Offset };
+                shortcutDragState.initialT2Offset = { ...shortcutDragState.t2Offset };
+            }
+
+            shortcutWrapper.addEventListener('mousedown', (e) => {
+                handleShortcutDragStart(e.clientX, e.clientY);
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (shortcutDragState.isDragging && activeTab === 'shortcuts') {
+                    const svg = document.getElementById('svg-shortcuts');
+                    if (!svg) return;
+                    const pt = getSVGCoords(svg, e.clientX, e.clientY);
+                    const dx = pt.x - shortcutDragState.startX;
+                    const dy = pt.y - shortcutDragState.startY;
+
+                    if (shortcutDragState.targetTriangle === 't1') {
+                        shortcutDragState.t1Offset.x = shortcutDragState.initialT1Offset.x + dx;
+                        shortcutDragState.t1Offset.y = shortcutDragState.initialT1Offset.y + dy;
+                    } else {
+                        shortcutDragState.t2Offset.x = shortcutDragState.initialT2Offset.x + dx;
+                        shortcutDragState.t2Offset.y = shortcutDragState.initialT2Offset.y + dy;
+                    }
+                    renderShortcuts();
+                }
+            });
+
+            window.addEventListener('mouseup', () => {
+                shortcutDragState.isDragging = false;
+            });
+
+            shortcutWrapper.addEventListener('touchstart', (e) => {
+                const touch = e.touches[0];
+                handleShortcutDragStart(touch.clientX, touch.clientY);
+            });
+
+            window.addEventListener('touchmove', (e) => {
+                if (shortcutDragState.isDragging && activeTab === 'shortcuts') {
+                    const touch = e.touches[0];
+                    const svg = document.getElementById('svg-shortcuts');
+                    if (!svg) return;
+                    const pt = getSVGCoords(svg, touch.clientX, touch.clientY);
+                    const dx = pt.x - shortcutDragState.startX;
+                    const dy = pt.y - shortcutDragState.startY;
+
+                    if (shortcutDragState.targetTriangle === 't1') {
+                        shortcutDragState.t1Offset.x = shortcutDragState.initialT1Offset.x + dx;
+                        shortcutDragState.t1Offset.y = shortcutDragState.initialT1Offset.y + dy;
+                    } else {
+                        shortcutDragState.t2Offset.x = shortcutDragState.initialT2Offset.x + dx;
+                        shortcutDragState.t2Offset.y = shortcutDragState.initialT2Offset.y + dy;
+                    }
+                    renderShortcuts();
+                }
+            });
+
+            window.addEventListener('touchend', () => {
+                shortcutDragState.isDragging = false;
+            });
+        }
+
+        // ================= TAB 3: THE SSA TRAP LOGIC =================
+        function drawSSATrap() {
+            const svg = document.getElementById('svg-ssa');
+            if (!svg) return;
+
+            const swingAngle = parseFloat(document.getElementById('slider-ssa-swing').value);
+            document.getElementById('ssa-angle-val').innerText = `${swingAngle}°`;
+
+            const A = { x: 120, y: 270 };
+            const lenBaseLine = 480;
+            const lenSide1 = 200;
+            const lenSwinging = 135;
+
+            const angleA = 35 * Math.PI / 180;
+            const C = { x: A.x + lenSide1 * Math.cos(angleA), y: A.y - lenSide1 * Math.sin(angleA) };
+
+            const baseSwingRad = (-90 + swingAngle) * Math.PI / 180;
+            const B_current = {
+                x: C.x + lenSwinging * Math.cos(baseSwingRad),
+                y: C.y - lenSwinging * Math.sin(baseSwingRad)
+            };
+
+            const dy = A.y - C.y;
+            const dx_offset = Math.sqrt(lenSwinging * lenSwinging - dy * dy);
+
+            const C1_base = { x: C.x - dx_offset, y: A.y };
+            const C2_base = { x: C.x + dx_offset, y: A.y };
+
+            let html = `
+                <line x1="${A.x - 20}" y1="${A.y}" x2="${A.x + lenBaseLine}" y2="${A.y}" stroke="#475569" stroke-width="2.5" stroke-dasharray="4,4" />
+                
+                <line x1="${A.x}" y1="${A.y}" x2="${C.x}" y2="${C.y}" stroke="#CCCC99" stroke-width="5" />
+                <text x="${(A.x+C.x)/2 - 20}" y="${(A.y+C.y)/2 - 12}" fill="#CCCC99" font-size="13" font-weight="bold">Side 1 (Fixed)</text>
+
+                <path d="M ${C1_base.x - 20} ${A.y} A ${lenSwinging} ${lenSwinging} 0 0 0 ${C2_base.x + 20} ${A.y}" fill="none" stroke="#FFC72C" stroke-width="2.5" stroke-dasharray="4,4" />
+
+                <circle cx="${C1_base.x}" cy="${C1_base.y}" r="6" fill="#CCCC99" />
+                <text x="${C1_base.x - 10}" y="${C1_base.y + 22}" fill="#CCCC99" font-weight="bold" font-size="14">B₁ (Pos 1)</text>
+                <line x1="${C.x}" y1="${C.y}" x2="${C1_base.x}" y2="${C1_base.y}" stroke="#CCCC99" stroke-width="2.5" stroke-dasharray="3,3" />
+
+                <circle cx="${C2_base.x}" cy="${C2_base.y}" r="6" fill="#FFC72C" />
+                <text x="${C2_base.x - 10}" y="${C2_base.y + 22}" fill="#FFC72C" font-weight="bold" font-size="14">B₂ (Pos 2)</text>
+                <line x1="${C.x}" y1="${C.y}" x2="${C2_base.x}" y2="${C2_base.y}" stroke="#FFC72C" stroke-width="2.5" stroke-dasharray="3,3" />
+
+                <line x1="${C.x}" y1="${C.y}" x2="${B_current.x}" y2="${B_current.y}" stroke="#FFC72C" stroke-width="5" />
+                <circle cx="${B_current.x}" cy="${B_current.y}" r="8" fill="#FFC72C" />
+                <text x="${C.x + 10}" y="${C.y - 15}" fill="#e2e8f0" font-weight="bold" font-size="15">C (Hinge)</text>
+                
+                ${drawAngleArc(A, {x: A.x + 100, y: A.y}, C, 1, '#FFC72C')}
+                <text x="${A.x + 35}" y="${A.y - 10}" fill="#FFC72C" font-size="13" font-weight="bold">Given ∠A</text>
+                <text x="${A.x - 15}" y="${A.y + 22}" fill="#e2e8f0" font-weight="bold" font-size="15">A</text>
+            `;
+
+            svg.innerHTML = html;
+        }
+
+        function setSSAPosition(pos) {
+            const slider = document.getElementById('slider-ssa-swing');
+            if (slider) {
+                slider.value = pos === 1 ? -42 : 10;
+                drawSSATrap();
+            }
+        }
+
+        // ================= TAB 4: QUIZ MODE LOGIC =================
+        const quizBank = [
+            {
+                type: 'SSS',
+                t1: { ticks: [1, 2, 3], arcs: [] },
+                t2: { ticks: [1, 2, 3], arcs: [] },
+                ans: 'SSS',
+                exp: 'All 3 pairs of corresponding sides have matching tick marks (SSS).'
+            },
+            {
+                type: 'SAS',
+                t1: { ticks: [1, 2, 0], arcs: [1] },
+                t2: { ticks: [1, 2, 0], arcs: [1] },
+                ans: 'SAS',
+                exp: 'Two sides (AB and AC) and the INCLUDED angle between them (∠A) are marked (SAS).'
+            },
+            {
+                type: 'SAS_ALT',
+                t1: { ticks: [1, 0, 2], arcs: [2] },
+                t2: { ticks: [1, 0, 2], arcs: [2] },
+                ans: 'SAS',
+                exp: 'Two sides (AB and BC) and the INCLUDED angle between them (∠B) are marked (SAS).'
+            },
+            {
+                type: 'ASA',
+                t1: { ticks: [1, 0, 0], arcs: [1, 2] },
+                t2: { ticks: [1, 0, 0], arcs: [1, 2] },
+                ans: 'ASA',
+                exp: 'Two angles (∠A, ∠B) and the INCLUDED side between them (AB) are marked (ASA).'
+            },
+            {
+                type: 'AAS',
+                t1: { ticks: [0, 1, 0], arcs: [1, 2] },
+                t2: { ticks: [0, 1, 0], arcs: [1, 2] },
+                ans: 'AAS',
+                exp: 'Two angles (∠A, ∠B) and a NON-INCLUDED side (AC) are marked (AAS).'
+            },
+            {
+                type: 'HL',
+                t1: { ticks: [1, 2, 0], arcs: ['right'] },
+                t2: { ticks: [1, 2, 0], arcs: ['right'] },
+                ans: 'HL',
+                exp: 'Both are Right Triangles with congruent Leg (AB) and Hypotenuse (AC) marked (HL).'
+            },
+            {
+                type: 'SSA_TRAP',
+                t1: { ticks: [1, 2, 0], arcs: [2] },
+                t2: { ticks: [1, 2, 0], arcs: [2] },
+                ans: 'NONE',
+                exp: 'Warning! Sides AB and AC are marked, but non-included ∠B is marked (SSA). SSA does NOT guarantee congruence!'
+            },
+            {
+                type: 'SSA_TRAP_DIFF',
+                t1: { ticks: [0, 2, 1], arcs: [1] },
+                t2: { ticks: [0, 2, 1], arcs: [1] },
+                ans: 'NONE',
+                exp: 'Ambiguous Case (SSA)! Both triangles have identical SSA markings (2 sides and a non-included angle), but ΔABC is obtuse and ΔDEF is acute. SSA does NOT guarantee congruence!'
+            },
+            {
+                type: 'AAA_TRAP',
+                t1: { ticks: [0, 0, 0], arcs: [1, 2, 3] },
+                t2: { ticks: [0, 0, 0], arcs: [1, 2, 3] },
+                ans: 'NONE',
+                exp: 'AAA proves similarity, NOT congruence! Triangles with equal angles can be different sizes.'
+            }
+        ];
+
+        function nextQuizQuestion() {
+            quizState.answered = false;
+            const randomProb = quizBank[Math.floor(Math.random() * quizBank.length)];
+            quizState.currentAnswer = randomProb.ans;
+            quizState.explanation = randomProb.exp;
+
+            const feedback = document.getElementById('quiz-feedback');
+            if (feedback) {
+                feedback.innerHTML = `<span class="text-slate-400 italic">Select your answer from the choices on the left!</span>`;
+                feedback.className = "p-3 bg-schoolNavy border border-schoolNavy-border rounded-xl text-xs text-slate-300 min-h-[50px] flex items-center gap-3";
+            }
+
+            renderQuizSVG(randomProb);
+        }
+
+        function renderQuizSVG(prob) {
+            const svg = document.getElementById('svg-quiz');
+            if (!svg) return;
+
+            let t1, t2;
+            if (prob.type === 'HL' || prob.ans === 'HL') {
+                t1 = calculateTrianglePoints('HL', { hlLeg: 110, hlHyp: 160 }, 80, 270);
+                t2 = calculateTrianglePoints('HL', { hlLeg: 110, hlHyp: 160 }, 410, 270);
+            } else if (prob.type === 'SSA_TRAP_DIFF') {
+                // Obtuse SSA triangle (Position 1)
+                t1 = {
+                    A: { x: 70, y: 270 },
+                    B: { x: 142, y: 270 },
+                    C: { x: 193, y: 184 }
+                };
+                // Acute SSA triangle (Position 2 - Same given SSA measures!)
+                t2 = {
+                    A: { x: 370, y: 270 },
+                    B: { x: 544, y: 270 },
+                    C: { x: 493, y: 184 }
+                };
+            } else {
+                t1 = calculateTrianglePoints('SAS', { s1: 130, s2: 110, angleA: 60 }, 80, 260);
+                t2 = calculateTrianglePoints('SAS', { s1: 130, s2: 110, angleA: 60 }, 410, 260);
+            }
+
+            let html = '';
+            
+            html += `<polygon points="${t1.A.x},${t1.A.y} ${t1.B.x},${t1.B.y} ${t1.C.x},${t1.C.y}" fill="rgba(204, 204, 153, 0.2)" stroke="#CCCC99" stroke-width="5" />`;
+            html += `<text x="${t1.A.x-15}" y="${t1.A.y+15}" fill="#CCCC99" font-bold font-size="15">A</text>`;
+            html += `<text x="${t1.B.x+10}" y="${t1.B.y+15}" fill="#CCCC99" font-bold font-size="15">B</text>`;
+            html += `<text x="${t1.C.x}" y="${t1.C.y-10}" fill="#CCCC99" font-bold font-size="15" text-anchor="middle">C</text>`;
+
+            html += `<polygon points="${t2.A.x},${t2.A.y} ${t2.B.x},${t2.B.y} ${t2.C.x},${t2.C.y}" fill="rgba(255, 199, 44, 0.2)" stroke="#FFC72C" stroke-width="5" />`;
+            html += `<text x="${t2.A.x-15}" y="${t2.A.y+15}" fill="#FFC72C" font-bold font-size="15">D</text>`;
+            html += `<text x="${t2.B.x+10}" y="${t2.B.y+15}" fill="#FFC72C" font-bold font-size="15">E</text>`;
+            html += `<text x="${t2.C.x}" y="${t2.C.y-10}" fill="#FFC72C" font-bold font-size="15" text-anchor="middle">F</text>`;
+
+            // Render side ticks
+            if (prob.t1.ticks[0]) html += drawSideTicks(t1.A, t1.B, prob.t1.ticks[0], '#CCCC99');
+            if (prob.t1.ticks[1]) html += drawSideTicks(t1.A, t1.C, prob.t1.ticks[1], '#CCCC99');
+            if (prob.t1.ticks[2]) html += drawSideTicks(t1.B, t1.C, prob.t1.ticks[2], '#CCCC99');
+
+            // Render angle arcs
+            if (prob.t1.arcs.includes(1)) html += drawAngleArc(t1.A, t1.B, t1.C, 1, '#CCCC99');
+            if (prob.t1.arcs.includes(2)) html += drawAngleArc(t1.B, t1.A, t1.C, 2, '#CCCC99');
+            if (prob.t1.arcs.includes(3)) html += drawAngleArc(t1.C, t1.A, t1.B, 3, '#CCCC99');
+            if (prob.t1.arcs.includes('right')) html += drawRightAngleBox(t1.B, t1.A, t1.C, '#CCCC99');
+
+            if (prob.t2.ticks[0]) html += drawSideTicks(t2.A, t2.B, prob.t2.ticks[0], '#FFC72C');
+            if (prob.t2.ticks[1]) html += drawSideTicks(t2.A, t2.C, prob.t2.ticks[1], '#FFC72C');
+            if (prob.t2.ticks[2]) html += drawSideTicks(t2.B, t2.C, prob.t2.ticks[2], '#FFC72C');
+
+            if (prob.t2.arcs.includes(1)) html += drawAngleArc(t2.A, t2.B, t2.C, 1, '#FFC72C');
+            if (prob.t2.arcs.includes(2)) html += drawAngleArc(t2.B, t2.A, t2.C, 2, '#FFC72C');
+            if (prob.t2.arcs.includes(3)) html += drawAngleArc(t2.C, t2.A, t2.B, 3, '#FFC72C');
+            if (prob.t2.arcs.includes('right')) html += drawRightAngleBox(t2.B, t2.A, t2.C, '#FFC72C');
+
+            svg.innerHTML = html;
+        }
+
+        function checkAnswer(userChoice) {
+            if (quizState.answered) return;
+            quizState.answered = true;
+            quizState.total++;
+
+            const isCorrect = userChoice === quizState.currentAnswer;
+            const feedbackEl = document.getElementById('quiz-feedback');
+
+            if (isCorrect) {
+                quizState.score++;
+                quizState.streak++;
+                playSound('correct');
+                confetti({ particleCount: 30, spread: 50, origin: { y: 0.7 } });
+
+                if (feedbackEl) {
+                    feedbackEl.className = "p-3 bg-emerald-950/60 border border-emerald-500/50 rounded-xl text-xs text-emerald-200 flex items-start gap-3";
+                    feedbackEl.innerHTML = `
+                        <div class="p-1 bg-emerald-500/20 text-emerald-400 rounded mt-0.5">✓</div>
+                        <div>
+                            <span class="font-bold text-white block">Correct! (${userChoice})</span>
+                            <span>${quizState.explanation}</span>
+                        </div>
+                    `;
+                }
+            } else {
+                quizState.streak = 0;
+                playSound('wrong');
+
+                if (feedbackEl) {
+                    feedbackEl.className = "p-3 bg-rose-950/60 border border-rose-500/50 rounded-xl text-xs text-rose-200 flex items-start gap-3";
+                    feedbackEl.innerHTML = `
+                        <div class="p-1 bg-rose-500/20 text-rose-400 rounded mt-0.5">✗</div>
+                        <div>
+                            <span class="font-bold text-white block">Incorrect (Correct answer: ${quizState.currentAnswer})</span>
+                            <span>${quizState.explanation}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            const scoreEl = document.getElementById('quiz-score');
+            const streakEl = document.getElementById('quiz-streak');
+            if (scoreEl) scoreEl.innerText = `${quizState.score} / ${quizState.total}`;
+            if (streakEl) streakEl.innerText = `${quizState.streak} 🔥`;
+        }
+
+        function resetQuiz() {
+            quizState.score = 0;
+            quizState.total = 0;
+            quizState.streak = 0;
+            const scoreEl = document.getElementById('quiz-score');
+            const streakEl = document.getElementById('quiz-streak');
+            if (scoreEl) scoreEl.innerText = "0 / 0";
+            if (streakEl) streakEl.innerText = "0 🔥";
+            nextQuizQuestion();
+        }
+
+        function dist(P1, P2) {
+            const dx = P2.x - P1.x;
+            const dy = P2.y - P1.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Initialize App on Load
+        window.onload = function() {
+            buildSliders();
+            renderShortcuts();
+            resetSuperposition();
+            drawSSATrap();
+        };
+    </script>
+</body>
+</html>
