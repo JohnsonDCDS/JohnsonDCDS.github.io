@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volumes with Cross Sections - AP Calculus AB/BC Visualizer</title>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Math.js for parsing mathematical expressions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #071124;
+            color: #f8fafc;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1933;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3a6e;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+        .glass-panel {
+            background: rgba(13, 30, 62, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 191, 36, 0.16);
+        }
+        .shape-btn.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.45), rgba(251, 191, 36, 0.22));
+            border-color: #fbbf24;
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(251, 191, 36, 0.24);
+        }
+    </style>
+</head>
+<body class="min-h-screen lg:h-screen flex flex-col lg:overflow-hidden bg-[#071124]">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[#09162e]/95 border-b border-blue-900/70 px-4 py-3 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 via-blue-500 to-amber-400 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 ring-1 ring-amber-300/40">
+                <i class="fa-solid fa-layer-group text-base"></i>
+            </div>
+            <div>
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Volumes with Cross Sections
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/40">AP Calculus AB/BC</span>
+                </h1>
+                <p class="text-xs text-blue-200/70 hidden sm:block">Interactive 3D Cross-Sectional Solid Builder & Differential Slice Inspector</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu -->
+        <div class="hidden xl:flex items-center space-x-1.5">
+            <span class="text-xs text-blue-200/75 font-medium mr-1"><i class="fa-solid fa-bookmark mr-1 text-amber-400"></i> Presets:</span>
+            <button onclick="loadPreset('circleSquares')" class="px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Disk Base + Squares (dx)</button>
+            <button onclick="loadPreset('lensSemicircles')" class="px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Lens + Semi-Circles (dx)</button>
+            <button onclick="loadPreset('triangleEquilateral')" class="px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Triangle + Equilateral (dy)</button>
+            <button onclick="loadPreset('parabolaIsoHyp')" class="px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Parabola + Iso Right (dy)</button>
+            <button onclick="loadPreset('sineCircles')" class="px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Sine + Circles (dx)</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button id="resetCamBtn" class="px-3 py-1.5 text-xs rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-100 border border-blue-800 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-video text-amber-400"></i> <span class="hidden sm:inline">Reset View</span>
+            </button>
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold flex items-center gap-1.5 transition shadow-sm shadow-amber-500/20">
+                <i class="fa-solid fa-circle-question"></i> Guide
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="flex-1 flex flex-col lg:flex-row lg:overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-full lg:w-96 bg-[#09162e]/95 border-b lg:border-b-0 lg:border-r border-blue-900/70 flex flex-col lg:overflow-y-auto shrink-0 z-10 p-4 space-y-4">
+
+            <!-- Mobile / Tablet Preset Selector -->
+            <div class="xl:hidden glass-panel p-3 rounded-xl flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold text-blue-100 shrink-0"><i class="fa-solid fa-bookmark text-amber-400 mr-1"></i> Preset:</span>
+                <select id="mobilePresetSelect" onchange="if(this.value) loadPreset(this.value)" class="w-full px-2.5 py-1.5 text-xs bg-[#060e1f] border border-blue-800 rounded-lg text-blue-100 focus:outline-none focus:border-amber-400">
+                    <option value="circleSquares">Disk Base + Squares (Vertical dx)</option>
+                    <option value="lensSemicircles">Lens Region + Semi-Circles (Vertical dx)</option>
+                    <option value="triangleEquilateral">Triangle Base + Equilateral Δ (Horizontal dy)</option>
+                    <option value="parabolaIsoHyp">Parabola + Isosceles Right Δ Hypotenuse (dy)</option>
+                    <option value="sineCircles">Sine Arch + Full Circles (Vertical dx)</option>
+                </select>
+            </div>
+
+            <!-- Active Setup Identification Card -->
+            <div class="p-3.5 rounded-xl bg-gradient-to-r from-blue-900/75 via-blue-950/90 to-[#0f2447] border border-amber-400/40 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-amber-400">Cross-Section Configuration</div>
+                    <div id="activeShapeTitle" class="text-base font-bold text-white">Squares</div>
+                </div>
+                <span id="orientationTag" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/40">
+                    Vertical (⊥ x-axis)
+                </span>
+            </div>
+
+            <!-- Cross-Section Orientation & Shape Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                    <i class="fa-solid fa-shapes text-amber-400"></i> Cross-Section Orientation & Shape
+                </h2>
+
+                <!-- Vertical (dx) vs Horizontal (dy) Toggle -->
+                <div class="space-y-1">
+                    <label class="text-xs text-blue-200/75 block">Slice Orientation:</label>
+                    <div class="grid grid-cols-2 gap-1.5 bg-[#060e1f] p-1 rounded-lg border border-blue-900/80">
+                        <button id="orientVertBtn" onclick="setOrientation('vertical')" class="px-2.5 py-2 rounded-md text-xs font-semibold bg-blue-600 text-white shadow ring-1 ring-amber-400/40 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-arrows-up-down text-amber-300"></i> Vertical (dx)
+                        </button>
+                        <button id="orientHorizBtn" onclick="setOrientation('horizontal')" class="px-2.5 py-2 rounded-md text-xs font-semibold text-blue-300/75 hover:text-white transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-arrows-left-right"></i> Horizontal (dy)
+                        </button>
+                    </div>
+                    <p id="orientationSubtitle" class="text-[11px] text-blue-200/75 pt-0.5">
+                        Cross sections are <strong class="text-amber-300">perpendicular to the x-axis</strong> (thickness <span class="font-mono">dx</span>).
+                    </p>
+                </div>
+
+                <!-- Cross-Section Shape Selector Grid -->
+                <div class="space-y-1.5 pt-1">
+                    <label class="text-xs text-blue-200/75 block">Cross-Section Shape:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" data-shape="square" onclick="setShape('square')" class="shape-btn active px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2">
+                            <span class="w-6 h-6 rounded bg-blue-500/25 text-amber-300 flex items-center justify-center text-xs shrink-0"><i class="fa-regular fa-square"></i></span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Square</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = s²</div>
+                            </div>
+                        </button>
+
+                        <button type="button" data-shape="semicircle" onclick="setShape('semicircle')" class="shape-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                            <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 16a9 9 0 0 1 18 0H3z"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Semi-Circle</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = (π/8)s²</div>
+                            </div>
+                        </button>
+
+                        <button type="button" data-shape="circle" onclick="setShape('circle')" class="shape-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                            <span class="w-6 h-6 rounded bg-blue-500/25 text-sky-300 flex items-center justify-center text-xs shrink-0"><i class="fa-regular fa-circle"></i></span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Circle</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = (π/4)s²</div>
+                            </div>
+                        </button>
+
+                        <button type="button" data-shape="equilateral" onclick="setShape('equilateral')" class="shape-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                            <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 4 21 19 3 19"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Equilateral Δ</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = (√3/4)s²</div>
+                            </div>
+                        </button>
+
+                        <button type="button" data-shape="iso_leg" onclick="setShape('iso_leg')" class="shape-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                            <span class="w-6 h-6 rounded bg-blue-500/25 text-sky-300 flex items-center justify-center text-xs shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="4 4 4 20 20 20"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Iso Right (Leg)</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = (1/2)s²</div>
+                            </div>
+                        </button>
+
+                        <button type="button" data-shape="iso_hyp" onclick="setShape('iso_hyp')" class="shape-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                            <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0">
+                                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 8 21 18 3 18"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Iso Right (Hyp)</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">A = (1/4)s²</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Boundary Curves Input Section -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-root-variable text-amber-400"></i> Base Region Curves
+                    </h2>
+                    <div class="flex items-center gap-1 bg-[#060e1f] p-1 rounded-lg border border-blue-900/80 text-xs">
+                        <button id="singleCurveBtn" onclick="setNumCurves(1)" class="px-2 py-0.5 rounded font-medium text-blue-300/75 transition">1 Curve</button>
+                        <button id="doubleCurveBtn" onclick="setNumCurves(2)" class="px-2 py-0.5 rounded font-medium bg-blue-600 text-white shadow-sm transition">2 Curves</button>
+                    </div>
+                </div>
+
+                <!-- f Input -->
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-sky-300 flex items-center justify-between">
+                        <span id="funcFLabel">Top Curve f(x):</span>
+                        <span id="funcFHint" class="text-[10px] text-blue-200/65">e.g. sqrt(4 - x^2)</span>
+                    </label>
+                    <div class="relative">
+                        <span id="funcFPrefix" class="absolute left-3 top-2.5 text-xs text-sky-400 font-mono font-bold">f(x) =</span>
+                        <input type="text" id="funcFInput" value="sqrt(4 - x^2)" class="w-full pl-14 pr-3 py-2 text-sm bg-[#060e1f] border border-blue-800/90 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-sky-400 transition">
+                    </div>
+                </div>
+
+                <!-- g Input -->
+                <div id="gCurveContainer" class="space-y-1">
+                    <label class="text-xs font-medium text-amber-300 flex items-center justify-between">
+                        <span id="funcGLabel">Bottom Curve g(x):</span>
+                        <span id="funcGHint" class="text-[10px] text-blue-200/65">e.g. -sqrt(4 - x^2), 0</span>
+                    </label>
+                    <div class="relative">
+                        <span id="funcGPrefix" class="absolute left-3 top-2.5 text-xs text-amber-400 font-mono font-bold">g(x) =</span>
+                        <input type="text" id="funcGInput" value="-sqrt(4 - x^2)" class="w-full pl-14 pr-3 py-2 text-sm bg-[#060e1f] border border-blue-800/90 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-amber-400 transition">
+                    </div>
+                </div>
+
+                <div id="functionError" class="hidden text-xs text-amber-300 bg-amber-950/50 p-2 rounded-md border border-amber-600/60 flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-400"></i> <span id="errorMsg">Invalid Math Syntax</span>
+                </div>
+
+                <!-- Integration Bounds -->
+                <div class="grid grid-cols-2 gap-3 pt-1 border-t border-blue-900/70">
+                    <div>
+                        <label id="boundALabel" class="text-xs text-blue-200/75 mb-1 block">Lower Bound (a):</label>
+                        <input type="number" id="boundAInput" value="-2" step="0.25" class="w-full px-3 py-1.5 text-sm bg-[#060e1f] border border-blue-800/90 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-amber-400">
+                    </div>
+                    <div>
+                        <label id="boundBLabel" class="text-xs text-blue-200/75 mb-1 block">Upper Bound (b):</label>
+                        <input type="number" id="boundBInput" value="2" step="0.25" class="w-full px-3 py-1.5 text-sm bg-[#060e1f] border border-blue-800/90 rounded-lg text-slate-100 font-mono focus:outline-none focus:border-amber-400">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Visualization Controls Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-amber-400"></i> Interactive Controls
+                </h2>
+
+                <!-- Solid Build Sweep Slider -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span class="text-blue-100 font-medium">Solid Extrusion Build:</span>
+                        <span id="buildPctText" class="text-sky-400 font-mono font-bold">100%</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="buildSlider" min="0" max="100" value="100" class="w-full accent-blue-500 bg-[#060e1f] rounded-lg h-2 cursor-pointer">
+                        <button id="playBuildBtn" title="Animate Solid Extrusion" class="p-1.5 rounded-md bg-blue-950 hover:bg-blue-900 text-sky-400 border border-blue-800 w-8 h-8 flex items-center justify-center transition shrink-0">
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Differential Slice Inspector Slider -->
+                <div class="space-y-1 pt-2 border-t border-blue-900/70">
+                    <div class="flex justify-between text-xs">
+                        <span id="sliceSliderLabel" class="text-blue-100 font-medium">Active Slice Position (x):</span>
+                        <span id="slicePosText" class="text-amber-400 font-mono font-bold">x = 0.00</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="range" id="slicePosSlider" min="0" max="100" value="50" class="w-full accent-amber-400 bg-[#060e1f] rounded-lg h-2 cursor-pointer">
+                        <button id="playSliceBtn" title="Sweep Differential Slice" class="p-1.5 rounded-md bg-blue-950 hover:bg-blue-900 text-amber-400 border border-blue-800 w-8 h-8 flex items-center justify-center transition shrink-0">
+                            <i class="fa-solid fa-play text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Render Toggles -->
+                <div class="grid grid-cols-2 gap-2 pt-2 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showSolidCheck" checked class="accent-blue-500 rounded">
+                        <span>Show 3D Solid</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showRibsCheck" checked class="accent-blue-500 rounded">
+                        <span>Slice Ribs</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showSliceCheck" checked class="accent-amber-400 rounded">
+                        <span>Highlight Slice</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showBaseCheck" checked class="accent-amber-400 rounded">
+                        <span>2D Base Region</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Main Workspace: Split 3D Viewport, 2D Diagrams, and Calculus Formula Panel -->
+        <main class="flex-1 flex flex-col lg:overflow-hidden bg-[#071124]">
+
+            <!-- Upper Split Container (3D View + 2D Base & Cross-Section Profile Views) -->
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-[420px]">
+
+                <!-- 3D Three.js Canvas Container -->
+                <div class="flex-1 relative bg-[#071124] border-b md:border-b-0 md:border-r border-blue-900/70 overflow-hidden min-h-[340px]">
+                    <div id="canvas3d" class="w-full h-full"></div>
+
+                    <!-- Floating 3D Viewport Hint -->
+                    <div class="absolute top-3 left-3 bg-[#09162e]/85 backdrop-blur border border-blue-800/80 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-100 flex items-center gap-2 pointer-events-none shadow-lg">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        3D Solid (Left-Drag: Rotate • Right-Drag: Pan • Scroll: Zoom)
+                    </div>
+
+                    <!-- 3D Axis & Color Legend -->
+                    <div class="absolute bottom-3 left-3 bg-[#09162e]/85 backdrop-blur border border-blue-800/80 p-2.5 rounded-lg text-[11px] text-blue-100 space-y-1 pointer-events-none shadow-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-blue-600/85 border border-sky-400"></span> Cross-Sectional Solid
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-amber-400/95 border border-yellow-200"></span> Active Differential Slice
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-sky-500/35 border border-sky-400"></span> Base Region on xy-Plane
+                        </div>
+                        <div class="pt-1 border-t border-blue-900/80 flex items-center gap-3 font-mono text-[10px]">
+                            <span class="text-sky-400 font-bold">X-axis</span>
+                            <span class="text-amber-300 font-bold">Y-axis</span>
+                            <span class="text-blue-300 font-bold">Z-height</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 2D Visualization Column: Top = 2D Base Region, Bottom = True Cross-Section Profile -->
+                <div class="w-full md:w-80 lg:w-96 flex flex-col bg-[#09162e]/95 border-blue-900/70 overflow-hidden shrink-0">
+                    
+                    <!-- Top Half: 2D Base Region in xy-Plane -->
+                    <div class="flex-1 flex flex-col border-b border-blue-900/70 min-h-[210px]">
+                        <div class="px-3 py-2 border-b border-blue-900/70 flex items-center justify-between bg-[#09162e]">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-area text-sky-400"></i> 2D Base Region (xy-Plane)
+                            </span>
+                            <span id="baseCoordBadge" class="text-[10px] text-amber-300 font-mono bg-amber-400/15 px-2 py-0.5 rounded border border-amber-400/40">⊥ x-axis (dx)</span>
+                        </div>
+                        <div class="flex-1 relative p-2 bg-[#060e1f] flex items-center justify-center">
+                            <canvas id="canvas2dBase" class="w-full h-full rounded-lg bg-[#0a1832] border border-blue-900/70"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Half: True Cross-Section Geometry Inspector -->
+                    <div class="h-44 sm:h-48 flex flex-col shrink-0">
+                        <div class="px-3 py-1.5 border-b border-blue-900/70 flex items-center justify-between bg-[#09162e]">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                                <i class="fa-solid fa-vector-square text-amber-400"></i> Cross-Section Profile
+                            </span>
+                            <span id="profileBaseLengthTag" class="text-[10px] text-amber-300 font-mono">s = 4.00</span>
+                        </div>
+                        <div class="flex-1 relative p-2 bg-[#060e1f] flex items-center justify-center">
+                            <canvas id="canvas2dProfile" class="w-full h-full rounded-lg bg-[#0a1832] border border-blue-900/70"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Bottom Calculus Explanation & Definite Integral Panel -->
+            <div class="h-auto lg:max-h-56 bg-[#09162e] border-t border-blue-900/70 p-4 overflow-y-auto shrink-0 space-y-3">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-blue-900/70 pb-3">
+
+                    <!-- Method Math Formula Header -->
+                    <div>
+                        <div class="text-xs font-semibold text-amber-400 uppercase tracking-wider">AP Calculus Definite Integral Setup</div>
+                        <div id="mathIntegralFormula" class="text-sm sm:text-base font-mono font-bold text-white tracking-wide mt-0.5">
+                            V = ∫[-2, 2] [ f(x) - g(x) ]² dx
+                        </div>
+                    </div>
+
+                    <!-- Computed Exact Volume Result Box -->
+                    <div class="flex items-center gap-3 bg-[#060e1f] px-4 py-2 rounded-xl border border-amber-400/35 self-start md:self-auto shadow-inner">
+                        <div class="text-right">
+                            <div class="text-[10px] uppercase font-bold text-blue-200/70">Total Volume</div>
+                            <div id="volumeResultValue" class="text-lg font-mono font-bold text-amber-400">42.6667 units³</div>
+                        </div>
+                        <div id="exactFactorValue" class="text-xs font-mono text-sky-300 bg-blue-950/90 px-2.5 py-1 rounded-md border border-blue-800">
+                            ∫ s² dx = 42.667
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Differential Slice Explanation -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+
+                    <!-- Box 1: Slice Base & Height Breakdown -->
+                    <div class="p-2.5 rounded-lg bg-[#060e1f]/80 border border-blue-900/70 space-y-1">
+                        <span class="font-bold text-sky-300 block border-b border-blue-900/60 pb-1">
+                            <i class="fa-solid fa-ruler-combined text-sky-400 mr-1"></i> Slice Dimensions @ <span id="explainCoordLabel">x = 0.00</span>
+                        </span>
+                        <div id="explainSliceParams" class="text-blue-100 font-mono space-y-0.5">
+                            <div>Base s(x) = |f(x) - g(x)| = 4.00</div>
+                            <div>Height h(x) = s = 4.00</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 2: Differential Slice Area -->
+                    <div class="p-2.5 rounded-lg bg-[#060e1f]/80 border border-blue-900/70 space-y-1">
+                        <span class="font-bold text-amber-300 block border-b border-blue-900/60 pb-1">
+                            <i class="fa-solid fa-shapes text-amber-400 mr-1"></i> Cross-Section Area <span id="explainAreaFunc">A(x)</span>
+                        </span>
+                        <div id="explainSliceArea" class="text-blue-100 font-mono space-y-0.5">
+                            <div>A(x) = s² = 16.0000</div>
+                            <div>dV = A(x) dx</div>
+                        </div>
+                    </div>
+
+                    <!-- Box 3: Pedagogical AP Calculus Note -->
+                    <div class="p-2.5 rounded-lg bg-blue-950/45 border border-amber-400/25 space-y-1">
+                        <span class="font-bold text-amber-300 block border-b border-amber-400/20 pb-1">
+                            <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i> AP Calculus Concept Note
+                        </span>
+                        <div id="explainTeacherTip" class="text-blue-100/90 leading-relaxed text-[11px]">
+                            Every cross-section perpendicular to the x-axis has base s(x) = Top - Bottom and thickness dx.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Help & AP Calculus Reference Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#040a17]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#09162e] border border-amber-400/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-blue-300 hover:text-amber-300 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/25 border border-amber-400/40 text-amber-400 flex items-center justify-center font-bold text-xl">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Volumes with Known Cross Sections</h3>
+                    <p class="text-xs text-blue-200/75">AP Calculus AB & BC Formula Reference</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-blue-100 leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-sky-400 block">1. Vertical vs. Horizontal Cross Sections</span>
+                    <p>• <strong>Perpendicular to the x-axis (Vertical, dx):</strong> Slice width is vertical across the base region: <span class="font-mono text-amber-300">s(x) = |f(x) - g(x)|</span>. Integrate with respect to <span class="font-mono text-white">x</span> from <span class="font-mono text-white">a</span> to <span class="font-mono text-white">b</span>.<br>
+                    • <strong>Perpendicular to the y-axis (Horizontal, dy):</strong> Slice width is horizontal across the base region: <span class="font-mono text-amber-300">s(y) = |f(y) - g(y)|</span> (Right minus Left). Integrate with respect to <span class="font-mono text-white">y</span> from <span class="font-mono text-white">c</span> to <span class="font-mono text-white">d</span>.</p>
+                </div>
+
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1.5">
+                    <span class="font-bold text-amber-400 block">2. Standard Cross-Section Area Formulas (Base = s)</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-sky-300 font-bold">Square:</span> A = s²
+                        </div>
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-amber-300 font-bold">Semi-Circle (diam s):</span> A = (π/8)s²
+                        </div>
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-sky-300 font-bold">Full Circle (diam s):</span> A = (π/4)s²
+                        </div>
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-amber-300 font-bold">Equilateral Δ:</span> A = (√3/4)s²
+                        </div>
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-sky-300 font-bold">Isosceles Right Δ (Leg):</span> A = (1/2)s²
+                        </div>
+                        <div class="p-2 rounded bg-[#0a1832] border border-blue-900/80">
+                            <span class="text-amber-300 font-bold">Isosceles Right Δ (Hyp):</span> A = (1/4)s²
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-amber-300 block">3. Interactive Controls</span>
+                    <p>• Use <strong>Solid Extrusion Build</strong> to sweep cross-sections gradually from the lower bound to the upper bound.<br>
+                    • Use <strong>Active Slice Position</strong> to inspect a single differential prism/slab and see its exact dimensions in both 2D and 3D views.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Application Logic -->
+    <script>
+        // =========================================================================
+        // 1. STATE & CROSS-SECTION SHAPE METADATA
+        // =========================================================================
+        const SHAPE_META = {
+            square: {
+                name: 'Squares',
+                coeff: 1,
+                coeffLatex: '',
+                areaFormula: 's²',
+                heightFormula: (s) => s,
+                heightLabel: 's',
+                tip: 'Each slice perpendicular to the base is a square of side s, so its height equals its base width s and A = s².'
+            },
+            semicircle: {
+                name: 'Semi-Circles',
+                coeff: Math.PI / 8,
+                coeffLatex: '(π/8) ',
+                areaFormula: '(π/8)s²',
+                heightFormula: (s) => s / 2,
+                heightLabel: 's/2',
+                tip: 'The base segment s is the diameter of the semi-circle, so the radius is r = s/2 and A = ½π(s/2)² = (π/8)s².'
+            },
+            circle: {
+                name: 'Full Circles',
+                coeff: Math.PI / 4,
+                coeffLatex: '(π/4) ',
+                areaFormula: '(π/4)s²',
+                heightFormula: (s) => s,
+                heightLabel: 's (diam)',
+                tip: 'With diameter s spanning the base region, the radius is r = s/2 and the full circular area is A = π(s/2)² = (π/4)s².'
+            },
+            equilateral: {
+                name: 'Equilateral Triangles',
+                coeff: Math.sqrt(3) / 4,
+                coeffLatex: '(√3/4) ',
+                areaFormula: '(√3/4)s²',
+                heightFormula: (s) => (Math.sqrt(3) / 2) * s,
+                heightLabel: '(√3/2)s',
+                tip: 'An equilateral triangle of side s has altitude h = (√3/2)s, giving area A = ½·s·(√3/2)s = (√3/4)s².'
+            },
+            iso_leg: {
+                name: 'Isosceles Right Δ (Leg on Base)',
+                coeff: 0.5,
+                coeffLatex: '(1/2) ',
+                areaFormula: '(1/2)s²',
+                heightFormula: (s) => s,
+                heightLabel: 's',
+                tip: 'When one leg of length s lies on the base, the vertical leg also has length s, so A = ½·base·height = ½s².'
+            },
+            iso_hyp: {
+                name: 'Isosceles Right Δ (Hypotenuse on Base)',
+                coeff: 0.25,
+                coeffLatex: '(1/4) ',
+                areaFormula: '(1/4)s²',
+                heightFormula: (s) => s / 2,
+                heightLabel: 's/2',
+                tip: 'When the hypotenuse s lies on the base, the altitude to the hypotenuse splits it into two 45°-45°-90° triangles of height s/2, giving A = ½·s·(s/2) = ¼s².'
+            }
+        };
+
+        const state = {
+            orientation: 'vertical', // 'vertical' (perp to x-axis, dx) | 'horizontal' (perp to y-axis, dy)
+            shape: 'square',         // 'square' | 'semicircle' | 'circle' | 'equilateral' | 'iso_leg' | 'iso_hyp'
+            numCurves: 2,
+            fStr: 'sqrt(4 - x^2)',
+            gStr: '-sqrt(4 - x^2)',
+            a: -2,
+            b: 2,
+            buildPct: 100,
+            slicePos: 0,
+            showSolid: true,
+            showRibs: true,
+            showSlice: true,
+            showBase: true,
+            isBuilding: false,
+            isSlicing: false
+        };
+
+        // Compiled math functions: evaluate wrt variable 't' (x when vertical, y when horizontal)
+        let compiledF = (t) => Math.sqrt(Math.max(0, 4 - t * t));
+        let compiledG = (t) => -Math.sqrt(Math.max(0, 4 - t * t));
+
+        // Three.js Scene Globals
+        let scene, camera, renderer, controls;
+        let solidGroup = null;
+        let sliceMesh = null;
+        let baseGroup = null;
+        let axesGroup = null;
+
+        // 2D Canvases
+        let canvasBase, ctxBase;
+        let canvasProfile, ctxProfile;
+
+        // =========================================================================
+        // 2. INITIALIZATION & MATH PARSING
+        // =========================================================================
+        window.onload = function () {
+            initThree();
+            init2DCanvases();
+            setupEventListeners();
+            updateAll();
+            animate();
+        };
+
+        // Compile mathematical expression accepting either 'x' or 'y' gracefully
+        function parseFunction(exprStr, varName) {
+            try {
+                const trimmed = exprStr.trim();
+                if (!trimmed) return null;
+                const node = math.parse(trimmed);
+                const code = node.compile();
+                // Test evaluation at a sample point to catch unknown variables
+                const testScope = { [varName]: 1, x: 1, y: 1 };
+                const testVal = code.evaluate(testScope);
+                if (typeof testVal !== 'number' && typeof testVal !== 'object') return null;
+
+                return (val) => {
+                    try {
+                        const res = code.evaluate({ [varName]: val });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return 0;
+                        return res;
+                    } catch (e) {
+                        return 0;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Helper to evaluate f(t) and g(t) at parameter t (x for vertical, y for horizontal)
+        function evalBoundsAt(t) {
+            const v1 = compiledF(t);
+            const v2 = state.numCurves === 2 ? compiledG(t) : 0;
+            return { v1, v2, s: Math.abs(v1 - v2) };
+        }
+
+        // Convert mathematical (x, y, zHeight) into Three.js right-handed world space (X, Y_up, Z)
+        // Mapping: mathX -> X, mathY -> -Z, mathZ_height -> +Y
+        function mathToWorld(mx, my, mz) {
+            return new THREE.Vector3(mx, mz, -my);
+        }
+
+        // =========================================================================
+        // 3. THREE.JS 3D SCENE SETUP
+        // =========================================================================
+        function initThree() {
+            const container = document.getElementById('canvas3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x071124);
+
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(5.5, 5.2, 6.8);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.06;
+            controls.target.set(0, 1.0, 0);
+
+            // Studio Lighting Setup (Royal Blue & Warm Gold highlights)
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xfffbeb, 0.85);
+            dirLight1.position.set(10, 18, 12);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x60a5fa, 0.5);
+            dirLight2.position.set(-12, 8, -10);
+            scene.add(dirLight2);
+
+            const bottomLight = new THREE.DirectionalLight(0xfbbf24, 0.25);
+            bottomLight.position.set(0, -10, 0);
+            scene.add(bottomLight);
+
+            // Subtle Navy Grid on the xy-plane (Y = 0 in Three.js)
+            const gridHelper = new THREE.GridHelper(16, 16, 0x1e3a6e, 0x102242);
+            gridHelper.position.y = -0.004;
+            scene.add(gridHelper);
+
+            buildCoordinateAxes();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        // Create crisp 3D X, Y, and Z axes with sprite labels
+        function buildCoordinateAxes() {
+            if (axesGroup) scene.remove(axesGroup);
+            axesGroup = new THREE.Group();
+
+            const axisLen = 6.5;
+
+            // Helper to make axis line + arrow cone
+            const makeAxis = (dirVec, colorHex, labelText, labelPos) => {
+                const mat = new THREE.LineBasicMaterial({ color: colorHex, transparent: true, opacity: 0.8 });
+                const pts = [dirVec.clone().multiplyScalar(-axisLen), dirVec.clone().multiplyScalar(axisLen)];
+                const geom = new THREE.BufferGeometry().setFromPoints(pts);
+                axesGroup.add(new THREE.Line(geom, mat));
+
+                const coneGeom = new THREE.ConeGeometry(0.11, 0.32, 12);
+                const coneMat = new THREE.MeshBasicMaterial({ color: colorHex });
+                const cone = new THREE.Mesh(coneGeom, coneMat);
+                cone.position.copy(dirVec.clone().multiplyScalar(axisLen));
+                cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dirVec.clone().normalize());
+                axesGroup.add(cone);
+
+                // Canvas Sprite Label
+                const c = document.createElement('canvas');
+                c.width = 96; c.height = 96;
+                const ctx = c.getContext('2d');
+                ctx.font = 'bold 48px Inter, sans-serif';
+                ctx.fillStyle = '#' + colorHex.toString(16).padStart(6, '0');
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(labelText, 48, 48);
+
+                const tex = new THREE.CanvasTexture(c);
+                const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+                const sprite = new THREE.Sprite(spriteMat);
+                sprite.position.copy(labelPos);
+                sprite.scale.set(0.65, 0.65, 0.65);
+                axesGroup.add(sprite);
+            };
+
+            // Math X-axis -> Three.js +X (Sky Blue)
+            makeAxis(new THREE.Vector3(1, 0, 0), 0x38bdf8, 'x', new THREE.Vector3(axisLen + 0.45, 0.15, 0));
+            // Math Y-axis -> Three.js -Z (Gold)
+            makeAxis(new THREE.Vector3(0, 0, -1), 0xfbbf24, 'y', new THREE.Vector3(0, 0.15, -(axisLen + 0.45)));
+            // Math Z-height -> Three.js +Y (Ice Blue)
+            makeAxis(new THREE.Vector3(0, 1, 0), 0x93c5fd, 'z', new THREE.Vector3(0.25, axisLen + 0.3, 0));
+
+            scene.add(axesGroup);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas3d');
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+
+            resize2DCanvases();
+            draw2DBaseGraph();
+            draw2DProfileGraph();
+        }
+
+        // =========================================================================
+        // 4. 3D CROSS-SECTIONAL GEOMETRY ENGINE
+        // =========================================================================
+
+        // Returns normalized (u, z_norm) closed convex loop points for a given shape.
+        // u in [0, 1] interpolates from bound endpoint 1 to bound endpoint 2.
+        // z_norm is multiplied by base length s to obtain true z-height.
+        function getNormalizedProfileLoop(shape) {
+            const pts = [];
+            if (shape === 'square') {
+                // Subdivided slightly along top/sides for clean shading & ribs
+                pts.push({ u: 0, z: 0 });
+                pts.push({ u: 1, z: 0 });
+                pts.push({ u: 1, z: 1 });
+                pts.push({ u: 0, z: 1 });
+            } else if (shape === 'iso_leg') {
+                pts.push({ u: 0, z: 0 });
+                pts.push({ u: 1, z: 0 });
+                pts.push({ u: 0, z: 1 });
+            } else if (shape === 'iso_hyp') {
+                pts.push({ u: 0, z: 0 });
+                pts.push({ u: 1, z: 0 });
+                pts.push({ u: 0.5, z: 0.5 });
+            } else if (shape === 'equilateral') {
+                pts.push({ u: 0, z: 0 });
+                pts.push({ u: 1, z: 0 });
+                pts.push({ u: 0.5, z: Math.sqrt(3) / 2 });
+            } else if (shape === 'semicircle') {
+                const segs = 32;
+                pts.push({ u: 0, z: 0 });
+                pts.push({ u: 1, z: 0 });
+                for (let k = 1; k < segs; k++) {
+                    const theta = (Math.PI * k) / segs; // 0 -> pi
+                    const u = 0.5 + 0.5 * Math.cos(theta);
+                    const z = 0.5 * Math.sin(theta);
+                    pts.push({ u, z });
+                }
+            } else if (shape === 'circle') {
+                const segs = 40;
+                for (let k = 0; k < segs; k++) {
+                    const theta = (2 * Math.PI * k) / segs;
+                    const u = 0.5 + 0.5 * Math.cos(theta);
+                    const z = 0.5 * Math.sin(theta);
+                    pts.push({ u, z });
+                }
+            }
+            return pts;
+        }
+
+        // Maps a parameter t (x for vertical, y for horizontal) and normalized profile (u, zNorm)
+        // into a 3D Three.js Vector3
+        function mapSliceVertex(t, u, zNorm) {
+            const v1 = compiledF(t);
+            const v2 = state.numCurves === 2 ? compiledG(t) : 0;
+            const low = Math.min(v1, v2);
+            const high = Math.max(v1, v2);
+            const s = high - low;
+            const spanVal = low + u * s;
+            const zHeight = zNorm * s;
+
+            if (state.orientation === 'vertical') {
+                // t is x, spanVal is y
+                return mathToWorld(t, spanVal, zHeight);
+            } else {
+                // t is y, spanVal is x
+                return mathToWorld(spanVal, t, zHeight);
+            }
+        }
+
+        // Builds a closed 3D mesh sweeping from tStart to tEnd
+        function buildSweptCrossSectionGeometry(tStart, tEnd, numSteps, profileLoop) {
+            const positions = [];
+            const indices = [];
+            const M = profileLoop.length;
+
+            // Generate vertex rings for each step i = 0 .. numSteps
+            const rings = [];
+            for (let i = 0; i <= numSteps; i++) {
+                const frac = numSteps === 0 ? 0 : i / numSteps;
+                const t = tStart + frac * (tEnd - tStart);
+                const ring = [];
+                for (let j = 0; j < M; j++) {
+                    const v = mapSliceVertex(t, profileLoop[j].u, profileLoop[j].z);
+                    ring.push(v);
+                    positions.push(v.x, v.y, v.z);
+                }
+                rings.push(ring);
+            }
+
+            // Bridge consecutive rings with quads (2 triangles each)
+            for (let i = 0; i < numSteps; i++) {
+                const rowA = i * M;
+                const rowB = (i + 1) * M;
+                for (let j = 0; j < M; j++) {
+                    const jNext = (j + 1) % M;
+                    const a = rowA + j;
+                    const b = rowA + jNext;
+                    const c = rowB + jNext;
+                    const d = rowB + j;
+                    indices.push(a, b, c, a, c, d);
+                }
+            }
+
+            // Helper to cap a convex ring using its centroid
+            const addConvexCap = (ringIdx, reverseWinding) => {
+                const ring = rings[ringIdx];
+                const center = new THREE.Vector3();
+                for (let j = 0; j < M; j++) center.add(ring[j]);
+                center.divideScalar(M);
+
+                const centerIdx = positions.length / 3;
+                positions.push(center.x, center.y, center.z);
+
+                const baseIdx = ringIdx * M;
+                for (let j = 0; j < M; j++) {
+                    const jNext = (j + 1) % M;
+                    if (reverseWinding) {
+                        indices.push(centerIdx, baseIdx + jNext, baseIdx + j);
+                    } else {
+                        indices.push(centerIdx, baseIdx + j, baseIdx + jNext);
+                    }
+                }
+            };
+
+            addConvexCap(0, true);
+            addConvexCap(numSteps, false);
+
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geom.setIndex(indices);
+            geom.computeVertexNormals();
+            return geom;
+        }
+
+        // Update 2D Base Region mesh and boundary lines in 3D space
+        function update3DBaseRegion() {
+            if (baseGroup) {
+                scene.remove(baseGroup);
+                baseGroup = null;
+            }
+            if (!state.showBase) return;
+
+            baseGroup = new THREE.Group();
+            const { a, b } = state;
+            if (Math.abs(b - a) < 1e-6) return;
+
+            const steps = 80;
+            const positions = [];
+            const indices = [];
+            const fPoints = [];
+            const gPoints = [];
+
+            for (let i = 0; i <= steps; i++) {
+                const t = a + (b - a) * (i / steps);
+                const v1 = compiledF(t);
+                const v2 = state.numCurves === 2 ? compiledG(t) : 0;
+
+                const p1 = state.orientation === 'vertical'
+                    ? mathToWorld(t, v1, 0.003)
+                    : mathToWorld(v1, t, 0.003);
+                const p2 = state.orientation === 'vertical'
+                    ? mathToWorld(t, v2, 0.003)
+                    : mathToWorld(v2, t, 0.003);
+
+                fPoints.push(p1);
+                gPoints.push(p2);
+
+                positions.push(p1.x, p1.y, p1.z);
+                positions.push(p2.x, p2.y, p2.z);
+
+                if (i < steps) {
+                    const idx = i * 2;
+                    indices.push(idx, idx + 1, idx + 3, idx, idx + 3, idx + 2);
+                }
+            }
+
+            // Shaded Base Mesh (Royal Sky Blue)
+            const baseGeom = new THREE.BufferGeometry();
+            baseGeom.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            baseGeom.setIndex(indices);
+            baseGeom.computeVertexNormals();
+
+            const baseMat = new THREE.MeshBasicMaterial({
+                color: 0x38bdf8,
+                transparent: true,
+                opacity: 0.24,
+                side: THREE.DoubleSide
+            });
+            baseGroup.add(new THREE.Mesh(baseGeom, baseMat));
+
+            // Boundary Curve f Outline (Sky Blue)
+            const fLineGeom = new THREE.BufferGeometry().setFromPoints(fPoints);
+            const fLineMat = new THREE.LineBasicMaterial({ color: 0x38bdf8, linewidth: 2 });
+            baseGroup.add(new THREE.Line(fLineGeom, fLineMat));
+
+            // Boundary Curve g Outline (Warm Gold)
+            const gLineGeom = new THREE.BufferGeometry().setFromPoints(gPoints);
+            const gLineMat = new THREE.LineBasicMaterial({ color: 0xfbbf24, linewidth: 2 });
+            baseGroup.add(new THREE.Line(gLineGeom, gLineMat));
+
+            scene.add(baseGroup);
+        }
+
+        // Rebuild full 3D Solid, Cross-Section Ribs, and Active Differential Slice
+        function update3DScene() {
+            if (solidGroup) {
+                scene.remove(solidGroup);
+                solidGroup = null;
+            }
+            if (sliceMesh) {
+                scene.remove(sliceMesh);
+                sliceMesh = null;
+            }
+
+            update3DBaseRegion();
+
+            const { a, b, buildPct, slicePos, shape } = state;
+            const span = b - a;
+            if (Math.abs(span) < 1e-6) return;
+
+            const profileLoop = getNormalizedProfileLoop(shape);
+            const tBuildEnd = a + (buildPct / 100) * span;
+
+            // 1. Build Swept 3D Solid & Optional Slice Ribs (Royal Blue)
+            if (state.showSolid && buildPct > 0.5) {
+                solidGroup = new THREE.Group();
+                const numSteps = Math.max(12, Math.round(80 * (buildPct / 100)));
+                const solidGeom = buildSweptCrossSectionGeometry(a, tBuildEnd, numSteps, profileLoop);
+
+                const solidMat = new THREE.MeshPhongMaterial({
+                    color: 0x1d4ed8,
+                    emissive: 0x172554,
+                    specular: 0xfbbf24,
+                    shininess: 50,
+                    transparent: true,
+                    opacity: 0.74,
+                    side: THREE.DoubleSide,
+                    flatShading: (shape === 'square' || shape === 'equilateral' || shape === 'iso_leg' || shape === 'iso_hyp')
+                });
+
+                solidGroup.add(new THREE.Mesh(solidGeom, solidMat));
+
+                // Cross-Sectional Slice Ribs (Soft Gold-Tinted Wire Ribs)
+                if (state.showRibs) {
+                    const ribCount = Math.max(4, Math.round(18 * (buildPct / 100)));
+                    const ribMat = new THREE.LineBasicMaterial({
+                        color: 0x93c5fd,
+                        transparent: true,
+                        opacity: 0.45
+                    });
+
+                    for (let r = 0; r <= ribCount; r++) {
+                        const tRib = a + (r / ribCount) * (tBuildEnd - a);
+                        const ribPts = profileLoop.map(p => mapSliceVertex(tRib, p.u, p.z));
+                        ribPts.push(ribPts[0].clone()); // Close loop
+                        const ribGeom = new THREE.BufferGeometry().setFromPoints(ribPts);
+                        solidGroup.add(new THREE.Line(ribGeom, ribMat));
+                    }
+                }
+
+                scene.add(solidGroup);
+            }
+
+            // 2. Build Active Differential Slice Slab at slicePos (Luminous Maize Gold)
+            if (state.showSlice) {
+                const dt = Math.max(Math.abs(span) / 48, 0.03);
+                const t1 = Math.max(Math.min(a, b), slicePos - dt / 2);
+                const t2 = Math.min(Math.max(a, b), slicePos + dt / 2);
+
+                const sliceGeom = buildSweptCrossSectionGeometry(t1, t2, 2, profileLoop);
+                const sliceMat = new THREE.MeshStandardMaterial({
+                    color: 0xfacc15,
+                    emissive: 0x92400e,
+                    metalness: 0.3,
+                    roughness: 0.22,
+                    side: THREE.DoubleSide
+                });
+
+                sliceMesh = new THREE.Mesh(sliceGeom, sliceMat);
+                scene.add(sliceMesh);
+            }
+        }
+
+        // =========================================================================
+        // 5. 2D CANVASES: BASE REGION & CROSS-SECTION PROFILE
+        // =========================================================================
+        function init2DCanvases() {
+            canvasBase = document.getElementById('canvas2dBase');
+            ctxBase = canvasBase.getContext('2d');
+            canvasProfile = document.getElementById('canvas2dProfile');
+            ctxProfile = canvasProfile.getContext('2d');
+            resize2DCanvases();
+        }
+
+        function resize2DCanvases() {
+            if (canvasBase && canvasBase.parentElement) {
+                const r1 = canvasBase.parentElement.getBoundingClientRect();
+                canvasBase.width = r1.width;
+                canvasBase.height = r1.height;
+            }
+            if (canvasProfile && canvasProfile.parentElement) {
+                const r2 = canvasProfile.parentElement.getBoundingClientRect();
+                canvasProfile.width = r2.width;
+                canvasProfile.height = r2.height;
+            }
+        }
+
+        // Draw 2D Base Region in the xy-plane (handles both dx vertical and dy horizontal)
+        function draw2DBaseGraph() {
+            if (!ctxBase) return;
+            const W = canvasBase.width;
+            const H = canvasBase.height;
+            ctxBase.clearRect(0, 0, W, H);
+
+            const { a, b, orientation, numCurves, slicePos } = state;
+            const tMin = Math.min(a, b);
+            const tMax = Math.max(a, b);
+
+            // Sample curves to determine auto-fit bounding box
+            let vMin = 0, vMax = 0;
+            const samples = 60;
+            for (let i = 0; i <= samples; i++) {
+                const t = tMin + (tMax - tMin) * (i / samples);
+                const fVal = compiledF(t);
+                const gVal = numCurves === 2 ? compiledG(t) : 0;
+                vMin = Math.min(vMin, fVal, gVal);
+                vMax = Math.max(vMax, fVal, gVal);
+            }
+
+            let xMin, xMax, yMin, yMax;
+            if (orientation === 'vertical') {
+                xMin = Math.min(tMin - 0.8, -0.8);
+                xMax = Math.max(tMax + 0.8, 0.8);
+                yMin = Math.min(vMin - 0.8, -0.8);
+                yMax = Math.max(vMax + 0.8, 0.8);
+            } else {
+                xMin = Math.min(vMin - 0.8, -0.8);
+                xMax = Math.max(vMax + 0.8, 0.8);
+                yMin = Math.min(tMin - 0.8, -0.8);
+                yMax = Math.max(tMax + 0.8, 0.8);
+            }
+
+            // Maintain balanced aspect ratio with padding
+            const pad = 26;
+            const drawW = W - pad * 2;
+            const drawH = H - pad * 2;
+            const toX = (x) => pad + ((x - xMin) / (xMax - xMin)) * drawW;
+            const toY = (y) => H - pad - ((y - yMin) / (yMax - yMin)) * drawH;
+
+            // Grid Lines (Deep Royal Navy)
+            ctxBase.strokeStyle = '#13284f';
+            ctxBase.lineWidth = 1;
+            for (let gx = Math.ceil(xMin); gx <= Math.floor(xMax); gx++) {
+                ctxBase.beginPath();
+                ctxBase.moveTo(toX(gx), pad / 2);
+                ctxBase.lineTo(toX(gx), H - pad / 2);
+                ctxBase.stroke();
+            }
+            for (let gy = Math.ceil(yMin); gy <= Math.floor(yMax); gy++) {
+                ctxBase.beginPath();
+                ctxBase.moveTo(pad / 2, toY(gy));
+                ctxBase.lineTo(W - pad / 2, toY(gy));
+                ctxBase.stroke();
+            }
+
+            // Coordinate Axes
+            ctxBase.strokeStyle = '#3b64a8';
+            ctxBase.lineWidth = 1.5;
+            if (yMin <= 0 && yMax >= 0) {
+                ctxBase.beginPath();
+                ctxBase.moveTo(pad / 2, toY(0));
+                ctxBase.lineTo(W - pad / 2, toY(0));
+                ctxBase.stroke();
+            }
+            if (xMin <= 0 && xMax >= 0) {
+                ctxBase.beginPath();
+                ctxBase.moveTo(toX(0), pad / 2);
+                ctxBase.lineTo(toX(0), H - pad / 2);
+                ctxBase.stroke();
+            }
+
+            // Axis Labels
+            ctxBase.fillStyle = '#93c5fd';
+            ctxBase.font = 'bold 10px Inter, sans-serif';
+            ctxBase.fillText('x', W - 14, Math.min(Math.max(toY(0) - 4, 14), H - 10));
+            ctxBase.fillText('y', Math.min(Math.max(toX(0) + 5, 10), W - 14), 14);
+
+            // Shaded Base Region (Royal Blue)
+            if (state.showBase) {
+                ctxBase.fillStyle = 'rgba(59, 130, 246, 0.24)';
+                ctxBase.beginPath();
+                for (let i = 0; i <= samples; i++) {
+                    const t = tMin + (tMax - tMin) * (i / samples);
+                    const fVal = compiledF(t);
+                    const px = orientation === 'vertical' ? toX(t) : toX(fVal);
+                    const py = orientation === 'vertical' ? toY(fVal) : toY(t);
+                    if (i === 0) ctxBase.moveTo(px, py);
+                    else ctxBase.lineTo(px, py);
+                }
+                for (let i = samples; i >= 0; i--) {
+                    const t = tMin + (tMax - tMin) * (i / samples);
+                    const gVal = numCurves === 2 ? compiledG(t) : 0;
+                    const px = orientation === 'vertical' ? toX(t) : toX(gVal);
+                    const py = orientation === 'vertical' ? toY(gVal) : toY(t);
+                    ctxBase.lineTo(px, py);
+                }
+                ctxBase.closePath();
+                ctxBase.fill();
+            }
+
+            // Plot Curve f (Electric Sky Blue)
+            ctxBase.strokeStyle = '#38bdf8';
+            ctxBase.lineWidth = 2.2;
+            ctxBase.beginPath();
+            for (let i = 0; i <= 100; i++) {
+                const t = (orientation === 'vertical' ? xMin : yMin) +
+                          ((orientation === 'vertical' ? xMax - xMin : yMax - yMin)) * (i / 100);
+                const fVal = compiledF(t);
+                const px = orientation === 'vertical' ? toX(t) : toX(fVal);
+                const py = orientation === 'vertical' ? toY(fVal) : toY(t);
+                if (i === 0) ctxBase.moveTo(px, py);
+                else ctxBase.lineTo(px, py);
+            }
+            ctxBase.stroke();
+
+            // Plot Curve g (Warm Amber Gold)
+            if (numCurves === 2) {
+                ctxBase.strokeStyle = '#fb923c';
+                ctxBase.lineWidth = 2.2;
+                ctxBase.beginPath();
+                for (let i = 0; i <= 100; i++) {
+                    const t = (orientation === 'vertical' ? xMin : yMin) +
+                              ((orientation === 'vertical' ? xMax - xMin : yMax - yMin)) * (i / 100);
+                    const gVal = compiledG(t);
+                    const px = orientation === 'vertical' ? toX(t) : toX(gVal);
+                    const py = orientation === 'vertical' ? toY(gVal) : toY(t);
+                    if (i === 0) ctxBase.moveTo(px, py);
+                    else ctxBase.lineTo(px, py);
+                }
+                ctxBase.stroke();
+            }
+
+            // Dashed Bound Lines (a and b)
+            ctxBase.strokeStyle = '#60a5fa';
+            ctxBase.lineWidth = 1.2;
+            ctxBase.setLineDash([3, 3]);
+            ctxBase.beginPath();
+            if (orientation === 'vertical') {
+                ctxBase.moveTo(toX(a), pad / 2); ctxBase.lineTo(toX(a), H - pad / 2);
+                ctxBase.moveTo(toX(b), pad / 2); ctxBase.lineTo(toX(b), H - pad / 2);
+            } else {
+                ctxBase.moveTo(pad / 2, toY(a)); ctxBase.lineTo(W - pad / 2, toY(a));
+                ctxBase.moveTo(pad / 2, toY(b)); ctxBase.lineTo(W - pad / 2, toY(b));
+            }
+            ctxBase.stroke();
+            ctxBase.setLineDash([]);
+
+            // Active Cross-Section Base Segment (Bright Maize Gold)
+            const fSlice = compiledF(slicePos);
+            const gSlice = numCurves === 2 ? compiledG(slicePos) : 0;
+            const pA = orientation === 'vertical'
+                ? { x: toX(slicePos), y: toY(fSlice) }
+                : { x: toX(fSlice), y: toY(slicePos) };
+            const pB = orientation === 'vertical'
+                ? { x: toX(slicePos), y: toY(gSlice) }
+                : { x: toX(gSlice), y: toY(slicePos) };
+
+            ctxBase.strokeStyle = '#facc15';
+            ctxBase.lineWidth = 3.5;
+            ctxBase.beginPath();
+            ctxBase.moveTo(pA.x, pA.y);
+            ctxBase.lineTo(pB.x, pB.y);
+            ctxBase.stroke();
+
+            ctxBase.fillStyle = '#fde047';
+            ctxBase.beginPath();
+            ctxBase.arc(pA.x, pA.y, 4, 0, Math.PI * 2);
+            ctxBase.arc(pB.x, pB.y, 4, 0, Math.PI * 2);
+            ctxBase.fill();
+
+            // Label "s" next to the slice segment
+            ctxBase.fillStyle = '#fde047';
+            ctxBase.font = 'bold 11px JetBrains Mono, monospace';
+            const midX = (pA.x + pB.x) / 2;
+            const midY = (pA.y + pB.y) / 2;
+            ctxBase.fillText('s', midX + 6, midY - 4);
+        }
+
+        // Draw 2D True Cross-Section Shape Diagram (shows base s, height h, and area A)
+        function draw2DProfileGraph() {
+            if (!ctxProfile) return;
+            const W = canvasProfile.width;
+            const H = canvasProfile.height;
+            ctxProfile.clearRect(0, 0, W, H);
+
+            const { s } = evalBoundsAt(state.slicePos);
+            const meta = SHAPE_META[state.shape];
+            const hVal = meta.heightFormula(s);
+            const areaVal = meta.coeff * s * s;
+
+            document.getElementById('profileBaseLengthTag').textContent = `s = ${s.toFixed(2)}`;
+
+            const cx = W * 0.34;
+            const basePixelW = Math.min(W * 0.44, H * 0.72);
+            const baselineY = state.shape === 'circle' ? H * 0.5 : H * 0.78;
+            const xLeft = cx - basePixelW / 2;
+            const xRight = cx + basePixelW / 2;
+
+            // Draw Shape Fill & Stroke (Gold)
+            ctxProfile.fillStyle = 'rgba(250, 204, 21, 0.22)';
+            ctxProfile.strokeStyle = '#facc15';
+            ctxProfile.lineWidth = 2.2;
+            ctxProfile.beginPath();
+
+            let peakX = cx, peakY = baselineY;
+
+            if (state.shape === 'square') {
+                const topY = baselineY - basePixelW * 0.82;
+                ctxProfile.rect(xLeft, topY, basePixelW, baselineY - topY);
+                peakX = xRight;
+                peakY = topY;
+            } else if (state.shape === 'semicircle') {
+                const rPx = basePixelW / 2;
+                ctxProfile.arc(cx, baselineY, rPx, Math.PI, 0, false);
+                ctxProfile.closePath();
+                peakX = cx;
+                peakY = baselineY - rPx;
+            } else if (state.shape === 'circle') {
+                const rPx = basePixelW * 0.44;
+                ctxProfile.arc(cx, baselineY, rPx, 0, Math.PI * 2);
+                peakX = cx;
+                peakY = baselineY - rPx;
+            } else if (state.shape === 'equilateral') {
+                const hPx = (Math.sqrt(3) / 2) * basePixelW;
+                ctxProfile.moveTo(xLeft, baselineY);
+                ctxProfile.lineTo(xRight, baselineY);
+                ctxProfile.lineTo(cx, baselineY - hPx);
+                ctxProfile.closePath();
+                peakX = cx;
+                peakY = baselineY - hPx;
+            } else if (state.shape === 'iso_leg') {
+                const hPx = basePixelW * 0.82;
+                ctxProfile.moveTo(xLeft, baselineY);
+                ctxProfile.lineTo(xRight, baselineY);
+                ctxProfile.lineTo(xLeft, baselineY - hPx);
+                ctxProfile.closePath();
+                peakX = xLeft;
+                peakY = baselineY - hPx;
+            } else if (state.shape === 'iso_hyp') {
+                const hPx = basePixelW * 0.5;
+                ctxProfile.moveTo(xLeft, baselineY);
+                ctxProfile.lineTo(xRight, baselineY);
+                ctxProfile.lineTo(cx, baselineY - hPx);
+                ctxProfile.closePath();
+                peakX = cx;
+                peakY = baselineY - hPx;
+            }
+
+            ctxProfile.fill();
+            ctxProfile.stroke();
+
+            // Draw Base Segment Line (Royal Sky Blue) & Height Dashed Line (Ice Blue)
+            if (state.shape === 'circle') {
+                const rPx = basePixelW * 0.44;
+                ctxProfile.strokeStyle = '#38bdf8';
+                ctxProfile.lineWidth = 2.5;
+                ctxProfile.beginPath();
+                ctxProfile.moveTo(cx - rPx, baselineY);
+                ctxProfile.lineTo(cx + rPx, baselineY);
+                ctxProfile.stroke();
+            } else {
+                // Dashed altitude line
+                ctxProfile.strokeStyle = '#60a5fa';
+                ctxProfile.lineWidth = 1.4;
+                ctxProfile.setLineDash([3, 3]);
+                ctxProfile.beginPath();
+                ctxProfile.moveTo(peakX, baselineY);
+                ctxProfile.lineTo(peakX, peakY);
+                ctxProfile.stroke();
+                ctxProfile.setLineDash([]);
+            }
+
+            // Base Dimension Label
+            ctxProfile.fillStyle = '#38bdf8';
+            ctxProfile.font = 'bold 10px JetBrains Mono, monospace';
+            ctxProfile.textAlign = 'center';
+            ctxProfile.fillText(`base s = ${s.toFixed(2)}`, cx, state.shape === 'circle' ? baselineY + 13 : baselineY + 14);
+
+            // Right-side Summary Readout inside Profile Card
+            const infoX = W * 0.64;
+            ctxProfile.textAlign = 'left';
+            ctxProfile.fillStyle = '#93c5fd';
+            ctxProfile.font = '600 10px Inter, sans-serif';
+            ctxProfile.fillText('Cross-Section Stats', infoX, 26);
+
+            ctxProfile.fillStyle = '#60a5fa';
+            ctxProfile.font = '11px JetBrains Mono, monospace';
+            ctxProfile.fillText(`h = ${meta.heightLabel}`, infoX, 46);
+            ctxProfile.fillText(`  = ${hVal.toFixed(2)}`, infoX, 61);
+
+            ctxProfile.fillStyle = '#facc15';
+            ctxProfile.font = 'bold 11px JetBrains Mono, monospace';
+            ctxProfile.fillText(`A = ${meta.areaFormula}`, infoX, 84);
+            ctxProfile.fillText(`  = ${areaVal.toFixed(3)}`, infoX, 99);
+        }
+
+        // =========================================================================
+        // 6. DEFINITE INTEGRAL & PEDAGOGICAL FORMULA UPDATES
+        // =========================================================================
+        function updateCalculusFormulas() {
+            const { a, b, orientation, shape, slicePos, numCurves } = state;
+            const meta = SHAPE_META[shape];
+            const varSym = orientation === 'vertical' ? 'x' : 'y';
+
+            // Simpson's / Midpoint Numerical Integration for ∫ [s(t)]² dt
+            const N = 600;
+            const dt = (b - a) / N;
+            let integralS2 = 0;
+            for (let i = 0; i < N; i++) {
+                const t = a + (i + 0.5) * dt;
+                const { s } = evalBoundsAt(t);
+                integralS2 += s * s * dt;
+            }
+
+            const totalVolume = meta.coeff * integralS2;
+
+            // Update Volume Display
+            document.getElementById('volumeResultValue').textContent = `${totalVolume.toFixed(4)} units³`;
+
+            // Exact Symbolic Factor Display (e.g. in terms of π or √3 when applicable)
+            const exactEl = document.getElementById('exactFactorValue');
+            if (shape === 'circle') {
+                exactEl.textContent = `${(integralS2 / 4).toFixed(3)} π`;
+            } else if (shape === 'semicircle') {
+                exactEl.textContent = `${(integralS2 / 8).toFixed(3)} π`;
+            } else if (shape === 'equilateral') {
+                exactEl.textContent = `${(integralS2 / 4).toFixed(3)} √3`;
+            } else {
+                exactEl.textContent = `∫ s² d${varSym} = ${integralS2.toFixed(3)}`;
+            }
+
+            // Definite Integral Formula Setup
+            const diffExpr = numCurves === 2 ? `[ f(${varSym}) - g(${varSym}) ]²` : `[ f(${varSym}) ]²`;
+            document.getElementById('mathIntegralFormula').textContent =
+                `V = ${meta.coeffLatex}∫[${a}, ${b}] ${diffExpr} d${varSym}`;
+
+            // Slice Parameters at Active Position
+            const { v1, v2, s } = evalBoundsAt(slicePos);
+            const hVal = meta.heightFormula(s);
+            const sliceArea = meta.coeff * s * s;
+
+            document.getElementById('explainCoordLabel').textContent = `${varSym} = ${slicePos.toFixed(2)}`;
+            document.getElementById('explainAreaFunc').textContent = `A(${varSym})`;
+
+            const boundNote = numCurves === 2
+                ? `|${v1.toFixed(2)} - (${v2.toFixed(2)})|`
+                : `|${v1.toFixed(2)}|`;
+
+            document.getElementById('explainSliceParams').innerHTML = `
+                <div>Base s(${varSym}) = ${boundNote} = <span class="text-sky-300 font-bold">${s.toFixed(3)}</span></div>
+                <div>Height h(${varSym}) = ${meta.heightLabel} = <span class="text-blue-300 font-bold">${hVal.toFixed(3)}</span></div>
+            `;
+
+            document.getElementById('explainSliceArea').innerHTML = `
+                <div>A(${varSym}) = ${meta.areaFormula} = <span class="text-amber-300 font-bold">${sliceArea.toFixed(4)}</span></div>
+                <div>dV = A(${varSym}) d${varSym}</div>
+            `;
+
+            const orientNote = orientation === 'vertical'
+                ? 'Perpendicular to x-axis (dx): slice width is Top − Bottom.'
+                : 'Perpendicular to y-axis (dy): slice width is Right − Left.';
+            document.getElementById('explainTeacherTip').textContent = `${orientNote} ${meta.tip}`;
+        }
+
+        // Update Header Badges & Variable Labels
+        function updateLabelsAndBadges() {
+            const meta = SHAPE_META[state.shape];
+            const isVert = state.orientation === 'vertical';
+            const varSym = isVert ? 'x' : 'y';
+
+            document.getElementById('activeShapeTitle').textContent = meta.name;
+            document.getElementById('orientationTag').textContent = isVert ? 'Vertical (⊥ x-axis)' : 'Horizontal (⊥ y-axis)';
+            document.getElementById('baseCoordBadge').textContent = isVert ? '⊥ x-axis (dx)' : '⊥ y-axis (dy)';
+
+            document.getElementById('orientationSubtitle').innerHTML = isVert
+                ? 'Cross sections are <strong class="text-amber-300">perpendicular to the x-axis</strong> (thickness <span class="font-mono">dx</span>).'
+                : 'Cross sections are <strong class="text-amber-300">perpendicular to the y-axis</strong> (thickness <span class="font-mono">dy</span>).';
+
+            document.getElementById('funcFLabel').textContent = isVert ? 'Top Curve f(x):' : 'Right Curve f(y):';
+            document.getElementById('funcGLabel').textContent = isVert ? 'Bottom Curve g(x):' : 'Left Curve g(y):';
+            document.getElementById('funcFPrefix').textContent = `f(${varSym}) =`;
+            document.getElementById('funcGPrefix').textContent = `g(${varSym}) =`;
+            document.getElementById('funcFHint').textContent = isVert ? 'e.g. sqrt(4 - x^2)' : 'e.g. 3 - 1.5*y';
+            document.getElementById('funcGHint').textContent = isVert ? 'e.g. -sqrt(4 - x^2), 0' : 'e.g. -sqrt(4 - y), 0';
+
+            document.getElementById('boundALabel').textContent = isVert ? 'Lower Bound (a):' : 'Lower Bound (c):';
+            document.getElementById('boundBLabel').textContent = isVert ? 'Upper Bound (b):' : 'Upper Bound (d):';
+            document.getElementById('sliceSliderLabel').textContent = `Active Slice Position (${varSym}):`;
+            document.getElementById('slicePosText').textContent = `${varSym} = ${state.slicePos.toFixed(2)}`;
+        }
+
+        function updateAll() {
+            updateLabelsAndBadges();
+            update3DScene();
+            draw2DBaseGraph();
+            draw2DProfileGraph();
+            updateCalculusFormulas();
+        }
+
+        // =========================================================================
+        // 7. EVENT LISTENERS & INTERACTIVE CONTROLS
+        // =========================================================================
+        function setupEventListeners() {
+            // Function F Input
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                const varName = state.orientation === 'vertical' ? 'x' : 'y';
+                const fn = parseFunction(e.target.value, varName);
+                if (fn) {
+                    compiledF = fn;
+                    state.fStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Function G Input
+            document.getElementById('funcGInput').addEventListener('input', (e) => {
+                const varName = state.orientation === 'vertical' ? 'x' : 'y';
+                const fn = parseFunction(e.target.value, varName);
+                if (fn) {
+                    compiledG = fn;
+                    state.gStr = e.target.value;
+                    document.getElementById('functionError').classList.add('hidden');
+                    updateAll();
+                } else {
+                    document.getElementById('functionError').classList.remove('hidden');
+                }
+            });
+
+            // Bounds Inputs
+            document.getElementById('boundAInput').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    state.a = val;
+                    clampSlicePos();
+                    updateAll();
+                }
+            });
+            document.getElementById('boundBInput').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                    state.b = val;
+                    clampSlicePos();
+                    updateAll();
+                }
+            });
+
+            // Extrusion Build Slider
+            document.getElementById('buildSlider').addEventListener('input', (e) => {
+                state.buildPct = parseInt(e.target.value, 10);
+                document.getElementById('buildPctText').textContent = `${state.buildPct}%`;
+                update3DScene();
+            });
+
+            // Differential Slice Position Slider
+            document.getElementById('slicePosSlider').addEventListener('input', (e) => {
+                const pct = parseFloat(e.target.value) / 100;
+                state.slicePos = state.a + pct * (state.b - state.a);
+                const varSym = state.orientation === 'vertical' ? 'x' : 'y';
+                document.getElementById('slicePosText').textContent = `${varSym} = ${state.slicePos.toFixed(2)}`;
+                update3DScene();
+                draw2DBaseGraph();
+                draw2DProfileGraph();
+                updateCalculusFormulas();
+            });
+
+            // Render Toggles
+            document.getElementById('showSolidCheck').addEventListener('change', (e) => {
+                state.showSolid = e.target.checked;
+                update3DScene();
+            });
+            document.getElementById('showRibsCheck').addEventListener('change', (e) => {
+                state.showRibs = e.target.checked;
+                update3DScene();
+            });
+            document.getElementById('showSliceCheck').addEventListener('change', (e) => {
+                state.showSlice = e.target.checked;
+                update3DScene();
+            });
+            document.getElementById('showBaseCheck').addEventListener('change', (e) => {
+                state.showBase = e.target.checked;
+                update3DScene();
+                draw2DBaseGraph();
+            });
+
+            // Reset Camera
+            document.getElementById('resetCamBtn').addEventListener('click', () => {
+                camera.position.set(5.5, 5.2, 6.8);
+                controls.target.set(0, 1.0, 0);
+                controls.update();
+            });
+
+            // Animation Buttons
+            document.getElementById('playBuildBtn').addEventListener('click', toggleBuildAnimation);
+            document.getElementById('playSliceBtn').addEventListener('click', toggleSliceAnimation);
+        }
+
+        function clampSlicePos() {
+            const lo = Math.min(state.a, state.b);
+            const hi = Math.max(state.a, state.b);
+            if (state.slicePos < lo || state.slicePos > hi) {
+                state.slicePos = (state.a + state.b) / 2;
+            }
+            syncSliceSliderUI();
+        }
+
+        function syncSliceSliderUI() {
+            const span = state.b - state.a;
+            const pct = Math.abs(span) < 1e-6 ? 50 : ((state.slicePos - state.a) / span) * 100;
+            document.getElementById('slicePosSlider').value = Math.max(0, Math.min(100, pct));
+            const varSym = state.orientation === 'vertical' ? 'x' : 'y';
+            document.getElementById('slicePosText').textContent = `${varSym} = ${state.slicePos.toFixed(2)}`;
+        }
+
+        // Switch Orientation: Vertical (dx) vs Horizontal (dy)
+        function setOrientation(orient) {
+            if (state.orientation === orient) return;
+            state.orientation = orient;
+
+            const vBtn = document.getElementById('orientVertBtn');
+            const hBtn = document.getElementById('orientHorizBtn');
+            if (orient === 'vertical') {
+                vBtn.className = 'px-2.5 py-2 rounded-md text-xs font-semibold bg-blue-600 text-white shadow ring-1 ring-amber-400/40 transition flex items-center justify-center gap-1.5';
+                hBtn.className = 'px-2.5 py-2 rounded-md text-xs font-semibold text-blue-300/75 hover:text-white transition flex items-center justify-center gap-1.5';
+            } else {
+                hBtn.className = 'px-2.5 py-2 rounded-md text-xs font-semibold bg-blue-600 text-white shadow ring-1 ring-amber-400/40 transition flex items-center justify-center gap-1.5';
+                vBtn.className = 'px-2.5 py-2 rounded-md text-xs font-semibold text-blue-300/75 hover:text-white transition flex items-center justify-center gap-1.5';
+            }
+
+            // Re-parse expressions for the new variable ('x' or 'y'), converting x <-> y automatically if helpful
+            const varName = orient === 'vertical' ? 'x' : 'y';
+            const oldVar = orient === 'vertical' ? 'y' : 'x';
+            const regex = new RegExp(`\\b${oldVar}\\b`, 'g');
+
+            const newFStr = document.getElementById('funcFInput').value.replace(regex, varName);
+            const newGStr = document.getElementById('funcGInput').value.replace(regex, varName);
+            document.getElementById('funcFInput').value = newFStr;
+            document.getElementById('funcGInput').value = newGStr;
+
+            const fnF = parseFunction(newFStr, varName);
+            const fnG = parseFunction(newGStr, varName);
+            if (fnF) { compiledF = fnF; state.fStr = newFStr; }
+            if (fnG) { compiledG = fnG; state.gStr = newGStr; }
+
+            updateAll();
+        }
+
+        // Switch Cross-Section Shape
+        function setShape(shapeKey) {
+            state.shape = shapeKey;
+            document.querySelectorAll('.shape-btn').forEach(btn => {
+                if (btn.dataset.shape === shapeKey) {
+                    btn.classList.add('active');
+                    btn.classList.remove('text-blue-100');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-blue-100');
+                }
+            });
+            updateAll();
+        }
+
+        // Switch 1 Curve vs 2 Curves
+        function setNumCurves(n) {
+            state.numCurves = n;
+            const btn1 = document.getElementById('singleCurveBtn');
+            const btn2 = document.getElementById('doubleCurveBtn');
+            const gContainer = document.getElementById('gCurveContainer');
+
+            if (n === 1) {
+                btn1.className = 'px-2 py-0.5 rounded font-medium bg-blue-600 text-white shadow-sm transition';
+                btn2.className = 'px-2 py-0.5 rounded font-medium text-blue-300/75 transition';
+                gContainer.classList.add('hidden');
+            } else {
+                btn2.className = 'px-2 py-0.5 rounded font-medium bg-blue-600 text-white shadow-sm transition';
+                btn1.className = 'px-2 py-0.5 rounded font-medium text-blue-300/75 transition';
+                gContainer.classList.remove('hidden');
+            }
+            updateAll();
+        }
+
+        // =========================================================================
+        // 8. CLASSIC AP CALCULUS PRESETS
+        // =========================================================================
+        function loadPreset(key) {
+            const mobileSel = document.getElementById('mobilePresetSelect');
+            if (mobileSel) mobileSel.value = key;
+
+            if (key === 'circleSquares') {
+                setOrientation('vertical');
+                setShape('square');
+                setNumCurves(2);
+                document.getElementById('funcFInput').value = 'sqrt(4 - x^2)';
+                document.getElementById('funcGInput').value = '-sqrt(4 - x^2)';
+                compiledF = parseFunction('sqrt(4 - x^2)', 'x');
+                compiledG = parseFunction('-sqrt(4 - x^2)', 'x');
+                state.a = -2; state.b = 2;
+            } else if (key === 'lensSemicircles') {
+                setOrientation('vertical');
+                setShape('semicircle');
+                setNumCurves(2);
+                document.getElementById('funcFInput').value = '2 * sqrt(x)';
+                document.getElementById('funcGInput').value = '2 * x^2';
+                compiledF = parseFunction('2 * sqrt(x)', 'x');
+                compiledG = parseFunction('2 * x^2', 'x');
+                state.a = 0; state.b = 1;
+            } else if (key === 'triangleEquilateral') {
+                setOrientation('horizontal');
+                setShape('equilateral');
+                setNumCurves(1);
+                document.getElementById('funcFInput').value = '3 - 1.5 * y';
+                compiledF = parseFunction('3 - 1.5 * y', 'y');
+                state.a = 0; state.b = 2;
+            } else if (key === 'parabolaIsoHyp') {
+                setOrientation('horizontal');
+                setShape('iso_hyp');
+                setNumCurves(2);
+                document.getElementById('funcFInput').value = 'sqrt(4 - y)';
+                document.getElementById('funcGInput').value = '-sqrt(4 - y)';
+                compiledF = parseFunction('sqrt(4 - y)', 'y');
+                compiledG = parseFunction('-sqrt(4 - y)', 'y');
+                state.a = 0; state.b = 4;
+            } else if (key === 'sineCircles') {
+                setOrientation('vertical');
+                setShape('circle');
+                setNumCurves(1);
+                document.getElementById('funcFInput').value = '2 * sin(x)';
+                compiledF = parseFunction('2 * sin(x)', 'x');
+                state.a = 0; state.b = 3.14;
+            }
+
+            document.getElementById('boundAInput').value = state.a;
+            document.getElementById('boundBInput').value = state.b;
+            document.getElementById('functionError').classList.add('hidden');
+            state.slicePos = (state.a + state.b) / 2;
+            state.buildPct = 100;
+            document.getElementById('buildSlider').value = 100;
+            document.getElementById('buildPctText').textContent = '100%';
+            syncSliceSliderUI();
+            updateAll();
+        }
+
+        // =========================================================================
+        // 9. ANIMATIONS & MODAL
+        // =========================================================================
+        let buildAnimId = null;
+        function toggleBuildAnimation() {
+            state.isBuilding = !state.isBuilding;
+            const btn = document.getElementById('playBuildBtn');
+            if (state.isBuilding) {
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                if (state.buildPct >= 100) state.buildPct = 0;
+                animBuild();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                cancelAnimationFrame(buildAnimId);
+            }
+        }
+
+        function animBuild() {
+            if (!state.isBuilding) return;
+            state.buildPct += 1.2;
+            if (state.buildPct >= 100) {
+                state.buildPct = 100;
+                state.isBuilding = false;
+                document.getElementById('playBuildBtn').innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+            }
+            const rounded = Math.round(state.buildPct);
+            document.getElementById('buildSlider').value = rounded;
+            document.getElementById('buildPctText').textContent = `${rounded}%`;
+            update3DScene();
+            if (state.isBuilding) buildAnimId = requestAnimationFrame(animBuild);
+        }
+
+        let sliceAnimId = null;
+        function toggleSliceAnimation() {
+            state.isSlicing = !state.isSlicing;
+            const btn = document.getElementById('playSliceBtn');
+            if (state.isSlicing) {
+                btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+                state.slicePos = state.a;
+                animSlice();
+            } else {
+                btn.innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+                cancelAnimationFrame(sliceAnimId);
+            }
+        }
+
+        function animSlice() {
+            if (!state.isSlicing) return;
+            const step = (state.b - state.a) / 140;
+            state.slicePos += step;
+            const finished = step >= 0 ? state.slicePos >= state.b : state.slicePos <= state.b;
+            if (finished) {
+                state.slicePos = state.b;
+                state.isSlicing = false;
+                document.getElementById('playSliceBtn').innerHTML = '<i class="fa-solid fa-play text-xs"></i>';
+            }
+            syncSliceSliderUI();
+            update3DScene();
+            draw2DBaseGraph();
+            draw2DProfileGraph();
+            updateCalculusFormulas();
+            if (state.isSlicing) sliceAnimId = requestAnimationFrame(animSlice);
+        }
+
+        function toggleHelpModal() {
+            document.getElementById('helpModal').classList.toggle('hidden');
+        }
+
+        // Main Three.js Render Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
