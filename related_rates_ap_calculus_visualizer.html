@@ -1,0 +1,2103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Related Rates - AP Calculus AB/BC Visualizer</title>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js r128 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #071124;
+            color: #f8fafc;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        /* Custom Royal Blue & Gold Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1933;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e3a6e;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d97706;
+        }
+        .glass-panel {
+            background: rgba(13, 30, 62, 0.78);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(251, 191, 36, 0.16);
+        }
+        .scenario-btn.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.5), rgba(251, 191, 36, 0.24));
+            border-color: #fbbf24;
+            color: #ffffff;
+            box-shadow: 0 0 14px rgba(251, 191, 36, 0.24);
+        }
+    </style>
+</head>
+<body class="min-h-screen lg:h-screen flex flex-col lg:overflow-hidden bg-[#071124]">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-[#09162e]/95 border-b border-blue-900/70 px-4 py-3 flex flex-wrap items-center justify-between gap-2 shrink-0 z-20">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-blue-600 via-blue-500 to-amber-400 flex items-center justify-center text-white shadow-lg shadow-blue-600/30 ring-1 ring-amber-300/40 font-mono font-bold text-sm">
+                d/dt
+            </div>
+            <div>
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                    Related Rates Visualizer
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/40">AP Calculus AB/BC</span>
+                </h1>
+                <p class="text-xs text-blue-200/70 hidden sm:block">Interactive 3D Dynamic Models, Implicit Differentiation & Rate Curves</p>
+            </div>
+        </div>
+
+        <!-- Quick Scenario Switcher Bar (Desktop) -->
+        <div class="hidden xl:flex items-center space-x-1.5">
+            <span class="text-xs text-blue-200/75 font-medium mr-1"><i class="fa-solid fa-bolt mr-1 text-amber-400"></i> Models:</span>
+            <button onclick="selectScenario('cone')" data-top-scenario="cone" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-amber-400/60 transition">Conical Tank</button>
+            <button onclick="selectScenario('ladder')" data-top-scenario="ladder" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Sliding Ladder</button>
+            <button onclick="selectScenario('shadow')" data-top-scenario="shadow" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Moving Shadow</button>
+            <button onclick="selectScenario('sphere')" data-top-scenario="sphere" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Sphere</button>
+            <button onclick="selectScenario('rectangle')" data-top-scenario="rectangle" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Rectangle</button>
+            <button onclick="selectScenario('box')" data-top-scenario="box" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Box Volume</button>
+            <button onclick="selectScenario('rocket')" data-top-scenario="rocket" class="top-scen-btn px-2.5 py-1 text-xs rounded-md bg-blue-950/90 hover:bg-blue-900 text-blue-100 border border-blue-800/80 hover:border-amber-400/50 transition">Rocket Radar</button>
+        </div>
+
+        <div class="flex items-center space-x-2">
+            <button id="resetCamBtn" class="px-3 py-1.5 text-xs rounded-lg bg-blue-950 hover:bg-blue-900 text-blue-100 border border-blue-800 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-video text-amber-400"></i> <span class="hidden sm:inline">Reset View</span>
+            </button>
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold flex items-center gap-1.5 transition shadow-sm shadow-amber-500/20">
+                <i class="fa-solid fa-circle-question"></i> AP Strategy
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="flex-1 flex flex-col lg:flex-row lg:overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside class="w-full lg:w-96 bg-[#09162e]/95 border-b lg:border-b-0 lg:border-r border-blue-900/70 flex flex-col lg:overflow-y-auto shrink-0 z-10 p-4 space-y-4">
+
+            <!-- Active Problem Detection Card -->
+            <div class="p-3.5 rounded-xl bg-gradient-to-r from-blue-900/75 via-blue-950/90 to-[#0f2447] border border-amber-400/40 flex items-center justify-between shadow-md">
+                <div>
+                    <div class="text-[10px] uppercase font-bold tracking-wider text-amber-400">Active Related Rates Model</div>
+                    <div id="activeModelTitle" class="text-base font-bold text-white">Conical Tank Emptying</div>
+                </div>
+                <span id="activeModelBadge" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-400/15 text-amber-300 border border-amber-400/40 font-mono">
+                    Find dh/dt
+                </span>
+            </div>
+
+            <!-- Scenario Selector Grid -->
+            <div class="glass-panel p-4 rounded-xl space-y-2.5">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                    <i class="fa-solid fa-cubes text-amber-400"></i> Select AP Calculus Scenario
+                </h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" data-scenario="cone" onclick="selectScenario('cone')" class="scenario-btn active px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-blue-500/25 text-amber-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-filter"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Conical Tank</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">V = ⅓πr²h</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="ladder" onclick="selectScenario('ladder')" class="scenario-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                        <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-stairs"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Sliding Ladder</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">x² + y² = L²</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="shadow" onclick="selectScenario('shadow')" class="scenario-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                        <span class="w-6 h-6 rounded bg-blue-500/25 text-sky-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-lightbulb"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Moving Shadow</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">s/h = (x+s)/H</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="sphere" onclick="selectScenario('sphere')" class="scenario-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                        <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-globe"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Sphere / Snowball</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">V = ⁴⁄₃πr³</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="rectangle" onclick="selectScenario('rectangle')" class="scenario-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                        <span class="w-6 h-6 rounded bg-blue-500/25 text-sky-300 flex items-center justify-center text-xs shrink-0"><i class="fa-regular fa-rectangle-list"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Changing Rectangle</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">A = x · y</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="box" onclick="selectScenario('box')" class="scenario-btn px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center gap-2 text-blue-100 hover:border-amber-400/50">
+                        <span class="w-6 h-6 rounded bg-amber-400/20 text-amber-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-cube"></i></span>
+                        <div>
+                            <div class="text-xs font-semibold leading-tight">Box & Volume</div>
+                            <div class="text-[10px] text-blue-200/70 font-mono">V = l · w · h</div>
+                        </div>
+                    </button>
+
+                    <button type="button" data-scenario="rocket" onclick="selectScenario('rocket')" class="scenario-btn col-span-2 px-2.5 py-2 rounded-lg bg-[#060e1f] border border-blue-900/80 text-left transition flex items-center justify-between text-blue-100 hover:border-amber-400/50">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded bg-blue-500/25 text-sky-300 flex items-center justify-center text-xs shrink-0"><i class="fa-solid fa-rocket"></i></span>
+                            <div>
+                                <div class="text-xs font-semibold leading-tight">Rocket Launch & Radar Tracking</div>
+                                <div class="text-[10px] text-blue-200/70 font-mono">tan(θ) = y / D  &  z² = D² + y²</div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-mono text-amber-300 px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/30">Trig Rate</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dynamic Scenario Parameters Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                        <i class="fa-solid fa-sliders text-amber-400"></i> System Constants & Given Rates
+                    </h2>
+                    <button onclick="resetCurrentScenario()" class="text-[11px] text-sky-400 hover:text-amber-300 font-medium transition">
+                        <i class="fa-solid fa-rotate-left mr-0.5"></i> Reset
+                    </button>
+                </div>
+
+                <!-- Dynamic Parameter Inputs Container (Populated per Scenario) -->
+                <div id="dynamicParamsContainer" class="space-y-3"></div>
+            </div>
+
+            <!-- Real-Time Simulation & Instant Scrubber Card -->
+            <div class="glass-panel p-4 rounded-xl space-y-3">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                    <i class="fa-solid fa-stopwatch text-amber-400"></i> Time Simulation & Instant Inspector
+                </h2>
+
+                <!-- Instant State Variable Scrubber -->
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span id="stateSliderLabel" class="text-blue-100 font-medium">Water Depth h:</span>
+                        <span id="stateSliderValue" class="text-amber-400 font-mono font-bold">5.00 ft</span>
+                    </div>
+                    <input type="range" id="stateVarSlider" min="0" max="100" value="50" class="w-full accent-amber-400 bg-[#060e1f] rounded-lg h-2 cursor-pointer">
+                </div>
+
+                <!-- Play / Pause / Speed Row -->
+                <div class="flex items-center justify-between gap-2 pt-1">
+                    <button id="playPauseBtn" onclick="togglePlaySimulation()" class="flex-1 py-2 px-3 rounded-lg bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold flex items-center justify-center gap-2 shadow border border-sky-400/30 transition">
+                        <i id="playPauseIcon" class="fa-solid fa-play"></i>
+                        <span id="playPauseText">Simulate Motion</span>
+                    </button>
+
+                    <div class="flex items-center bg-[#060e1f] rounded-lg border border-blue-900/80 p-0.5 text-[11px] font-mono">
+                        <button onclick="setSimSpeed(0.5)" data-speed="0.5" class="speed-btn px-2 py-1 rounded text-blue-300/75 hover:text-white transition">0.5×</button>
+                        <button onclick="setSimSpeed(1)" data-speed="1" class="speed-btn px-2 py-1 rounded bg-blue-600 text-white font-bold transition">1×</button>
+                        <button onclick="setSimSpeed(2)" data-speed="2" class="speed-btn px-2 py-1 rounded text-blue-300/75 hover:text-white transition">2×</button>
+                    </div>
+                </div>
+
+                <!-- Visual Overlay Toggles -->
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-blue-900/70 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showVectorsCheck" checked class="accent-amber-400 rounded">
+                        <span>Velocity Vectors</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-blue-100">
+                        <input type="checkbox" id="showGuidesCheck" checked class="accent-blue-500 rounded">
+                        <span>Dimension Lines</span>
+                    </label>
+                </div>
+            </div>
+
+        </aside>
+
+        <!-- Right Main Workspace: Split 3D Viewport, 2D Diagrams, and Calculus Formula Panel -->
+        <main class="flex-1 flex flex-col lg:overflow-hidden bg-[#071124]">
+
+            <!-- Upper Split Container (3D Viewport + 2D Schematic & Live Rate Graph) -->
+            <div class="flex-1 flex flex-col md:flex-row overflow-hidden relative min-h-[420px]">
+
+                <!-- 3D Three.js Canvas Container -->
+                <div class="flex-1 relative bg-[#071124] border-b md:border-b-0 md:border-r border-blue-900/70 overflow-hidden min-h-[340px]">
+                    <div id="canvas3d" class="w-full h-full"></div>
+
+                    <!-- Floating 3D Viewport Controls Hint -->
+                    <div class="absolute top-3 left-3 bg-[#09162e]/85 backdrop-blur border border-blue-800/80 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-100 flex items-center gap-2 pointer-events-none shadow-lg">
+                        <span id="simStatusDot" class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                        <span id="viewportCaption">3D Physical Model (Drag to Orbit • Scroll to Zoom)</span>
+                    </div>
+
+                    <!-- 3D Vector & Geometry Legend -->
+                    <div class="absolute bottom-3 left-3 bg-[#09162e]/85 backdrop-blur border border-blue-800/80 p-2.5 rounded-lg text-[11px] text-blue-100 space-y-1 pointer-events-none shadow-lg">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-sky-400/85 border border-sky-200"></span> Given Input Rate Vector
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-amber-400/95 border border-yellow-200"></span> Secondary / Target Rate Vector
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded bg-blue-600/80 border border-blue-400"></span> Dynamic Fluid / Object Body
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right 2D Visualization Column: Top = 2D Geometric Schematic, Bottom = Rate vs State Curve -->
+                <div class="w-full md:w-80 lg:w-96 flex flex-col bg-[#09162e]/95 border-blue-900/70 overflow-hidden shrink-0">
+
+                    <!-- Top Half: 2D Geometric Cross-Section / Triangle Schematic -->
+                    <div class="flex-1 flex flex-col border-b border-blue-900/70 min-h-[210px]">
+                        <div class="px-3 py-2 border-b border-blue-900/70 flex items-center justify-between bg-[#09162e]">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                                <i class="fa-solid fa-compass-drafting text-sky-400"></i> <span id="schematicTitle">2D Similar Triangles</span>
+                            </span>
+                            <span id="schematicBadge" class="text-[10px] text-amber-300 font-mono bg-amber-400/15 px-2 py-0.5 rounded border border-amber-400/40">Cross-Section</span>
+                        </div>
+                        <div class="flex-1 relative p-2 bg-[#060e1f] flex items-center justify-center">
+                            <canvas id="canvas2dSchematic" class="w-full h-full rounded-lg bg-[#0a1832] border border-blue-900/70"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Half: Live Target Rate Behavior Curve -->
+                    <div class="h-44 sm:h-48 flex flex-col shrink-0">
+                        <div class="px-3 py-1.5 border-b border-blue-900/70 flex items-center justify-between bg-[#09162e]">
+                            <span class="text-xs font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1.5">
+                                <i class="fa-solid fa-chart-line text-amber-400"></i> <span id="rateGraphTitle">Rate Curve: dh/dt vs. h</span>
+                            </span>
+                            <span id="rateGraphStatus" class="text-[10px] text-sky-300 font-mono">Non-Linear</span>
+                        </div>
+                        <div class="flex-1 relative p-2 bg-[#060e1f] flex items-center justify-center">
+                            <canvas id="canvas2dRateCurve" class="w-full h-full rounded-lg bg-[#0a1832] border border-blue-900/70"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Bottom Implicit Differentiation & Instantaneous Rate Breakdown Panel -->
+            <div class="h-auto lg:max-h-56 bg-[#09162e] border-t border-blue-900/70 p-4 overflow-y-auto shrink-0 space-y-3">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-blue-900/70 pb-3">
+
+                    <!-- Equation & Differentiated Formula Chain -->
+                    <div class="space-y-0.5">
+                        <div class="text-xs font-semibold text-amber-400 uppercase tracking-wider">Implicit Differentiation Pipeline (wrt Time t)</div>
+                        <div id="calculusEquationChain" class="text-xs sm:text-sm font-mono font-bold text-white tracking-wide">
+                            V = ⅓π(R/H)²h³   ⟹   dV/dt = π(R/H)²h² · (dh/dt)
+                        </div>
+                    </div>
+
+                    <!-- Computed Instantaneous Target Rate Result Box -->
+                    <div class="flex items-center gap-3 bg-[#060e1f] px-4 py-2 rounded-xl border border-amber-400/35 self-start md:self-auto shadow-inner">
+                        <div class="text-right">
+                            <div id="primaryRateLabel" class="text-[10px] uppercase font-bold text-blue-200/70">Water Level Rate (dh/dt)</div>
+                            <div id="primaryRateValue" class="text-lg font-mono font-bold text-amber-400">-0.1592 ft/min</div>
+                        </div>
+                        <div id="secondaryRateBadge" class="text-xs font-mono text-sky-300 bg-blue-950/90 px-2.5 py-1 rounded-md border border-blue-800">
+                            dr/dt = -0.0637 ft/min
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3-Column AP Calculus Solution Breakdown -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+
+                    <!-- Box 1: Snapshot of Instantaneous Variables -->
+                    <div class="p-2.5 rounded-lg bg-[#060e1f]/80 border border-blue-900/70 space-y-1">
+                        <span class="font-bold text-sky-300 block border-b border-blue-900/60 pb-1">
+                            <i class="fa-solid fa-crosshairs text-sky-400 mr-1"></i> Instantaneous Snapshot
+                        </span>
+                        <div id="snapshotValuesBox" class="text-blue-100 font-mono space-y-0.5"></div>
+                    </div>
+
+                    <!-- Box 2: Step-by-Step Substitution -->
+                    <div class="p-2.5 rounded-lg bg-[#060e1f]/80 border border-blue-900/70 space-y-1">
+                        <span class="font-bold text-amber-300 block border-b border-blue-900/60 pb-1">
+                            <i class="fa-solid fa-calculator text-amber-400 mr-1"></i> Rate Substitution
+                        </span>
+                        <div id="substitutionStepsBox" class="text-blue-100 font-mono space-y-0.5"></div>
+                    </div>
+
+                    <!-- Box 3: AP Calculus Exam Insight -->
+                    <div class="p-2.5 rounded-lg bg-blue-950/45 border border-amber-400/25 space-y-1">
+                        <span class="font-bold text-amber-300 block border-b border-amber-400/20 pb-1">
+                            <i class="fa-solid fa-graduation-cap text-amber-400 mr-1"></i> AP Calculus Exam Insight
+                        </span>
+                        <div id="apExamInsightBox" class="text-blue-100/90 leading-relaxed text-[11px]"></div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- AP Calculus Strategy Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#040a17]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#09162e] border border-amber-400/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-blue-300 hover:text-amber-300 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600/25 border border-amber-400/40 text-amber-400 flex items-center justify-center font-bold text-xl">
+                    <i class="fa-solid fa-pen-ruler"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">AP Calculus Related Rates Blueprint</h3>
+                    <p class="text-xs text-blue-200/75">4-Step Problem Solving Protocol & Exam Pitfalls</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-blue-100 leading-relaxed max-h-96 overflow-y-auto pr-2">
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-amber-400 block">Step 1: Identify Constants vs. Changing Variables</span>
+                    <p>Before taking any derivative, separate quantities that stay constant throughout the motion (like ladder length <span class="font-mono text-sky-300">L</span>, tank ratio <span class="font-mono text-sky-300">R/H</span>, or radar distance <span class="font-mono text-sky-300">D</span>) from variables that change with time <span class="font-mono text-amber-300">t</span>.</p>
+                </div>
+
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-sky-400 block">Step 2: Reduce Extra Variables Before Differentiating</span>
+                    <p>In the <strong>Conical Tank</strong> and <strong>Moving Shadow</strong> problems, use <strong>Similar Triangles</strong> to eliminate an unwanted variable (<span class="font-mono">r = (R/H)h</span> or <span class="font-mono">s = [h/(H−h)]x</span>) prior to differentiating so you avoid messy product rules.</p>
+                </div>
+
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-amber-400 block">Step 3: Differentiate Implicitly with Respect to Time (t)</span>
+                    <p>Apply the Chain Rule and Product Rule to every time-dependent variable: <span class="font-mono text-white">d/dt [x·y] = x(dy/dt) + y(dx/dt)</span> and <span class="font-mono text-white">d/dt [lwh] = wh(dl/dt) + lh(dw/dt) + lw(dh/dt)</span>. <strong>Never substitute snapshot values before differentiating!</strong></p>
+                </div>
+
+                <div class="p-3 bg-[#060e1f] rounded-lg border border-blue-900/80 space-y-1">
+                    <span class="font-bold text-sky-400 block">Step 4: Watch Sign Conventions & Units</span>
+                    <p>Decreasing quantities have negative derivatives (<span class="font-mono text-amber-300">dV/dt &lt; 0</span> when draining, <span class="font-mono text-amber-300">dy/dt &lt; 0</span> as a ladder slides down). Always include units such as <span class="font-mono">ft/min</span>, <span class="font-mono">cm³/s</span>, or <span class="font-mono">rad/s</span> on AP free-response questions.</p>
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Application Logic -->
+    <script>
+        // =========================================================================
+        // 1. SCENARIO DEFINITIONS & HELPER MATH
+        // =========================================================================
+        function fmtSign(val, decimals = 2) {
+            const fixed = val.toFixed(decimals);
+            return val > 0 ? `+${fixed}` : fixed;
+        }
+
+        // Safe dimension evaluator for Changing Rectangle (clamps t before side reaches <= 0.25)
+        function getRectDims(p) {
+            const tStopX = p.dxdt < 0 ? (p.x0 - 0.25) / (-p.dxdt) : Infinity;
+            const tStopY = p.dydt < 0 ? (p.y0 - 0.25) / (-p.dydt) : Infinity;
+            const tMax = Math.max(0.5, Math.min(5.0, tStopX, tStopY));
+            const tClamped = Math.max(0, Math.min(tMax, p.t));
+            const x = Math.max(0.25, p.x0 + p.dxdt * tClamped);
+            const y = Math.max(0.25, p.y0 + p.dydt * tClamped);
+            return { x, y, tMax };
+        }
+
+        // Safe dimension evaluator for Changing Rectangular Box
+        function getBoxDims(p) {
+            const tStopL = p.dldt < 0 ? (p.l0 - 0.25) / (-p.dldt) : Infinity;
+            const tStopW = p.dwdt < 0 ? (p.w0 - 0.25) / (-p.dwdt) : Infinity;
+            const tStopH = p.dhdt < 0 ? (p.h0 - 0.25) / (-p.dhdt) : Infinity;
+            const tMax = Math.max(0.5, Math.min(5.0, tStopL, tStopW, tStopH));
+            const tClamped = Math.max(0, Math.min(tMax, p.t));
+            const l = Math.max(0.25, p.l0 + p.dldt * tClamped);
+            const w = Math.max(0.25, p.w0 + p.dwdt * tClamped);
+            const h = Math.max(0.25, p.h0 + p.dhdt * tClamped);
+            return { l, w, h, tMax };
+        }
+
+        const SCENARIOS = {
+            cone: {
+                title: 'Conical Tank Emptying',
+                badge: 'Find dh/dt',
+                schematicTitle: '2D Similar Triangles',
+                schematicBadge: 'r / h = R / H',
+                rateGraphTitle: 'Rate Curve: dh/dt vs. h',
+                rateGraphStatus: '∝ 1 / h²',
+                stateLabel: 'Water Depth h:',
+                unitLen: 'ft',
+                unitTime: 'min',
+                defaults: { R: 4, H: 10, dVdt: -2, h: 5 },
+                getBounds: (p) => ({ min: 0.35, max: p.H }),
+                getStateVal: (p) => p.h,
+                setStateVal: (p, v) => { p.h = v; },
+                paramsUI: [
+                    { key: 'R', label: 'Tank Top Radius (R)', unit: 'ft', min: 1.5, max: 8, step: 0.5 },
+                    { key: 'H', label: 'Tank Total Height (H)', unit: 'ft', min: 4, max: 16, step: 0.5 },
+                    { key: 'dVdt', label: 'Flow Rate (dV/dt)', unit: 'ft³/min', min: -8, max: 8, step: 0.5 }
+                ]
+            },
+            ladder: {
+                title: 'Sliding Ladder Against Wall',
+                badge: 'Find dy/dt',
+                schematicTitle: '2D Right Triangle',
+                schematicBadge: 'x² + y² = L²',
+                rateGraphTitle: 'Rate Curve: dy/dt vs. x',
+                rateGraphStatus: '∝ −x / √(L²−x²)',
+                stateLabel: 'Base Distance x:',
+                unitLen: 'ft',
+                unitTime: 's',
+                defaults: { L: 13, dxdt: 2, x: 5 },
+                getBounds: (p) => ({ min: 0.5, max: p.L - 0.25 }),
+                getStateVal: (p) => p.x,
+                setStateVal: (p, v) => { p.x = v; },
+                paramsUI: [
+                    { key: 'L', label: 'Ladder Length (L)', unit: 'ft', min: 6, max: 20, step: 0.5 },
+                    { key: 'dxdt', label: 'Base Slide Rate (dx/dt)', unit: 'ft/s', min: -5, max: 5, step: 0.25 }
+                ]
+            },
+            shadow: {
+                title: 'Streetlight & Moving Shadow',
+                badge: 'Find ds/dt',
+                schematicTitle: '2D Light Ray Triangles',
+                schematicBadge: 's / h = (x+s) / H',
+                rateGraphTitle: 'Constant Rate: ds/dt vs. x',
+                rateGraphStatus: 'Constant!',
+                stateLabel: 'Distance from Pole x:',
+                unitLen: 'ft',
+                unitTime: 's',
+                defaults: { H: 15, h: 6, dxdt: 5, x: 12 },
+                getBounds: (p) => ({ min: 0.5, max: 28 }),
+                getStateVal: (p) => p.x,
+                setStateVal: (p, v) => { p.x = v; },
+                paramsUI: [
+                    { key: 'H', label: 'Lamp Post Height (H)', unit: 'ft', min: 10, max: 25, step: 0.5 },
+                    { key: 'h', label: 'Person Height (h)', unit: 'ft', min: 3, max: 7.5, step: 0.5 },
+                    { key: 'dxdt', label: 'Walking Speed (dx/dt)', unit: 'ft/s', min: -8, max: 8, step: 0.5 }
+                ]
+            },
+            sphere: {
+                title: 'Expanding / Melting Sphere',
+                badge: 'Find dr/dt',
+                schematicTitle: '2D Great Circle Profile',
+                schematicBadge: 'V = ⁴⁄₃πr³',
+                rateGraphTitle: 'Rate Curve: dr/dt vs. r',
+                rateGraphStatus: '∝ 1 / r²',
+                stateLabel: 'Sphere Radius r:',
+                unitLen: 'cm',
+                unitTime: 's',
+                defaults: { r: 3, dVdt: 36 },
+                getBounds: (p) => ({ min: 0.5, max: 6.5 }),
+                getStateVal: (p) => p.r,
+                setStateVal: (p, v) => { p.r = v; },
+                paramsUI: [
+                    { key: 'dVdt', label: 'Volume Rate (dV/dt)', unit: 'cm³/s', min: -80, max: 80, step: 2 }
+                ]
+            },
+            rectangle: {
+                title: 'Changing Rectangle Area',
+                badge: 'Find dA/dt',
+                schematicTitle: '2D Area Differential Strips',
+                schematicBadge: 'A = x · y',
+                rateGraphTitle: 'Rate Curve: dA/dt vs. t',
+                rateGraphStatus: 'Linear in t',
+                stateLabel: 'Elapsed Time t:',
+                unitLen: 's',
+                unitTime: 's',
+                gridCols: 2,
+                defaults: { x0: 6, y0: 4, dxdt: 1.5, dydt: -1.0, t: 0 },
+                getBounds: (p) => ({ min: 0, max: getRectDims(p).tMax }),
+                getStateVal: (p) => p.t,
+                setStateVal: (p, v) => { p.t = v; },
+                paramsUI: [
+                    { key: 'x0', label: 'Initial Length x₀', unit: 'cm', min: 1, max: 12, step: 0.5 },
+                    { key: 'dxdt', label: 'Rate dx/dt', unit: 'cm/s', min: -4, max: 4, step: 0.25 },
+                    { key: 'y0', label: 'Initial Width y₀', unit: 'cm', min: 1, max: 12, step: 0.5 },
+                    { key: 'dydt', label: 'Rate dy/dt', unit: 'cm/s', min: -4, max: 4, step: 0.25 }
+                ]
+            },
+            box: {
+                title: 'Changing Box Volume',
+                badge: 'Find dV/dt',
+                schematicTitle: '2D Box Faces & Rate Terms',
+                schematicBadge: 'V = l · w · h',
+                rateGraphTitle: 'Rate Curve: dV/dt vs. t',
+                rateGraphStatus: 'Quadratic in t',
+                stateLabel: 'Elapsed Time t:',
+                unitLen: 's',
+                unitTime: 's',
+                gridCols: 2,
+                defaults: { l0: 6, w0: 4, h0: 3, dldt: 1.5, dwdt: -1.0, dhdt: 0.5, t: 0 },
+                getBounds: (p) => ({ min: 0, max: getBoxDims(p).tMax }),
+                getStateVal: (p) => p.t,
+                setStateVal: (p, v) => { p.t = v; },
+                paramsUI: [
+                    { key: 'l0', label: 'Initial Length l₀', unit: 'cm', min: 1, max: 10, step: 0.5 },
+                    { key: 'dldt', label: 'Rate dl/dt', unit: 'cm/s', min: -3, max: 3, step: 0.25 },
+                    { key: 'w0', label: 'Initial Width w₀', unit: 'cm', min: 1, max: 10, step: 0.5 },
+                    { key: 'dwdt', label: 'Rate dw/dt', unit: 'cm/s', min: -3, max: 3, step: 0.25 },
+                    { key: 'h0', label: 'Initial Height h₀', unit: 'cm', min: 1, max: 10, step: 0.5 },
+                    { key: 'dhdt', label: 'Rate dh/dt', unit: 'cm/s', min: -3, max: 3, step: 0.25 }
+                ]
+            },
+            rocket: {
+                title: 'Rocket Launch & Radar Angle',
+                badge: 'Find dθ/dt',
+                schematicTitle: '2D Radar Tracking Triangle',
+                schematicBadge: 'tan(θ) = y / D',
+                rateGraphTitle: 'Angular Rate: dθ/dt vs. y',
+                rateGraphStatus: 'D / (D² + y²)',
+                stateLabel: 'Rocket Altitude y:',
+                unitLen: 'km',
+                unitTime: 's',
+                defaults: { D: 3, dydt: 0.6, y: 4 },
+                getBounds: (p) => ({ min: 0, max: 10 }),
+                getStateVal: (p) => p.y,
+                setStateVal: (p, v) => { p.y = v; },
+                paramsUI: [
+                    { key: 'D', label: 'Radar Distance (D)', unit: 'km', min: 1, max: 8, step: 0.5 },
+                    { key: 'dydt', label: 'Rocket Speed (dy/dt)', unit: 'km/s', min: 0.1, max: 2.0, step: 0.1 }
+                ]
+            }
+        };
+
+        const appState = {
+            scenario: 'cone',
+            params: { ...SCENARIOS.cone.defaults },
+            isPlaying: false,
+            simSpeed: 1,
+            showVectors: true,
+            showGuides: true
+        };
+
+        // Three.js Globals
+        let scene, camera, renderer, controls;
+        let worldGroup = null;
+        let lastFrameTime = performance.now();
+
+        // 2D Canvases
+        let canvasSchematic, ctxSchematic;
+        let canvasRateCurve, ctxRateCurve;
+
+        // =========================================================================
+        // 2. INITIALIZATION
+        // =========================================================================
+        window.onload = function () {
+            initThree();
+            init2DCanvases();
+            setupStaticListeners();
+            selectScenario('cone');
+            requestAnimationFrame(mainLoop);
+        };
+
+        function initThree() {
+            const container = document.getElementById('canvas3d');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x071124);
+
+            camera = new THREE.PerspectiveCamera(44, width / height, 0.1, 1000);
+            camera.position.set(11, 8, 13);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.06;
+
+            // Studio Royal Blue & Warm Gold Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.72);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xfffbeb, 0.85);
+            dirLight1.position.set(14, 22, 16);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x60a5fa, 0.5);
+            dirLight2.position.set(-14, 10, -12);
+            scene.add(dirLight2);
+
+            worldGroup = new THREE.Group();
+            scene.add(worldGroup);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function resetCameraForScenario(scenKey) {
+            if (!camera || !controls) return;
+            if (scenKey === 'cone') {
+                camera.position.set(10, 8.5, 12);
+                controls.target.set(0, 4.5, 0);
+            } else if (scenKey === 'ladder') {
+                camera.position.set(13, 9, 16);
+                controls.target.set(3.5, 5, 0);
+            } else if (scenKey === 'shadow') {
+                camera.position.set(14, 9, 22);
+                controls.target.set(9, 5, 0);
+            } else if (scenKey === 'sphere') {
+                camera.position.set(10, 7, 12);
+                controls.target.set(0, 0, 0);
+            } else if (scenKey === 'rectangle') {
+                camera.position.set(10, 11, 13);
+                controls.target.set(3.5, 0, 2.5);
+            } else if (scenKey === 'box') {
+                camera.position.set(12, 10, 14);
+                controls.target.set(3.2, 2.0, 2.2);
+            } else if (scenKey === 'rocket') {
+                camera.position.set(7, 6.5, 13);
+                controls.target.set(1.8, 3.2, 0);
+            }
+            controls.update();
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas3d');
+            if (!container) return;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+
+            resize2DCanvases();
+            drawSchematic2D();
+            drawRateCurve2D();
+        }
+
+        // =========================================================================
+        // 3. 3D SCENE BUILDERS FOR ALL 7 RELATED RATES SCENARIOS
+        // =========================================================================
+        function clearWorldGroup() {
+            while (worldGroup.children.length > 0) {
+                const obj = worldGroup.children[0];
+                worldGroup.remove(obj);
+            }
+        }
+
+        // Helper: 3D Velocity Vector Arrow (automatically reverses direction for negative rates)
+        function addVectorArrow(origin, dir, signedMag, colorHex) {
+            if (!appState.showVectors) return;
+            const absMag = Math.abs(signedMag);
+            if (absMag < 0.04) return;
+            const len = Math.min(3.4, Math.max(0.65, absMag * 0.65));
+            const finalDir = dir.clone().normalize().multiplyScalar(signedMag >= 0 ? 1 : -1);
+            const arrow = new THREE.ArrowHelper(finalDir, origin, len, colorHex, 0.34, 0.22);
+            worldGroup.add(arrow);
+        }
+
+        // Helper: Dashed Dimension Line
+        function addDashedLine(p1, p2, colorHex) {
+            if (!appState.showGuides) return;
+            const geom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
+            const mat = new THREE.LineDashedMaterial({
+                color: colorHex,
+                dashSize: 0.25,
+                gapSize: 0.15
+            });
+            const line = new THREE.Line(geom, mat);
+            line.computeLineDistances();
+            worldGroup.add(line);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3A. CONICAL TANK 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildCone3D() {
+            const { R, H, dVdt, h } = appState.params;
+            const r = (R / H) * h;
+
+            const grid = new THREE.GridHelper(16, 16, 0x1e3a6e, 0x102242);
+            worldGroup.add(grid);
+
+            // Outer Glass Cone (Vertex at y=0, Top Rim at y=H)
+            const outerGeom = new THREE.CylinderGeometry(R, 0.02, H, 48, 1, true);
+            outerGeom.translate(0, H / 2, 0);
+            const outerMat = new THREE.MeshPhongMaterial({
+                color: 0x60a5fa,
+                specular: 0xfbbf24,
+                shininess: 80,
+                transparent: true,
+                opacity: 0.18,
+                side: THREE.DoubleSide
+            });
+            worldGroup.add(new THREE.Mesh(outerGeom, outerMat));
+
+            // Gold Top Rim Ring
+            const rimGeom = new THREE.TorusGeometry(R, 0.05, 12, 64);
+            rimGeom.rotateX(Math.PI / 2);
+            rimGeom.translate(0, H, 0);
+            worldGroup.add(new THREE.Mesh(rimGeom, new THREE.MeshBasicMaterial({ color: 0xfbbf24 })));
+
+            // Inner Water Cone Volume (Royal Blue)
+            if (h > 0.05) {
+                const waterGeom = new THREE.CylinderGeometry(r, 0.01, h, 48, 1, false);
+                waterGeom.translate(0, h / 2, 0);
+                const waterMat = new THREE.MeshPhongMaterial({
+                    color: 0x1d4ed8,
+                    emissive: 0x172554,
+                    specular: 0x38bdf8,
+                    shininess: 65,
+                    transparent: true,
+                    opacity: 0.78
+                });
+                worldGroup.add(new THREE.Mesh(waterGeom, waterMat));
+
+                // Water Surface Ring (Sky Blue)
+                const surfGeom = new THREE.TorusGeometry(r, 0.045, 12, 64);
+                surfGeom.rotateX(Math.PI / 2);
+                surfGeom.translate(0, h, 0);
+                worldGroup.add(new THREE.Mesh(surfGeom, new THREE.MeshBasicMaterial({ color: 0x38bdf8 })));
+            }
+
+            // Dimension Guides
+            addDashedLine(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, H, 0), 0x93c5fd);
+            addDashedLine(new THREE.Vector3(0, h, 0), new THREE.Vector3(r, h, 0), 0xfbbf24);
+
+            // Rate Vectors: dh/dt (Amber Gold) & dr/dt (Sky Blue)
+            const dhdt = dVdt / (Math.PI * r * r);
+            const drdt = (R / H) * dhdt;
+            addVectorArrow(new THREE.Vector3(0, h, 0), new THREE.Vector3(0, 1, 0), dhdt * 4.5, 0xfacc15);
+            addVectorArrow(new THREE.Vector3(r, h, 0), new THREE.Vector3(1, 0, 0), drdt * 6.0, 0x38bdf8);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3B. SLIDING LADDER 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildLadder3D() {
+            const { L, dxdt, x } = appState.params;
+            const y = Math.sqrt(Math.max(0.01, L * L - x * x));
+            const dydt = -(x / y) * dxdt;
+
+            // Floor Plane
+            const floor = new THREE.Mesh(
+                new THREE.PlaneGeometry(24, 14),
+                new THREE.MeshPhongMaterial({ color: 0x0b1933, side: THREE.DoubleSide })
+            );
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.set(8, 0, 0);
+            worldGroup.add(floor);
+
+            const grid = new THREE.GridHelper(22, 22, 0x1e3a6e, 0x102242);
+            grid.position.set(8, 0.01, 0);
+            worldGroup.add(grid);
+
+            // Vertical Wall at x = 0
+            const wall = new THREE.Mesh(
+                new THREE.BoxGeometry(0.3, 18, 12),
+                new THREE.MeshPhongMaterial({
+                    color: 0x1e3a8a,
+                    transparent: true,
+                    opacity: 0.42
+                })
+            );
+            wall.position.set(-0.15, 9, 0);
+            worldGroup.add(wall);
+
+            // Gold Corner Seam
+            addDashedLine(new THREE.Vector3(0, 0, -6), new THREE.Vector3(0, 0, 6), 0xfbbf24);
+
+            // 3D Ladder Rails & Rungs (Gold & Sky Blue)
+            const ladderGroup = new THREE.Group();
+            const railMat = new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.4, roughness: 0.3 });
+            const rungMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.3, roughness: 0.4 });
+            const railWidth = 1.2;
+
+            for (const zOff of [-railWidth / 2, railWidth / 2]) {
+                const railGeom = new THREE.CylinderGeometry(0.08, 0.08, L, 12);
+                const rail = new THREE.Mesh(railGeom, railMat);
+                rail.position.set(0, 0, zOff);
+                ladderGroup.add(rail);
+            }
+
+            const numRungs = Math.max(5, Math.floor(L));
+            for (let i = 1; i < numRungs; i++) {
+                const t = -L / 2 + (i / numRungs) * L;
+                const rungGeom = new THREE.CylinderGeometry(0.045, 0.045, railWidth, 10);
+                rungGeom.rotateX(Math.PI / 2);
+                const rung = new THREE.Mesh(rungGeom, rungMat);
+                rung.position.set(0, t, 0);
+                ladderGroup.add(rung);
+            }
+
+            // Position & Orient Ladder between (0, y, 0) and (x, 0, 0)
+            ladderGroup.position.set(x / 2, y / 2, 0);
+            const angle = Math.atan2(x, y); // Angle from vertical wall
+            ladderGroup.rotation.z = angle;
+            worldGroup.add(ladderGroup);
+
+            // Velocity Vectors: dx/dt at base (Sky Blue) & dy/dt at top (Gold)
+            addVectorArrow(new THREE.Vector3(x, 0.25, 0), new THREE.Vector3(1, 0, 0), dxdt, 0x38bdf8);
+            addVectorArrow(new THREE.Vector3(0.25, y, 0), new THREE.Vector3(0, 1, 0), dydt, 0xfacc15);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3C. STREETLIGHT & MOVING SHADOW 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildShadow3D() {
+            const { H, h, dxdt, x } = appState.params;
+            const s = (h / (H - h)) * x;
+            const tipX = x + s;
+            const dsdt = (h / (H - h)) * dxdt;
+
+            // Ground Sidewalk
+            const ground = new THREE.Mesh(
+                new THREE.PlaneGeometry(46, 12),
+                new THREE.MeshPhongMaterial({ color: 0x0b1933, side: THREE.DoubleSide })
+            );
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.set(18, 0, 0);
+            worldGroup.add(ground);
+
+            // Lamp Post at x = 0
+            const pole = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.14, 0.2, H, 16),
+                new THREE.MeshStandardMaterial({ color: 0x3b82f6, metalness: 0.5, roughness: 0.3 })
+            );
+            pole.position.set(0, H / 2, 0);
+            worldGroup.add(pole);
+
+            // Glowing Gold Lamp Bulb at (0, H, 0)
+            const bulb = new THREE.Mesh(
+                new THREE.SphereGeometry(0.45, 20, 20),
+                new THREE.MeshBasicMaterial({ color: 0xfde047 })
+            );
+            bulb.position.set(0, H, 0);
+            worldGroup.add(bulb);
+
+            // Person Figure at x
+            const bodyH = h - 0.65;
+            const torso = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24, 0.28, bodyH, 16),
+                new THREE.MeshPhongMaterial({ color: 0x38bdf8 })
+            );
+            torso.position.set(x, bodyH / 2, 0);
+            worldGroup.add(torso);
+
+            const head = new THREE.Mesh(
+                new THREE.SphereGeometry(0.32, 16, 16),
+                new THREE.MeshPhongMaterial({ color: 0xe0f2fe })
+            );
+            head.position.set(x, h - 0.32, 0);
+            worldGroup.add(head);
+
+            // Cast Shadow Strip on Ground from x to x + s (Gold/Dark Amber)
+            if (s > 0.05) {
+                const shadowStrip = new THREE.Mesh(
+                    new THREE.BoxGeometry(s, 0.04, 0.75),
+                    new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.75 })
+                );
+                shadowStrip.position.set(x + s / 2, 0.02, 0);
+                worldGroup.add(shadowStrip);
+            }
+
+            // Light Ray Line from (0, H, 0) grazing head (x, h, 0) to tip (x+s, 0, 0)
+            addDashedLine(new THREE.Vector3(0, H, 0), new THREE.Vector3(tipX, 0.05, 0), 0xfde047);
+
+            // Velocity Vectors: Person dx/dt (Sky Blue) & Shadow Tip Speed dx/dt + ds/dt (Gold)
+            addVectorArrow(new THREE.Vector3(x, h * 0.55, 0.6), new THREE.Vector3(1, 0, 0), dxdt * 0.65, 0x38bdf8);
+            addVectorArrow(new THREE.Vector3(tipX, 0.25, 0), new THREE.Vector3(1, 0, 0), (dxdt + dsdt) * 0.65, 0xfacc15);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3D. EXPANDING / MELTING SPHERE 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildSphere3D() {
+            const { r, dVdt } = appState.params;
+            const drdt = dVdt / (4 * Math.PI * r * r);
+
+            const grid = new THREE.GridHelper(16, 16, 0x1e3a6e, 0x102242);
+            grid.position.y = -4.5;
+            worldGroup.add(grid);
+
+            // Translucent Royal Blue Sphere
+            const sphereGeom = new THREE.SphereGeometry(r, 48, 36);
+            const sphereMat = new THREE.MeshPhongMaterial({
+                color: 0x1d4ed8,
+                emissive: 0x172554,
+                specular: 0xfbbf24,
+                shininess: 75,
+                transparent: true,
+                opacity: 0.72
+            });
+            worldGroup.add(new THREE.Mesh(sphereGeom, sphereMat));
+
+            // Gold Equatorial Ring
+            const eqGeom = new THREE.TorusGeometry(r + 0.015, 0.04, 12, 64);
+            eqGeom.rotateX(Math.PI / 2);
+            worldGroup.add(new THREE.Mesh(eqGeom, new THREE.MeshBasicMaterial({ color: 0xfbbf24 })));
+
+            // Radial Line & dr/dt Velocity Vector
+            addDashedLine(new THREE.Vector3(0, 0, 0), new THREE.Vector3(r, 0, 0), 0xfbbf24);
+            addVectorArrow(new THREE.Vector3(r, 0, 0), new THREE.Vector3(1, 0, 0), drdt * 2.5, 0xfacc15);
+            addVectorArrow(new THREE.Vector3(0, r, 0), new THREE.Vector3(0, 1, 0), drdt * 2.5, 0x38bdf8);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3E. CHANGING RECTANGLE 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildRectangle3D() {
+            const p = appState.params;
+            const { x, y } = getRectDims(p);
+
+            const grid = new THREE.GridHelper(24, 24, 0x1e3a6e, 0x102242);
+            grid.position.set(4, 0, 4);
+            worldGroup.add(grid);
+
+            // Origin Anchor Corner Post
+            const anchor = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.12, 0.12, 0.3, 16),
+                new THREE.MeshStandardMaterial({ color: 0xfbbf24, metalness: 0.5, roughness: 0.3 })
+            );
+            anchor.position.set(0, 0.15, 0);
+            worldGroup.add(anchor);
+
+            // Dynamic Royal Blue Rectangle Plate (x along +X, y along +Z)
+            const plateH = 0.16;
+            const rectGeom = new THREE.BoxGeometry(x, plateH, y);
+            rectGeom.translate(x / 2, plateH / 2, y / 2);
+            const rectMat = new THREE.MeshPhongMaterial({
+                color: 0x1d4ed8,
+                emissive: 0x172554,
+                specular: 0xfbbf24,
+                shininess: 65,
+                transparent: true,
+                opacity: 0.78
+            });
+            worldGroup.add(new THREE.Mesh(rectGeom, rectMat));
+
+            // Crisp Gold Perimeter Wireframe
+            const edgeGeom = new THREE.EdgesGeometry(rectGeom);
+            worldGroup.add(new THREE.LineSegments(edgeGeom, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
+
+            // Ghost Reference Outline of Initial Rectangle (x0, y0) when t > 0
+            if (p.t > 0.02 && appState.showGuides) {
+                const ghostGeom = new THREE.BoxGeometry(p.x0, 0.04, p.y0);
+                ghostGeom.translate(p.x0 / 2, 0.02, p.y0 / 2);
+                const ghostEdges = new THREE.EdgesGeometry(ghostGeom);
+                worldGroup.add(new THREE.LineSegments(
+                    ghostEdges,
+                    new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.6 })
+                ));
+            }
+
+            // Dimension Guide Lines
+            addDashedLine(new THREE.Vector3(0, 0.02, y + 0.55), new THREE.Vector3(x, 0.02, y + 0.55), 0x38bdf8);
+            addDashedLine(new THREE.Vector3(x + 0.55, 0.02, 0), new THREE.Vector3(x + 0.55, 0.02, y), 0xfbbf24);
+
+            // Velocity Vectors on the two moving edges (flip inward automatically when negative)
+            addVectorArrow(new THREE.Vector3(x, plateH + 0.06, y / 2), new THREE.Vector3(1, 0, 0), p.dxdt, 0x38bdf8);
+            addVectorArrow(new THREE.Vector3(x / 2, plateH + 0.06, y), new THREE.Vector3(0, 0, 1), p.dydt, 0xfacc15);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3F. CHANGING RECTANGULAR BOX & VOLUME 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildBox3D() {
+            const p = appState.params;
+            const { l, w, h } = getBoxDims(p);
+
+            const grid = new THREE.GridHelper(24, 24, 0x1e3a6e, 0x102242);
+            grid.position.set(4, 0, 4);
+            worldGroup.add(grid);
+
+            // Dynamic Royal Blue 3D Box (l along +X, h along +Y, w along +Z)
+            const boxGeom = new THREE.BoxGeometry(l, h, w);
+            boxGeom.translate(l / 2, h / 2, w / 2);
+            const boxMat = new THREE.MeshPhongMaterial({
+                color: 0x1d4ed8,
+                emissive: 0x172554,
+                specular: 0xfbbf24,
+                shininess: 65,
+                transparent: true,
+                opacity: 0.68
+            });
+            worldGroup.add(new THREE.Mesh(boxGeom, boxMat));
+
+            // Crisp Gold Box Edges
+            const edgeGeom = new THREE.EdgesGeometry(boxGeom);
+            worldGroup.add(new THREE.LineSegments(edgeGeom, new THREE.LineBasicMaterial({ color: 0xfbbf24 })));
+
+            // Ghost Wireframe of Initial Box (l0, h0, w0) when t > 0
+            if (p.t > 0.02 && appState.showGuides) {
+                const ghostGeom = new THREE.BoxGeometry(p.l0, p.h0, p.w0);
+                ghostGeom.translate(p.l0 / 2, p.h0 / 2, p.w0 / 2);
+                const ghostEdges = new THREE.EdgesGeometry(ghostGeom);
+                worldGroup.add(new THREE.LineSegments(
+                    ghostEdges,
+                    new THREE.LineBasicMaterial({ color: 0x60a5fa, transparent: true, opacity: 0.55 })
+                ));
+            }
+
+            // Dimension Guide Lines
+            addDashedLine(new THREE.Vector3(0, 0.03, w + 0.5), new THREE.Vector3(l, 0.03, w + 0.5), 0x38bdf8);
+            addDashedLine(new THREE.Vector3(l + 0.5, 0.03, 0), new THREE.Vector3(l + 0.5, 0.03, w), 0x93c5fd);
+            addDashedLine(new THREE.Vector3(l + 0.5, 0.03, w + 0.5), new THREE.Vector3(l + 0.5, h, w + 0.5), 0xfbbf24);
+
+            // Three Orthogonal Face Velocity Vectors: dl/dt (+X), dw/dt (+Z), dh/dt (+Y)
+            addVectorArrow(new THREE.Vector3(l, h / 2, w / 2), new THREE.Vector3(1, 0, 0), p.dldt, 0x38bdf8);
+            addVectorArrow(new THREE.Vector3(l / 2, h / 2, w), new THREE.Vector3(0, 0, 1), p.dwdt, 0x93c5fd);
+            addVectorArrow(new THREE.Vector3(l / 2, h, w / 2), new THREE.Vector3(0, 1, 0), p.dhdt, 0xfacc15);
+        }
+
+        // -------------------------------------------------------------------------
+        // 3G. ROCKET LAUNCH & RADAR TRACKING 3D BUILDER
+        // -------------------------------------------------------------------------
+        function buildRocket3D() {
+            const { D, dydt, y } = appState.params;
+            const theta = Math.atan2(y, D);
+
+            const grid = new THREE.GridHelper(22, 22, 0x1e3a6e, 0x102242);
+            grid.position.set(3, 0, 0);
+            worldGroup.add(grid);
+
+            // Radar Station Base at Origin (0, 0, 0)
+            const pedestal = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.35, 0.5, 0.7, 16),
+                new THREE.MeshStandardMaterial({ color: 0x3b82f6 })
+            );
+            pedestal.position.set(0, 0.35, 0);
+            worldGroup.add(pedestal);
+
+            // Rotating Radar Dish aimed directly at Rocket (D, y, 0)
+            const dish = new THREE.Mesh(
+                new THREE.ConeGeometry(0.65, 0.4, 20, 1, true),
+                new THREE.MeshStandardMaterial({ color: 0xfbbf24, side: THREE.DoubleSide })
+            );
+            dish.position.set(0, 0.85, 0);
+            dish.rotation.z = theta - Math.PI / 2;
+            worldGroup.add(dish);
+
+            // Launch Pad at (D, 0, 0)
+            const pad = new THREE.Mesh(
+                new THREE.BoxGeometry(1.4, 0.18, 1.4),
+                new THREE.MeshStandardMaterial({ color: 0x1e3a8a })
+            );
+            pad.position.set(D, 0.09, 0);
+            worldGroup.add(pad);
+
+            // 3D Rocket Body at (D, y, 0)
+            const rocketGroup = new THREE.Group();
+            const body = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.24, 0.28, 1.2, 16),
+                new THREE.MeshPhongMaterial({ color: 0xe0f2fe })
+            );
+            body.position.y = 0.6;
+            rocketGroup.add(body);
+
+            const nose = new THREE.Mesh(
+                new THREE.ConeGeometry(0.24, 0.5, 16),
+                new THREE.MeshPhongMaterial({ color: 0xfacc15 })
+            );
+            nose.position.y = 1.45;
+            rocketGroup.add(nose);
+
+            rocketGroup.position.set(D, y, 0);
+            worldGroup.add(rocketGroup);
+
+            // Radar Sightline Hypotenuse & Vertical Path Guides
+            addDashedLine(new THREE.Vector3(0, 0.85, 0), new THREE.Vector3(D, y + 0.6, 0), 0xfacc15);
+            addDashedLine(new THREE.Vector3(D, 0, 0), new THREE.Vector3(D, y, 0), 0x38bdf8);
+
+            // Rocket Velocity Vector dy/dt (Sky Blue)
+            addVectorArrow(new THREE.Vector3(D + 0.55, y + 0.65, 0), new THREE.Vector3(0, 1, 0), dydt * 2.2, 0x38bdf8);
+        }
+
+        function update3DScene() {
+            clearWorldGroup();
+            const s = appState.scenario;
+            if (s === 'cone') buildCone3D();
+            else if (s === 'ladder') buildLadder3D();
+            else if (s === 'shadow') buildShadow3D();
+            else if (s === 'sphere') buildSphere3D();
+            else if (s === 'rectangle') buildRectangle3D();
+            else if (s === 'box') buildBox3D();
+            else if (s === 'rocket') buildRocket3D();
+        }
+
+        // =========================================================================
+        // 4. 2D SCHEMATIC & RATE CURVE RENDERERS
+        // =========================================================================
+        function init2DCanvases() {
+            canvasSchematic = document.getElementById('canvas2dSchematic');
+            ctxSchematic = canvasSchematic.getContext('2d');
+            canvasRateCurve = document.getElementById('canvas2dRateCurve');
+            ctxRateCurve = canvasRateCurve.getContext('2d');
+            resize2DCanvases();
+        }
+
+        function resize2DCanvases() {
+            if (canvasSchematic && canvasSchematic.parentElement) {
+                const r1 = canvasSchematic.parentElement.getBoundingClientRect();
+                canvasSchematic.width = r1.width;
+                canvasSchematic.height = r1.height;
+            }
+            if (canvasRateCurve && canvasRateCurve.parentElement) {
+                const r2 = canvasRateCurve.parentElement.getBoundingClientRect();
+                canvasRateCurve.width = r2.width;
+                canvasRateCurve.height = r2.height;
+            }
+        }
+
+        // Draw crisp 2D triangle / cross-section schematic with annotated dimensions
+        function drawSchematic2D() {
+            if (!ctxSchematic) return;
+            const W = canvasSchematic.width;
+            const H = canvasSchematic.height;
+            ctxSchematic.clearRect(0, 0, W, H);
+
+            const scen = appState.scenario;
+            const p = appState.params;
+
+            ctxSchematic.font = 'bold 11px JetBrains Mono, monospace';
+
+            if (scen === 'cone') {
+                const cx = W * 0.44;
+                const topY = 24;
+                const botY = H - 24;
+                const coneH = botY - topY;
+                const topHalfW = Math.min(W * 0.34, coneH * (p.R / p.H) * 0.95);
+                const frac = p.h / p.H;
+                const waterY = botY - frac * coneH;
+                const waterHalfW = frac * topHalfW;
+
+                // Outer Cone Triangle
+                ctxSchematic.strokeStyle = '#60a5fa';
+                ctxSchematic.lineWidth = 2;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(cx - topHalfW, topY);
+                ctxSchematic.lineTo(cx + topHalfW, topY);
+                ctxSchematic.lineTo(cx, botY);
+                ctxSchematic.closePath();
+                ctxSchematic.stroke();
+
+                // Filled Water Triangle
+                ctxSchematic.fillStyle = 'rgba(37, 99, 235, 0.38)';
+                ctxSchematic.strokeStyle = '#38bdf8';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(cx - waterHalfW, waterY);
+                ctxSchematic.lineTo(cx + waterHalfW, waterY);
+                ctxSchematic.lineTo(cx, botY);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+                ctxSchematic.stroke();
+
+                // Center Altitude Dashed Line
+                ctxSchematic.setLineDash([3, 3]);
+                ctxSchematic.strokeStyle = '#93c5fd';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(cx, topY);
+                ctxSchematic.lineTo(cx, botY);
+                ctxSchematic.stroke();
+                ctxSchematic.setLineDash([]);
+
+                // Top Radius R & Water Radius r (Gold)
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.lineWidth = 2.2;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(cx, waterY);
+                ctxSchematic.lineTo(cx + waterHalfW, waterY);
+                ctxSchematic.stroke();
+
+                const rVal = (p.R / p.H) * p.h;
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`R = ${p.R.toFixed(1)}`, cx + 6, topY - 6);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.fillText(`r = ${rVal.toFixed(2)}`, cx + waterHalfW + 6, waterY + 4);
+                ctxSchematic.fillStyle = '#93c5fd';
+                ctxSchematic.fillText(`h = ${p.h.toFixed(2)}`, cx + 6, (waterY + botY) / 2 + 4);
+            } else if (scen === 'ladder') {
+                const y = Math.sqrt(Math.max(0.01, p.L * p.L - p.x * p.x));
+                const originX = 44;
+                const originY = H - 28;
+                const scale = Math.min((W - 84) / p.L, (H - 54) / p.L);
+                const px = originX + p.x * scale;
+                const py = originY - y * scale;
+
+                // Wall & Floor Axes
+                ctxSchematic.strokeStyle = '#3b64a8';
+                ctxSchematic.lineWidth = 2;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, 16);
+                ctxSchematic.lineTo(originX, originY);
+                ctxSchematic.lineTo(W - 20, originY);
+                ctxSchematic.stroke();
+
+                // Shaded Triangle
+                ctxSchematic.fillStyle = 'rgba(59, 130, 246, 0.18)';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, originY);
+                ctxSchematic.lineTo(px, originY);
+                ctxSchematic.lineTo(originX, py);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+
+                // Ladder Hypotenuse (Gold)
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.lineWidth = 3.5;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, py);
+                ctxSchematic.lineTo(px, originY);
+                ctxSchematic.stroke();
+
+                // Labels
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`x = ${p.x.toFixed(2)}`, (originX + px) / 2, originY + 15);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.textAlign = 'right';
+                ctxSchematic.fillText(`y=${y.toFixed(2)}`, originX - 5, (originY + py) / 2);
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`L = ${p.L.toFixed(1)}`, (originX + px) / 2 + 6, (originY + py) / 2 - 4);
+            } else if (scen === 'shadow') {
+                const s = (p.h / (p.H - p.h)) * p.x;
+                const tipX = p.x + s;
+                const originX = 32;
+                const originY = H - 28;
+                const maxSpan = Math.max(tipX + 2, 22);
+                const scaleX = (W - 56) / maxSpan;
+                const scaleY = (H - 52) / p.H;
+
+                const px = originX + p.x * scaleX;
+                const pTip = originX + tipX * scaleX;
+                const topPoleY = originY - p.H * scaleY;
+                const topHeadY = originY - p.h * scaleY;
+
+                // Ground & Pole
+                ctxSchematic.strokeStyle = '#3b64a8';
+                ctxSchematic.lineWidth = 2;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, topPoleY);
+                ctxSchematic.lineTo(originX, originY);
+                ctxSchematic.lineTo(W - 16, originY);
+                ctxSchematic.stroke();
+
+                // Light Triangle
+                ctxSchematic.fillStyle = 'rgba(250, 204, 21, 0.14)';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, topPoleY);
+                ctxSchematic.lineTo(originX, originY);
+                ctxSchematic.lineTo(pTip, originY);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+
+                // Light Ray Hypotenuse
+                ctxSchematic.strokeStyle = '#fde047';
+                ctxSchematic.lineWidth = 1.8;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, topPoleY);
+                ctxSchematic.lineTo(pTip, originY);
+                ctxSchematic.stroke();
+
+                // Person Segment
+                ctxSchematic.strokeStyle = '#38bdf8';
+                ctxSchematic.lineWidth = 3;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(px, originY);
+                ctxSchematic.lineTo(px, topHeadY);
+                ctxSchematic.stroke();
+
+                // Shadow Segment
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.lineWidth = 4;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(px, originY);
+                ctxSchematic.lineTo(pTip, originY);
+                ctxSchematic.stroke();
+
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`x=${p.x.toFixed(1)}`, (originX + px) / 2, originY + 15);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.fillText(`s=${s.toFixed(1)}`, (px + pTip) / 2, originY + 15);
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`H=${p.H}`, originX + 4, topPoleY + 10);
+            } else if (scen === 'sphere') {
+                const cx = W * 0.42;
+                const cy = H * 0.5;
+                const maxR = Math.min(W * 0.34, H * 0.38);
+                const rPx = (p.r / 6.5) * maxR;
+
+                ctxSchematic.fillStyle = 'rgba(37, 99, 235, 0.28)';
+                ctxSchematic.strokeStyle = '#38bdf8';
+                ctxSchematic.lineWidth = 2.2;
+                ctxSchematic.beginPath();
+                ctxSchematic.arc(cx, cy, rPx, 0, Math.PI * 2);
+                ctxSchematic.fill();
+                ctxSchematic.stroke();
+
+                // Radius Vector
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.lineWidth = 2.5;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(cx, cy);
+                ctxSchematic.lineTo(cx + rPx, cy);
+                ctxSchematic.stroke();
+
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`r = ${p.r.toFixed(2)} cm`, cx + rPx + 8, cy + 4);
+                ctxSchematic.fillStyle = '#93c5fd';
+                const vol = (4 / 3) * Math.PI * Math.pow(p.r, 3);
+                ctxSchematic.fillText(`V = ${vol.toFixed(1)} cm³`, cx + rPx + 8, cy + 20);
+            } else if (scen === 'rectangle') {
+                const { x, y } = getRectDims(p);
+                const originX = 44;
+                const originY = H - 28;
+                const maxCoord = Math.max(x, y, p.x0, p.y0, 8);
+                const scale = Math.min((W - 96) / maxCoord, (H - 58) / maxCoord);
+                const rw = x * scale;
+                const rh = y * scale;
+
+                // Main Rectangle Body
+                ctxSchematic.fillStyle = 'rgba(37, 99, 235, 0.34)';
+                ctxSchematic.strokeStyle = '#60a5fa';
+                ctxSchematic.lineWidth = 2;
+                ctxSchematic.fillRect(originX, originY - rh, rw, rh);
+                ctxSchematic.strokeRect(originX, originY - rh, rw, rh);
+
+                // Differential Strip for y*(dx/dt) along right edge (Sky Blue if +, Rose if -)
+                if (Math.abs(p.dxdt) > 1e-4) {
+                    const stripW = Math.min(14, Math.max(5, Math.abs(p.dxdt) * 3.5));
+                    const sx = p.dxdt > 0 ? originX + rw : originX + rw - stripW;
+                    ctxSchematic.fillStyle = p.dxdt > 0 ? 'rgba(56, 189, 248, 0.45)' : 'rgba(244, 63, 94, 0.42)';
+                    ctxSchematic.fillRect(sx, originY - rh, stripW, rh);
+                }
+
+                // Differential Strip for x*(dy/dt) along top edge (Gold if +, Rose if -)
+                if (Math.abs(p.dydt) > 1e-4) {
+                    const stripH = Math.min(14, Math.max(5, Math.abs(p.dydt) * 3.5));
+                    const sy = p.dydt > 0 ? originY - rh - stripH : originY - rh;
+                    ctxSchematic.fillStyle = p.dydt > 0 ? 'rgba(250, 204, 21, 0.48)' : 'rgba(244, 63, 94, 0.42)';
+                    ctxSchematic.fillRect(originX, sy, rw, stripH);
+                }
+
+                // Dimension Labels
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`x=${x.toFixed(1)} (${fmtSign(p.dxdt, 1)})`, originX + rw / 2, originY + 15);
+
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`y=${y.toFixed(1)}`, originX + rw + 6, originY - rh / 2);
+                ctxSchematic.fillText(`(${fmtSign(p.dydt, 1)})`, originX + rw + 6, originY - rh / 2 + 13);
+
+                ctxSchematic.fillStyle = '#e0f2fe';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`A = ${(x * y).toFixed(1)}`, originX + rw / 2, originY - rh / 2 + 4);
+            } else if (scen === 'box') {
+                const { l, w, h } = getBoxDims(p);
+                const termL = w * h * p.dldt;
+                const termW = l * h * p.dwdt;
+                const termH = l * w * p.dhdt;
+
+                // Left side: Isometric 2D Box Wireframe
+                const ox = 36;
+                const oy = H - 26;
+                const maxD = Math.max(l, w, h, 8);
+                const sc = Math.min((W * 0.38) / maxD, (H * 0.56) / maxD);
+                const lx = l * sc;
+                const hy = h * sc;
+                const wx = w * sc * 0.5;
+                const wy = w * sc * 0.35;
+
+                // Front face
+                ctxSchematic.fillStyle = 'rgba(37, 99, 235, 0.32)';
+                ctxSchematic.strokeStyle = '#38bdf8';
+                ctxSchematic.lineWidth = 1.8;
+                ctxSchematic.fillRect(ox, oy - hy, lx, hy);
+                ctxSchematic.strokeRect(ox, oy - hy, lx, hy);
+
+                // Top face
+                ctxSchematic.fillStyle = 'rgba(250, 204, 21, 0.22)';
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(ox, oy - hy);
+                ctxSchematic.lineTo(ox + wx, oy - hy - wy);
+                ctxSchematic.lineTo(ox + lx + wx, oy - hy - wy);
+                ctxSchematic.lineTo(ox + lx, oy - hy);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+                ctxSchematic.stroke();
+
+                // Right face
+                ctxSchematic.fillStyle = 'rgba(56, 189, 248, 0.24)';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(ox + lx, oy - hy);
+                ctxSchematic.lineTo(ox + lx + wx, oy - hy - wy);
+                ctxSchematic.lineTo(ox + lx + wx, oy - wy);
+                ctxSchematic.lineTo(ox + lx, oy);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+                ctxSchematic.stroke();
+
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`l=${l.toFixed(1)}`, ox + lx / 2, oy + 14);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.textAlign = 'right';
+                ctxSchematic.fillText(`h=${h.toFixed(1)}`, ox - 4, oy - hy / 2);
+
+                // Right side: 3-Term Product Rule Contributions Breakdown
+                const infoX = W * 0.53;
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillStyle = '#93c5fd';
+                ctxSchematic.font = 'bold 10px Inter, sans-serif';
+                ctxSchematic.fillText('dV/dt Face Terms:', infoX, 24);
+
+                ctxSchematic.font = '10px JetBrains Mono, monospace';
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.fillText(`wh(dl/dt) = ${fmtSign(termL, 1)}`, infoX, 44);
+                ctxSchematic.fillStyle = '#93c5fd';
+                ctxSchematic.fillText(`lh(dw/dt) = ${fmtSign(termW, 1)}`, infoX, 62);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.fillText(`lw(dh/dt) = ${fmtSign(termH, 1)}`, infoX, 80);
+
+                ctxSchematic.strokeStyle = '#254785';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(infoX, 88);
+                ctxSchematic.lineTo(W - 14, 88);
+                ctxSchematic.stroke();
+
+                ctxSchematic.fillStyle = '#fde047';
+                ctxSchematic.font = 'bold 11px JetBrains Mono, monospace';
+                ctxSchematic.fillText(`Σ = ${fmtSign(termL + termW + termH, 2)}`, infoX, 104);
+            } else if (scen === 'rocket') {
+                const thetaDeg = (Math.atan2(p.y, p.D) * 180) / Math.PI;
+                const originX = 42;
+                const originY = H - 28;
+                const scaleX = (W - 88) / Math.max(p.D, 4);
+                const scaleY = (H - 52) / 10;
+
+                const px = originX + p.D * scaleX;
+                const py = originY - p.y * scaleY;
+
+                ctxSchematic.fillStyle = 'rgba(59, 130, 246, 0.18)';
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, originY);
+                ctxSchematic.lineTo(px, originY);
+                ctxSchematic.lineTo(px, py);
+                ctxSchematic.closePath();
+                ctxSchematic.fill();
+
+                ctxSchematic.strokeStyle = '#38bdf8';
+                ctxSchematic.lineWidth = 2;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, originY);
+                ctxSchematic.lineTo(px, originY);
+                ctxSchematic.lineTo(px, py);
+                ctxSchematic.stroke();
+
+                // Radar Sightline
+                ctxSchematic.strokeStyle = '#facc15';
+                ctxSchematic.lineWidth = 2.5;
+                ctxSchematic.beginPath();
+                ctxSchematic.moveTo(originX, originY);
+                ctxSchematic.lineTo(px, py);
+                ctxSchematic.stroke();
+
+                // Angle Arc
+                ctxSchematic.beginPath();
+                ctxSchematic.arc(originX, originY, 24, -Math.atan2(originY - py, px - originX), 0);
+                ctxSchematic.stroke();
+
+                ctxSchematic.fillStyle = '#38bdf8';
+                ctxSchematic.textAlign = 'center';
+                ctxSchematic.fillText(`D = ${p.D.toFixed(1)} km`, (originX + px) / 2, originY + 15);
+                ctxSchematic.fillStyle = '#facc15';
+                ctxSchematic.textAlign = 'left';
+                ctxSchematic.fillText(`y=${p.y.toFixed(1)}`, px + 5, (originY + py) / 2);
+                ctxSchematic.fillText(`θ=${thetaDeg.toFixed(1)}°`, originX + 28, originY - 8);
+            }
+        }
+
+        // Draw Live Rate Behavior Curve across the domain with current instant dot
+        function drawRateCurve2D() {
+            if (!ctxRateCurve) return;
+            const W = canvasRateCurve.width;
+            const H = canvasRateCurve.height;
+            ctxRateCurve.clearRect(0, 0, W, H);
+
+            const scen = appState.scenario;
+            const cfg = SCENARIOS[scen];
+            const bounds = cfg.getBounds(appState.params);
+            const curX = cfg.getStateVal(appState.params);
+
+            // Helper to compute target rate as a function of primary state variable u
+            const evalRateAt = (u) => {
+                const p = appState.params;
+                if (scen === 'cone') {
+                    const r = (p.R / p.H) * u;
+                    return p.dVdt / (Math.PI * r * r);
+                } else if (scen === 'ladder') {
+                    const y = Math.sqrt(Math.max(0.05, p.L * p.L - u * u));
+                    return -(u / y) * p.dxdt;
+                } else if (scen === 'shadow') {
+                    return (p.h / (p.H - p.h)) * p.dxdt;
+                } else if (scen === 'sphere') {
+                    return p.dVdt / (4 * Math.PI * u * u);
+                } else if (scen === 'rectangle') {
+                    const x = p.x0 + p.dxdt * u;
+                    const y = p.y0 + p.dydt * u;
+                    return x * p.dydt + y * p.dxdt;
+                } else if (scen === 'box') {
+                    const l = p.l0 + p.dldt * u;
+                    const w = p.w0 + p.dwdt * u;
+                    const h = p.h0 + p.dhdt * u;
+                    return w * h * p.dldt + l * h * p.dwdt + l * w * p.dhdt;
+                } else if (scen === 'rocket') {
+                    return (p.D / (p.D * p.D + u * u)) * p.dydt;
+                }
+                return 0;
+            };
+
+            const samples = 80;
+            const pts = [];
+            let yMin = 0, yMax = 0;
+
+            for (let i = 0; i <= samples; i++) {
+                const u = bounds.min + (bounds.max - bounds.min) * (i / samples);
+                let rate = evalRateAt(u);
+                // Soft-clamp asymptotic spikes near 0/L so graph stays legible
+                rate = Math.max(-25, Math.min(25, rate));
+                pts.push({ u, rate });
+                yMin = Math.min(yMin, rate);
+                yMax = Math.max(yMax, rate);
+            }
+
+            if (Math.abs(yMax - yMin) < 0.5) {
+                yMin -= 1;
+                yMax += 1;
+            }
+
+            const padL = 32, padR = 16, padT = 16, padB = 22;
+            const plotW = W - padL - padR;
+            const plotH = H - padT - padB;
+
+            const toX = (u) => padL + ((u - bounds.min) / (bounds.max - bounds.min)) * plotW;
+            const toY = (r) => padT + plotH - ((r - yMin) / (yMax - yMin)) * plotH;
+
+            // Zero Axis Line
+            ctxRateCurve.strokeStyle = '#254785';
+            ctxRateCurve.lineWidth = 1.2;
+            const zeroY = toY(0);
+            if (zeroY >= padT && zeroY <= padT + plotH) {
+                ctxRateCurve.beginPath();
+                ctxRateCurve.moveTo(padL, zeroY);
+                ctxRateCurve.lineTo(W - padR, zeroY);
+                ctxRateCurve.stroke();
+            }
+
+            // Left Vertical Axis
+            ctxRateCurve.beginPath();
+            ctxRateCurve.moveTo(padL, padT);
+            ctxRateCurve.lineTo(padL, padT + plotH);
+            ctxRateCurve.stroke();
+
+            // Plot Rate Curve (Electric Sky Blue)
+            ctxRateCurve.strokeStyle = '#38bdf8';
+            ctxRateCurve.lineWidth = 2.4;
+            ctxRateCurve.beginPath();
+            pts.forEach((pt, idx) => {
+                const px = toX(pt.u);
+                const py = toY(pt.rate);
+                if (idx === 0) ctxRateCurve.moveTo(px, py);
+                else ctxRateCurve.lineTo(px, py);
+            });
+            ctxRateCurve.stroke();
+
+            // Highlight Current Instant Point (Bright Gold Dot)
+            const curRate = Math.max(-25, Math.min(25, evalRateAt(curX)));
+            const dotX = toX(curX);
+            const dotY = toY(curRate);
+
+            ctxRateCurve.setLineDash([2, 2]);
+            ctxRateCurve.strokeStyle = '#facc15';
+            ctxRateCurve.beginPath();
+            ctxRateCurve.moveTo(dotX, padT);
+            ctxRateCurve.lineTo(dotX, padT + plotH);
+            ctxRateCurve.stroke();
+            ctxRateCurve.setLineDash([]);
+
+            ctxRateCurve.fillStyle = '#facc15';
+            ctxRateCurve.beginPath();
+            ctxRateCurve.arc(dotX, dotY, 4.8, 0, Math.PI * 2);
+            ctxRateCurve.fill();
+
+            // Axis Labels
+            ctxRateCurve.fillStyle = '#93c5fd';
+            ctxRateCurve.font = '10px JetBrains Mono, monospace';
+            ctxRateCurve.textAlign = 'left';
+            ctxRateCurve.fillText(bounds.min.toFixed(1), padL, H - 6);
+            ctxRateCurve.textAlign = 'right';
+            ctxRateCurve.fillText(bounds.max.toFixed(1), W - padR, H - 6);
+        }
+
+        // =========================================================================
+        // 5. IMPLICIT DIFFERENTIATION & LIVE READOUT PANEL
+        // =========================================================================
+        function updateCalculusPanel() {
+            const scen = appState.scenario;
+            const p = appState.params;
+
+            const eqChain = document.getElementById('calculusEquationChain');
+            const primLabel = document.getElementById('primaryRateLabel');
+            const primVal = document.getElementById('primaryRateValue');
+            const secBadge = document.getElementById('secondaryRateBadge');
+            const snapBox = document.getElementById('snapshotValuesBox');
+            const subBox = document.getElementById('substitutionStepsBox');
+            const insightBox = document.getElementById('apExamInsightBox');
+
+            if (scen === 'cone') {
+                const r = (p.R / p.H) * p.h;
+                const V = (1 / 3) * Math.PI * r * r * p.h;
+                const dhdt = p.dVdt / (Math.PI * r * r);
+                const drdt = (p.R / p.H) * dhdt;
+
+                eqChain.textContent = 'V = ⅓π(R/H)²h³   ⟹   dV/dt = π(R/H)²h² · (dh/dt)';
+                primLabel.textContent = 'Water Level Rate (dh/dt)';
+                primVal.textContent = `${dhdt.toFixed(4)} ft/min`;
+                secBadge.textContent = `dr/dt = ${drdt.toFixed(4)} ft/min`;
+
+                snapBox.innerHTML = `
+                    <div>Depth h = <span class="text-amber-300 font-bold">${p.h.toFixed(2)} ft</span>, Radius r = <span class="text-sky-300 font-bold">${r.toFixed(2)} ft</span></div>
+                    <div>Volume V = ${V.toFixed(2)} ft³, dV/dt = ${p.dVdt.toFixed(2)} ft³/min</div>
+                `;
+                subBox.innerHTML = `
+                    <div>${p.dVdt.toFixed(2)} = π(${r.toFixed(2)})² · (dh/dt)</div>
+                    <div>dh/dt = ${p.dVdt.toFixed(2)} / ${(Math.PI * r * r).toFixed(2)} = <span class="text-amber-300 font-bold">${dhdt.toFixed(4)}</span></div>
+                `;
+                insightBox.textContent = 'Because the cone narrows toward the vertex, cross-sectional area πr² shrinks as h decreases—causing |dh/dt| to accelerate rapidly near empty!';
+            } else if (scen === 'ladder') {
+                const y = Math.sqrt(Math.max(0.01, p.L * p.L - p.x * p.x));
+                const dydt = -(p.x / y) * p.dxdt;
+                const dthetadt = -(1 / y) * p.dxdt;
+                const dAdt = 0.5 * (p.x * dydt + y * p.dxdt);
+
+                eqChain.textContent = 'x² + y² = L²   ⟹   2x(dx/dt) + 2y(dy/dt) = 0';
+                primLabel.textContent = 'Top Slide Rate (dy/dt)';
+                primVal.textContent = `${dydt.toFixed(4)} ft/s`;
+                secBadge.textContent = `dθ/dt = ${dthetadt.toFixed(4)} rad/s`;
+
+                snapBox.innerHTML = `
+                    <div>Base x = <span class="text-sky-300 font-bold">${p.x.toFixed(2)} ft</span>, Wall y = <span class="text-amber-300 font-bold">${y.toFixed(2)} ft</span></div>
+                    <div>Length L = ${p.L.toFixed(1)} ft, dA/dt = ${dAdt.toFixed(2)} ft²/s</div>
+                `;
+                subBox.innerHTML = `
+                    <div>2(${p.x.toFixed(2)})(${p.dxdt.toFixed(2)}) + 2(${y.toFixed(2)})(dy/dt) = 0</div>
+                    <div>dy/dt = −(${p.x.toFixed(2)}/${y.toFixed(2)})(${p.dxdt.toFixed(2)}) = <span class="text-amber-300 font-bold">${dydt.toFixed(4)}</span></div>
+                `;
+                insightBox.textContent = 'Notice that dy/dt is negative because y decreases as x increases. As y → 0 near the floor, dy/dt → −∞ even when dx/dt is constant.';
+            } else if (scen === 'shadow') {
+                const s = (p.h / (p.H - p.h)) * p.x;
+                const dsdt = (p.h / (p.H - p.h)) * p.dxdt;
+                const dtipdt = p.dxdt + dsdt;
+
+                eqChain.textContent = 's / h = (x + s) / H   ⟹   ds/dt = [h / (H − h)] · (dx/dt)';
+                primLabel.textContent = 'Shadow Growth (ds/dt)';
+                primVal.textContent = `${dsdt.toFixed(4)} ft/s`;
+                secBadge.textContent = `Tip Speed = ${dtipdt.toFixed(4)} ft/s`;
+
+                snapBox.innerHTML = `
+                    <div>Distance x = <span class="text-sky-300 font-bold">${p.x.toFixed(2)} ft</span>, Shadow s = <span class="text-amber-300 font-bold">${s.toFixed(2)} ft</span></div>
+                    <div>Pole H = ${p.H} ft, Person h = ${p.h} ft</div>
+                `;
+                subBox.innerHTML = `
+                    <div>ds/dt = (${p.h} / (${p.H} − ${p.h})) · (${p.dxdt.toFixed(2)}) = <span class="text-amber-300 font-bold">${dsdt.toFixed(4)}</span></div>
+                    <div>Tip Speed = dx/dt + ds/dt = <span class="text-sky-300 font-bold">${dtipdt.toFixed(4)} ft/s</span></div>
+                `;
+                insightBox.textContent = 'AP Exam Favorite: Because s = [h/(H−h)]x is linear in x, both ds/dt and the shadow tip speed are completely independent of x!';
+            } else if (scen === 'sphere') {
+                const V = (4 / 3) * Math.PI * Math.pow(p.r, 3);
+                const drdt = p.dVdt / (4 * Math.PI * p.r * p.r);
+                const dSdt = 8 * Math.PI * p.r * drdt;
+
+                eqChain.textContent = 'V = ⁴⁄₃πr³   ⟹   dV/dt = 4πr² · (dr/dt)';
+                primLabel.textContent = 'Radius Rate (dr/dt)';
+                primVal.textContent = `${drdt.toFixed(4)} cm/s`;
+                secBadge.textContent = `dS/dt = ${dSdt.toFixed(2)} cm²/s`;
+
+                snapBox.innerHTML = `
+                    <div>Radius r = <span class="text-amber-300 font-bold">${p.r.toFixed(2)} cm</span>, Volume V = ${V.toFixed(2)} cm³</div>
+                    <div>Surface Area S = ${(4 * Math.PI * p.r * p.r).toFixed(2)} cm²</div>
+                `;
+                subBox.innerHTML = `
+                    <div>${p.dVdt.toFixed(1)} = 4π(${p.r.toFixed(2)})² · (dr/dt)</div>
+                    <div>dr/dt = ${p.dVdt.toFixed(1)} / ${(4 * Math.PI * p.r * p.r).toFixed(2)} = <span class="text-amber-300 font-bold">${drdt.toFixed(4)}</span></div>
+                `;
+                insightBox.textContent = 'Notice that dV/dt = (Surface Area) · (dr/dt). A thin spherical shell of thickness dr adds volume dV ≈ 4πr² dr!';
+            } else if (scen === 'rectangle') {
+                const { x, y } = getRectDims(p);
+                const area = x * y;
+                const dAdt = x * p.dydt + y * p.dxdt;
+                const dPdt = 2 * p.dxdt + 2 * p.dydt;
+
+                eqChain.textContent = 'A = x · y   ⟹   dA/dt = x · (dy/dt) + y · (dx/dt)';
+                primLabel.textContent = 'Area Rate (dA/dt)';
+                primVal.textContent = `${fmtSign(dAdt, 4)} cm²/s`;
+                secBadge.textContent = `dP/dt = ${fmtSign(dPdt, 2)} cm/s`;
+
+                snapBox.innerHTML = `
+                    <div>x = <span class="text-sky-300 font-bold">${x.toFixed(2)} cm</span> (dx/dt=${fmtSign(p.dxdt)}), y = <span class="text-amber-300 font-bold">${y.toFixed(2)} cm</span> (dy/dt=${fmtSign(p.dydt)})</div>
+                    <div>Instant Area A = ${area.toFixed(2)} cm², Time t = ${p.t.toFixed(2)} s</div>
+                `;
+                subBox.innerHTML = `
+                    <div>dA/dt = (${x.toFixed(2)})(${p.dydt.toFixed(2)}) + (${y.toFixed(2)})(${p.dxdt.toFixed(2)})</div>
+                    <div>dA/dt = ${fmtSign(x * p.dydt)} + ${fmtSign(y * p.dxdt)} = <span class="text-amber-300 font-bold">${fmtSign(dAdt, 4)} cm²/s</span></div>
+                `;
+                insightBox.textContent = 'Product Rule Balance: When one side expands (+) and the other contracts (−), dA/dt can switch sign mid-motion as the longer side gains greater leverage!';
+            } else if (scen === 'box') {
+                const { l, w, h } = getBoxDims(p);
+                const vol = l * w * h;
+                const termL = w * h * p.dldt;
+                const termW = l * h * p.dwdt;
+                const termH = l * w * p.dhdt;
+                const dVdt = termL + termW + termH;
+                const dSdt = 2 * ((l * p.dwdt + w * p.dldt) + (l * p.dhdt + h * p.dldt) + (w * p.dhdt + h * p.dwdt));
+
+                eqChain.textContent = 'V = l · w · h   ⟹   dV/dt = wh(dl/dt) + lh(dw/dt) + lw(dh/dt)';
+                primLabel.textContent = 'Volume Rate (dV/dt)';
+                primVal.textContent = `${fmtSign(dVdt, 4)} cm³/s`;
+                secBadge.textContent = `dS/dt = ${fmtSign(dSdt, 2)} cm²/s`;
+
+                snapBox.innerHTML = `
+                    <div>l=<span class="text-sky-300 font-bold">${l.toFixed(2)}</span>, w=<span class="text-blue-200 font-bold">${w.toFixed(2)}</span>, h=<span class="text-amber-300 font-bold">${h.toFixed(2)} cm</span> (V=${vol.toFixed(1)} cm³)</div>
+                    <div>Rates: dl/dt=${fmtSign(p.dldt)}, dw/dt=${fmtSign(p.dwdt)}, dh/dt=${fmtSign(p.dhdt)} cm/s</div>
+                `;
+                subBox.innerHTML = `
+                    <div>dV/dt = (${(w * h).toFixed(1)})(${p.dldt}) + (${(l * h).toFixed(1)})(${p.dwdt}) + (${(l * w).toFixed(1)})(${p.dhdt})</div>
+                    <div>dV/dt = ${fmtSign(termL)} + ${fmtSign(termW)} + ${fmtSign(termH)} = <span class="text-amber-300 font-bold">${fmtSign(dVdt, 4)} cm³/s</span></div>
+                `;
+                insightBox.textContent = '3-Factor Product Rule: Each edge rate multiplies the area of the face perpendicular to it—so a negative rate on a large face can shrink volume even if two other edges grow!';
+            } else if (scen === 'rocket') {
+                const z = Math.sqrt(p.D * p.D + p.y * p.y);
+                const theta = Math.atan2(p.y, p.D);
+                const dthetadt = (p.D / (p.D * p.D + p.y * p.y)) * p.dydt;
+                const dzdt = (p.y / z) * p.dydt;
+
+                eqChain.textContent = 'tan(θ) = y / D   ⟹   sec²(θ) · (dθ/dt) = (1 / D) · (dy/dt)';
+                primLabel.textContent = 'Angular Rate (dθ/dt)';
+                primVal.textContent = `${dthetadt.toFixed(4)} rad/s`;
+                secBadge.textContent = `dz/dt = ${dzdt.toFixed(4)} km/s`;
+
+                snapBox.innerHTML = `
+                    <div>Altitude y = <span class="text-amber-300 font-bold">${p.y.toFixed(2)} km</span>, Sightline z = <span class="text-sky-300 font-bold">${z.toFixed(2)} km</span></div>
+                    <div>Angle θ = ${theta.toFixed(3)} rad (${((theta * 180) / Math.PI).toFixed(1)}°)</div>
+                `;
+                subBox.innerHTML = `
+                    <div>cos(θ) = D/z = ${p.D.toFixed(1)}/${z.toFixed(2)} = ${(p.D / z).toFixed(3)}</div>
+                    <div>dθ/dt = (cos²θ / D)(dy/dt) = <span class="text-amber-300 font-bold">${dthetadt.toFixed(4)} rad/s</span></div>
+                `;
+                insightBox.textContent = 'Replace sec²(θ) using the right triangle: cos(θ) = D/z, so cos²(θ) = D²/(D² + y²). No inverse trig evaluation needed!';
+            }
+        }
+
+        // =========================================================================
+        // 6. DYNAMIC UI CONTROLS & SIMULATION LOOP
+        // =========================================================================
+        function buildDynamicParamControls() {
+            const scen = appState.scenario;
+            const cfg = SCENARIOS[scen];
+            const container = document.getElementById('dynamicParamsContainer');
+            container.innerHTML = '';
+            container.className = cfg.gridCols === 2 ? 'grid grid-cols-2 gap-2.5' : 'space-y-3';
+
+            cfg.paramsUI.forEach(item => {
+                const val = appState.params[item.key];
+                const isRate = item.min < 0;
+                const displayVal = isRate ? `${fmtSign(val, 2)} ${item.unit}` : `${val} ${item.unit}`;
+                const valColor = isRate && val < 0 ? 'text-rose-400' : 'text-sky-300';
+
+                const row = document.createElement('div');
+                row.className = 'space-y-1';
+                row.innerHTML = `
+                    <div class="flex justify-between text-[11px] gap-1">
+                        <label class="text-blue-200/85 font-medium truncate">${item.label}:</label>
+                        <span id="paramVal_${item.key}" class="${valColor} font-mono font-bold shrink-0">${displayVal}</span>
+                    </div>
+                    <input type="range" id="paramSlider_${item.key}" min="${item.min}" max="${item.max}" step="${item.step}" value="${val}"
+                           class="w-full accent-blue-500 bg-[#060e1f] rounded-lg h-1.5 cursor-pointer">
+                `;
+                container.appendChild(row);
+
+                const slider = row.querySelector('input');
+                slider.addEventListener('input', (e) => {
+                    const num = parseFloat(e.target.value);
+                    appState.params[item.key] = num;
+                    const valEl = document.getElementById(`paramVal_${item.key}`);
+                    valEl.textContent = isRate ? `${fmtSign(num, 2)} ${item.unit}` : `${num} ${item.unit}`;
+                    if (isRate) {
+                        valEl.className = `${num < 0 ? 'text-rose-400' : 'text-sky-300'} font-mono font-bold shrink-0`;
+                    }
+
+                    // Clamp state variable if bounds changed (e.g., H, L, or negative rate tMax changed)
+                    const b = cfg.getBounds(appState.params);
+                    let cur = cfg.getStateVal(appState.params);
+                    if (cur < b.min) cur = b.min;
+                    if (cur > b.max) cur = b.max;
+                    cfg.setStateVal(appState.params, cur);
+                    syncStateScrubber();
+                    updateAll();
+                });
+            });
+
+            syncStateScrubber();
+        }
+
+        function syncStateScrubber() {
+            const cfg = SCENARIOS[appState.scenario];
+            const b = cfg.getBounds(appState.params);
+            const cur = cfg.getStateVal(appState.params);
+            const pct = b.max === b.min ? 50 : ((cur - b.min) / (b.max - b.min)) * 100;
+
+            document.getElementById('stateSliderLabel').textContent = cfg.stateLabel;
+            document.getElementById('stateSliderValue').textContent = `${cur.toFixed(2)} ${cfg.unitLen}`;
+            document.getElementById('stateVarSlider').value = Math.max(0, Math.min(100, pct));
+        }
+
+        function setupStaticListeners() {
+            document.getElementById('stateVarSlider').addEventListener('input', (e) => {
+                const cfg = SCENARIOS[appState.scenario];
+                const b = cfg.getBounds(appState.params);
+                const pct = parseFloat(e.target.value) / 100;
+                const val = b.min + pct * (b.max - b.min);
+                cfg.setStateVal(appState.params, val);
+                document.getElementById('stateSliderValue').textContent = `${val.toFixed(2)} ${cfg.unitLen}`;
+                updateAll();
+            });
+
+            document.getElementById('showVectorsCheck').addEventListener('change', (e) => {
+                appState.showVectors = e.target.checked;
+                update3DScene();
+            });
+
+            document.getElementById('showGuidesCheck').addEventListener('change', (e) => {
+                appState.showGuides = e.target.checked;
+                update3DScene();
+            });
+
+            document.getElementById('resetCamBtn').addEventListener('click', () => {
+                resetCameraForScenario(appState.scenario);
+            });
+        }
+
+        function selectScenario(scenKey) {
+            appState.scenario = scenKey;
+            appState.params = { ...SCENARIOS[scenKey].defaults };
+            appState.isPlaying = false;
+            updatePlayButtonUI();
+
+            // Update sidebar & top header button active styles
+            document.querySelectorAll('.scenario-btn').forEach(btn => {
+                if (btn.dataset.scenario === scenKey) {
+                    btn.classList.add('active');
+                    btn.classList.remove('text-blue-100');
+                } else {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-blue-100');
+                }
+            });
+
+            document.querySelectorAll('.top-scen-btn').forEach(btn => {
+                if (btn.dataset.topScenario === scenKey) {
+                    btn.classList.add('border-amber-400/60', 'bg-blue-900');
+                    btn.classList.remove('border-blue-800/80');
+                } else {
+                    btn.classList.remove('border-amber-400/60', 'bg-blue-900');
+                    btn.classList.add('border-blue-800/80');
+                }
+            });
+
+            const cfg = SCENARIOS[scenKey];
+            document.getElementById('activeModelTitle').textContent = cfg.title;
+            document.getElementById('activeModelBadge').textContent = cfg.badge;
+            document.getElementById('schematicTitle').textContent = cfg.schematicTitle;
+            document.getElementById('schematicBadge').textContent = cfg.schematicBadge;
+            document.getElementById('rateGraphTitle').textContent = cfg.rateGraphTitle;
+            document.getElementById('rateGraphStatus').textContent = cfg.rateGraphStatus;
+
+            buildDynamicParamControls();
+            resetCameraForScenario(scenKey);
+            updateAll();
+        }
+
+        function resetCurrentScenario() {
+            appState.params = { ...SCENARIOS[appState.scenario].defaults };
+            appState.isPlaying = false;
+            updatePlayButtonUI();
+            buildDynamicParamControls();
+            updateAll();
+        }
+
+        function setSimSpeed(spd) {
+            appState.simSpeed = spd;
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                if (parseFloat(btn.dataset.speed) === spd) {
+                    btn.className = 'speed-btn px-2 py-1 rounded bg-blue-600 text-white font-bold transition';
+                } else {
+                    btn.className = 'speed-btn px-2 py-1 rounded text-blue-300/75 hover:text-white transition';
+                }
+            });
+        }
+
+        function togglePlaySimulation() {
+            const cfg = SCENARIOS[appState.scenario];
+            const b = cfg.getBounds(appState.params);
+            const cur = cfg.getStateVal(appState.params);
+
+            // If at boundary when pressing Play, reset to starting position automatically
+            if (!appState.isPlaying) {
+                if (appState.scenario === 'cone' && appState.params.dVdt < 0 && cur <= b.min + 0.05) {
+                    appState.params.h = appState.params.H * 0.85;
+                } else if (appState.scenario === 'cone' && appState.params.dVdt > 0 && cur >= b.max - 0.05) {
+                    appState.params.h = b.min + 0.2;
+                } else if (appState.scenario === 'ladder' && appState.params.dxdt > 0 && cur >= b.max - 0.05) {
+                    appState.params.x = 2.0;
+                } else if (appState.scenario === 'shadow' && appState.params.dxdt > 0 && cur >= b.max - 0.1) {
+                    appState.params.x = 2.0;
+                } else if (appState.scenario === 'sphere' && appState.params.dVdt > 0 && cur >= b.max - 0.05) {
+                    appState.params.r = 1.0;
+                } else if (appState.scenario === 'sphere' && appState.params.dVdt < 0 && cur <= b.min + 0.05) {
+                    appState.params.r = 5.5;
+                } else if ((appState.scenario === 'rectangle' || appState.scenario === 'box') && cur >= b.max - 0.05) {
+                    appState.params.t = 0;
+                } else if (appState.scenario === 'rocket' && cur >= b.max - 0.05) {
+                    appState.params.y = 0.2;
+                }
+            }
+
+            appState.isPlaying = !appState.isPlaying;
+            updatePlayButtonUI();
+        }
+
+        function updatePlayButtonUI() {
+            const icon = document.getElementById('playPauseIcon');
+            const text = document.getElementById('playPauseText');
+            const dot = document.getElementById('simStatusDot');
+
+            if (appState.isPlaying) {
+                icon.className = 'fa-solid fa-pause';
+                text.textContent = 'Pause Simulation';
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping';
+            } else {
+                icon.className = 'fa-solid fa-play';
+                text.textContent = 'Simulate Motion';
+                dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+            }
+        }
+
+        // Advance physical system by elapsed time dt using exact analytical calculus laws
+        function stepPhysics(dt) {
+            const scen = appState.scenario;
+            const p = appState.params;
+            const cfg = SCENARIOS[scen];
+            const b = cfg.getBounds(p);
+
+            if (scen === 'cone') {
+                const r = (p.R / p.H) * p.h;
+                let V = (1 / 3) * Math.PI * r * r * p.h;
+                V += p.dVdt * dt;
+                const Vmin = (1 / 3) * Math.PI * Math.pow((p.R / p.H) * b.min, 2) * b.min;
+                const Vmax = (1 / 3) * Math.PI * p.R * p.R * p.H;
+                if (V <= Vmin || V >= Vmax) {
+                    V = Math.max(Vmin, Math.min(Vmax, V));
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+                p.h = Math.cbrt((3 * V * p.H * p.H) / (Math.PI * p.R * p.R));
+            } else if (scen === 'ladder') {
+                p.x += p.dxdt * dt;
+                if (p.x <= b.min || p.x >= b.max) {
+                    p.x = Math.max(b.min, Math.min(b.max, p.x));
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+            } else if (scen === 'shadow') {
+                p.x += p.dxdt * dt;
+                if (p.x <= b.min || p.x >= b.max) {
+                    p.x = Math.max(b.min, Math.min(b.max, p.x));
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+            } else if (scen === 'sphere') {
+                let V = (4 / 3) * Math.PI * Math.pow(p.r, 3);
+                V += p.dVdt * dt;
+                const Vmin = (4 / 3) * Math.PI * Math.pow(b.min, 3);
+                const Vmax = (4 / 3) * Math.PI * Math.pow(b.max, 3);
+                if (V <= Vmin || V >= Vmax) {
+                    V = Math.max(Vmin, Math.min(Vmax, V));
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+                p.r = Math.cbrt((3 * V) / (4 * Math.PI));
+            } else if (scen === 'rectangle' || scen === 'box') {
+                p.t += dt;
+                if (p.t >= b.max) {
+                    p.t = b.max;
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+            } else if (scen === 'rocket') {
+                p.y += p.dydt * dt;
+                if (p.y <= b.min || p.y >= b.max) {
+                    p.y = Math.max(b.min, Math.min(b.max, p.y));
+                    appState.isPlaying = false;
+                    updatePlayButtonUI();
+                }
+            }
+
+            syncStateScrubber();
+            updateAll();
+        }
+
+        function updateAll() {
+            update3DScene();
+            drawSchematic2D();
+            drawRateCurve2D();
+            updateCalculusPanel();
+        }
+
+        function toggleHelpModal() {
+            document.getElementById('helpModal').classList.toggle('hidden');
+        }
+
+        // Main Animation Loop
+        function mainLoop(now) {
+            requestAnimationFrame(mainLoop);
+            const rawDt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            if (appState.isPlaying) {
+                stepPhysics(rawDt * appState.simSpeed);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>
