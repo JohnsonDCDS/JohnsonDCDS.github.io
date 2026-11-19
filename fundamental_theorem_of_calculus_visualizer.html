@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fundamental Theorem of Calculus - AP Calculus Visualizer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Math.js for parsing mathematical expressions -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --navy-dark: #001a2c;
+            --navy: #002B49;
+            --navy-light: #003e69;
+            --yellow: #FFC72C;
+            --vegas-gold: #CCCC99;
+            --cyan-accent: #38bdf8;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--navy-dark);
+            color: #f8fafc;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        input, select, textarea {
+            user-select: text;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--navy-dark);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--navy-light);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--vegas-gold);
+        }
+
+        .glass-panel {
+            background: rgba(0, 43, 73, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(204, 204, 153, 0.25);
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            background-color: var(--yellow);
+        }
+
+        .cyan-slider::-webkit-slider-thumb {
+            background-color: var(--cyan-accent);
+        }
+
+        /* --- Resizable Splitters Styling --- */
+        .resizer-v {
+            width: 8px;
+            cursor: col-resize;
+            background-color: #001524;
+            border-left: 1px solid rgba(204, 204, 153, 0.2);
+            border-right: 1px solid rgba(204, 204, 153, 0.2);
+            transition: background-color 0.15s ease;
+            touch-action: none;
+        }
+        .resizer-v:hover, .resizer-v.active {
+            background-color: rgba(255, 199, 44, 0.35);
+            border-color: rgba(255, 199, 44, 0.7);
+        }
+
+        .resizer-h {
+            height: 8px;
+            cursor: row-resize;
+            background-color: #002138;
+            border-top: 1px solid rgba(204, 204, 153, 0.25);
+            border-bottom: 1px solid rgba(204, 204, 153, 0.25);
+            transition: background-color 0.15s ease;
+            touch-action: none;
+        }
+        .resizer-h:hover, .resizer-h.active {
+            background-color: rgba(255, 199, 44, 0.35);
+            border-color: rgba(255, 199, 44, 0.7);
+        }
+
+        body.resizing-v {
+            cursor: col-resize !important;
+        }
+        body.resizing-v * {
+            cursor: col-resize !important;
+        }
+        body.resizing-h {
+            cursor: row-resize !important;
+        }
+        body.resizing-h * {
+            cursor: row-resize !important;
+        }
+
+        /* --- Presentation Mode Enhancements --- */
+        body.presentation-mode #appHeader {
+            display: none !important;
+        }
+        body.presentation-mode #sidebarPane,
+        body.presentation-mode #verticalResizer {
+            display: none !important;
+        }
+        body.presentation-mode #presentationHud {
+            display: flex !important;
+        }
+        body.presentation-mode #normalPaneToolbar {
+            display: none !important;
+        }
+
+        body.presentation-mode #analysisPane {
+            padding: 1rem 1.5rem;
+        }
+        body.presentation-mode #fbValText,
+        body.presentation-mode #netAreaValText,
+        body.presentation-mode #fpbValText {
+            font-size: 1.45rem;
+            line-height: 1.95rem;
+        }
+        body.presentation-mode #apFtcTheoremText {
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- Top Navigation Header -->
+    <header id="appHeader" class="bg-[#002B49] border-b border-[#CCCC99]/30 px-4 py-2.5 flex items-center justify-between shrink-0 z-20 gap-2">
+        <div class="flex items-center space-x-3 min-w-0">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-[#FFC72C] to-[#38bdf8] flex items-center justify-center text-[#002B49] font-bold shadow-lg shadow-[#FFC72C]/20 shrink-0">
+                <span class="text-lg font-serif">∫</span>
+            </div>
+            <div class="min-w-0">
+                <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2 truncate">
+                    <span class="truncate">Fundamental Theorem of Calculus</span>
+                    <span class="hidden sm:inline-block text-xs font-bold px-2 py-0.5 rounded-full bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/40 shrink-0">AP Calculus AB/BC</span>
+                </h1>
+                <p class="hidden sm:block text-xs text-[#CCCC99] truncate">Accumulation Function F(x) = ∫ₐˣ f(t) dt + C &amp; Derivative Connection F'(x) = f(x)</p>
+            </div>
+        </div>
+
+        <!-- Preset Buttons Menu (Desktop) -->
+        <div class="hidden xl:flex items-center space-x-1.5">
+            <span class="text-xs text-[#CCCC99] font-medium mr-1"><i class="fa-solid fa-bookmark mr-1 text-[#FFC72C]"></i> Presets:</span>
+            <button onclick="loadPreset('linear')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">t (Linear → Quadratic)</button>
+            <button onclick="loadPreset('cosine')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">cos(t)</button>
+            <button onclick="loadPreset('quadratic_shift')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">t² - 2</button>
+            <button onclick="loadPreset('gaussian')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">2.5·e^(-t²)</button>
+            <button onclick="loadPreset('tent')" class="px-2.5 py-1 text-xs rounded-md bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 transition">2 - |t| (AP FRQ)</button>
+        </div>
+
+        <!-- Workspace Actions -->
+        <div class="flex items-center space-x-2 shrink-0">
+            <button onclick="resetLayout()" title="Reset Window Sizes" class="px-2.5 py-1.5 text-xs rounded-lg bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 font-medium flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-table-columns text-[#FFC72C]"></i>
+                <span class="hidden md:inline">Reset Layout</span>
+            </button>
+
+            <button onclick="togglePresentationMode()" title="Enter Classroom Presentation Mode (Shortcut: P)" class="px-3 py-1.5 text-xs rounded-lg bg-[#001a2c] hover:bg-[#003961] text-[#FFC72C] border border-[#FFC72C]/50 font-bold flex items-center gap-1.5 transition shadow-sm">
+                <i class="fa-solid fa-person-chalkboard"></i>
+                <span class="hidden sm:inline">Presentation Mode</span>
+            </button>
+
+            <button onclick="toggleHelpModal()" class="px-3 py-1.5 text-xs rounded-lg bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold flex items-center gap-1.5 transition shadow-md">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span class="hidden sm:inline">FTC Guide</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Layout (Resizable Split Panes) -->
+    <div id="workspaceContainer" class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+
+        <!-- Left Controls Sidebar -->
+        <aside id="sidebarPane" style="width: 390px;" class="w-full lg:w-[390px] max-h-[44vh] lg:max-h-none bg-[#002B49]/95 border-b lg:border-b-0 border-[#CCCC99]/20 flex flex-col overflow-hidden shrink-0 z-10 transition-[width] duration-75">
+            
+            <!-- Sidebar Window Header Bar -->
+            <div class="px-4 py-2 bg-[#001f36] border-b border-[#CCCC99]/20 flex items-center justify-between shrink-0">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                    <i class="fa-solid fa-sliders text-[#FFC72C]"></i> FTC Parameters &amp; Controls
+                </span>
+                <div class="flex items-center gap-1">
+                    <select id="mobilePresetSelect" onchange="if(this.value) loadPreset(this.value)" class="xl:hidden text-[11px] bg-[#001a2c] text-[#CCCC99] border border-[#CCCC99]/30 rounded px-1.5 py-0.5 focus:outline-none focus:border-[#FFC72C]">
+                        <option value="">Presets...</option>
+                        <option value="linear">t (Linear)</option>
+                        <option value="cosine">cos(t)</option>
+                        <option value="quadratic_shift">t² - 2</option>
+                        <option value="gaussian">2.5·e^(-t²)</option>
+                        <option value="tent">2 - |t| (AP FRQ)</option>
+                    </select>
+                    <button onclick="toggleSidebarCollapse()" title="Collapse Controls Window" class="hidden lg:flex w-6 h-6 rounded hover:bg-[#003961] text-[#CCCC99] hover:text-[#FFC72C] items-center justify-center transition">
+                        <i class="fa-solid fa-angles-left text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Controls Body -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                
+                <!-- FTC Identity Banner -->
+                <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#001a2c] to-[#002B49] border border-[#38bdf8]/40 space-y-1.5 shadow-md">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-[#CCCC99]">Antiderivative Family</span>
+                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/40">F'(x) = f(x)</span>
+                    </div>
+                    <div class="text-sm font-mono font-bold text-white flex items-center gap-2">
+                        <span class="text-[#38bdf8]">F(x)</span>
+                        <span>=</span>
+                        <span>∫<sub class="text-[#CCCC99]" id="formulaSubA">0</sub><sup class="text-[#FFC72C]">x</sup> <span class="text-[#FFC72C]">f(t)</span> dt <span id="formulaPlusC" class="text-[#38bdf8]">+ 0</span></span>
+                    </div>
+                    <div class="text-[11px] text-[#CCCC99]">
+                        Initial value <span class="font-mono text-white">F(a) = C</span>; net area <span class="font-mono text-white">F(b) − F(a)</span> is independent of <span class="text-[#38bdf8] font-semibold">C</span>.
+                    </div>
+                </div>
+
+                <!-- Integrand Function f(t) Card -->
+                <div class="glass-panel p-4 rounded-xl space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                        <i class="fa-solid fa-square-root-variable text-[#FFC72C]"></i> Rate / Integrand Function f(t)
+                    </h2>
+
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-[#CCCC99] flex items-center justify-between">
+                            <span>Rate Function f(t):</span>
+                            <span class="text-[10px] text-[#CCCC99]/70">e.g. cos(t), t^2-2, 2-abs(t)</span>
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-xs text-[#FFC72C] font-mono font-bold">f(t) =</span>
+                            <input type="text" id="funcFInput" value="cos(t)" class="w-full pl-14 pr-3 py-2 text-sm bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C] transition">
+                        </div>
+                    </div>
+
+                    <div id="functionError" class="hidden text-xs text-rose-300 bg-rose-950/60 p-2 rounded-md border border-rose-800/50 flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-400"></i> <span id="errorMsg">Invalid Math Syntax</span>
+                    </div>
+                </div>
+
+                <!-- Lower Limit (a), Constant (+C) & Upper Limit (b) Sliders Card -->
+                <div class="glass-panel p-4 rounded-xl space-y-3.5">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrows-left-right text-[#FFC72C]"></i> Limits (a, b) &amp; Constant (+C)
+                    </h2>
+
+                    <!-- Lower Limit (a) Slider -->
+                    <div class="space-y-1.5 bg-[#001a2c]/80 p-3 rounded-xl border border-[#CCCC99]/25">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[#CCCC99] font-semibold flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#CCCC99]"></span>
+                                Lower Limit (a):
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="boundAInput" value="0" step="0.1" class="w-20 px-2 py-0.5 text-xs text-right bg-[#002B49] border border-[#CCCC99]/40 rounded text-[#CCCC99] font-mono font-bold focus:outline-none focus:border-[#FFC72C]">
+                            </div>
+                        </div>
+                        <input type="range" id="sliderA" min="-5" max="5" step="0.05" value="0" class="w-full accent-[#CCCC99] bg-[#002B49] rounded-lg h-2 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-[#CCCC99]/70 font-mono">
+                            <span>Anchor where F(a) = C</span>
+                            <button onclick="setAValue(0)" class="text-[#FFC72C] hover:underline">Set a = 0</button>
+                        </div>
+                    </div>
+
+                    <!-- Constant of Integration (+C) Slider -->
+                    <div class="space-y-1.5 bg-[#001a2c]/80 p-3 rounded-xl border border-[#38bdf8]/35">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[#38bdf8] font-semibold flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#38bdf8]"></span>
+                                Vertical Shift (+C):
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="constCInput" value="0" step="0.1" class="w-20 px-2 py-0.5 text-xs text-right bg-[#002B49] border border-[#38bdf8]/50 rounded text-[#38bdf8] font-mono font-bold focus:outline-none focus:border-[#38bdf8]">
+                            </div>
+                        </div>
+                        <input type="range" id="sliderC" min="-10" max="10" step="0.1" value="0" class="w-full accent-[#38bdf8] bg-[#002B49] rounded-lg h-2 cursor-pointer cyan-slider">
+                        <div class="flex justify-between text-[10px] text-[#CCCC99]/70 font-mono">
+                            <span>Shifts F(x) vertically (F' unchanged)</span>
+                            <button onclick="setCValue(0)" class="text-[#38bdf8] hover:underline">Set C = 0</button>
+                        </div>
+                    </div>
+
+                    <!-- Upper Limit (b) Slider + Convergence Sweep Player -->
+                    <div class="space-y-2 bg-[#001a2c]/80 p-3 rounded-xl border border-[#FFC72C]/35">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-[#FFC72C] font-semibold flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C]"></span>
+                                Upper Limit (b / x):
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="boundBInput" value="2.1" step="0.1" class="w-20 px-2 py-0.5 text-xs text-right bg-[#002B49] border border-[#FFC72C]/50 rounded text-[#FFC72C] font-mono font-bold focus:outline-none focus:border-[#FFC72C]">
+                            </div>
+                        </div>
+                        <input type="range" id="sliderB" min="-5" max="5" step="0.02" value="2.1" class="w-full accent-[#FFC72C] bg-[#002B49] rounded-lg h-2 cursor-pointer custom-slider">
+                        
+                        <!-- Sweep Player Controls for b -->
+                        <div class="flex items-center justify-between gap-1.5 pt-1">
+                            <div class="flex items-center gap-1">
+                                <button id="playBBtn" onclick="toggleBPlayer()" title="Sweep b across domain to trace F(x)" class="px-2.5 py-1 rounded-md bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold text-xs flex items-center gap-1.5 transition shadow-sm">
+                                    <i id="playBIcon" class="fa-solid fa-play"></i>
+                                    <span id="playBLabel">Sweep b</span>
+                                </button>
+                                <button onclick="resetBToA()" title="Reset b = a (Zero Area)" class="px-2 h-7 rounded-md bg-[#002B49] hover:bg-[#003961] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/20 text-[11px] font-mono flex items-center justify-center transition">
+                                    b=a
+                                </button>
+                                <button id="loopBBtn" onclick="toggleLoopB()" title="Toggle Continuous Sweep Loop" class="w-7 h-7 rounded-md bg-[#002B49] hover:bg-[#003961] text-[#CCCC99]/70 border border-[#CCCC99]/20 text-xs flex items-center justify-center transition">
+                                    <i class="fa-solid fa-repeat"></i>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-1 text-[11px] text-[#CCCC99]">
+                                <span>Speed:</span>
+                                <select id="playSpeedSelect" onchange="setPlaySpeed(this.value)" class="bg-[#002B49] text-[#FFC72C] font-mono font-bold text-[11px] rounded px-1.5 py-0.5 border border-[#CCCC99]/30 focus:outline-none focus:border-[#FFC72C]">
+                                    <option value="0.02">1x</option>
+                                    <option value="0.045" selected>2x</option>
+                                    <option value="0.09">4x</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Viewing Domain & Visual Options Card -->
+                <div class="glass-panel p-4 rounded-xl space-y-3">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-[#CCCC99] flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye text-[#FFC72C]"></i> Domain &amp; Visual Overlays
+                    </h2>
+
+                    <div class="grid grid-cols-2 gap-2.5 text-xs">
+                        <div>
+                            <label class="text-[#CCCC99] mb-1 block">Domain Min (tₘᵢₙ):</label>
+                            <input type="number" id="domMinInput" value="-5" step="1" class="w-full px-2.5 py-1 bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                        </div>
+                        <div>
+                            <label class="text-[#CCCC99] mb-1 block">Domain Max (tₘₐₓ):</label>
+                            <input type="number" id="domMaxInput" value="5" step="1" class="w-full px-2.5 py-1 bg-[#001a2c] border border-[#CCCC99]/40 rounded-lg text-white font-mono focus:outline-none focus:border-[#FFC72C]">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-2 pt-1 text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer text-[#FFC72C] font-medium">
+                            <input type="checkbox" id="combineAxesCheck" checked class="accent-[#FFC72C] rounded">
+                            <span>Graph <span class="text-[#FFC72C] font-semibold">f(t)</span> &amp; <span class="text-[#38bdf8] font-semibold">F(x)</span> on Same Axes</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                            <input type="checkbox" id="showTangentCheck" class="accent-[#38bdf8] rounded">
+                            <span>Show Tangent Line on <span class="text-[#38bdf8] font-semibold">F(x)</span> (Slope = <span class="text-[#FFC72C] font-semibold">f(b)</span>)</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                            <input type="checkbox" id="showSignedColorsCheck" checked class="accent-[#FFC72C] rounded">
+                            <span>Color-Code Positive (+) vs Negative (−) Area</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                            <input type="checkbox" id="showTraceTrailCheck" class="accent-[#38bdf8] rounded">
+                            <span>Show Full <span class="text-[#38bdf8] font-semibold">F(x)</span> Curve Across Domain</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer text-[#CCCC99]">
+                            <input type="checkbox" id="showGridCheck" class="accent-[#CCCC99] rounded">
+                            <span>Coordinate Grid Lines</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Vertical Drag Resizer (Between Sidebar and Main Workspace) -->
+        <div id="verticalResizer" title="Drag to resize sidebar (Double-click to collapse/restore)" class="hidden lg:flex resizer-v items-center justify-center shrink-0 z-20 group">
+            <div class="w-1 h-8 rounded-full bg-[#CCCC99]/40 group-hover:bg-[#FFC72C] transition"></div>
+        </div>
+
+        <!-- Right Main Workspace -->
+        <main id="rightWorkspace" class="flex-1 flex flex-col overflow-hidden bg-[#001a2c] min-w-0 relative">
+
+            <!-- Floating Presentation Mode HUD (Hidden until Presentation Mode is active) -->
+            <div id="presentationHud" style="top: 14px; left: 50%; transform: translateX(-50%);" class="hidden fixed z-40 bg-[#002B49]/95 backdrop-blur-md border-2 border-[#FFC72C]/70 rounded-2xl shadow-2xl px-3.5 py-2 items-center gap-2.5 flex-wrap max-w-[96vw]">
+                <!-- Drag Handle -->
+                <div id="hudDragHandle" title="Drag toolbar anywhere" class="cursor-move text-[#CCCC99] hover:text-[#FFC72C] px-1 py-1 flex items-center">
+                    <i class="fa-solid fa-grip-vertical text-sm"></i>
+                </div>
+
+                <!-- Function & Preset Pill -->
+                <div class="flex items-center gap-1.5 bg-[#001a2c] px-2.5 py-1 rounded-xl border border-[#CCCC99]/30">
+                    <span class="text-xs font-bold text-[#FFC72C] font-mono">f(t)=</span>
+                    <input type="text" id="hudFuncInput" value="cos(t)" class="w-24 sm:w-28 bg-transparent text-xs sm:text-sm font-mono text-white focus:outline-none border-b border-transparent focus:border-[#FFC72C]">
+                    <select onchange="if(this.value) loadPreset(this.value)" title="Load Preset" class="bg-[#002B49] text-[#CCCC99] text-xs rounded px-1.5 py-0.5 border border-[#CCCC99]/30 focus:outline-none">
+                        <option value="">Presets</option>
+                        <option value="linear">t</option>
+                        <option value="cosine">cos(t)</option>
+                        <option value="quadratic_shift">t² - 2</option>
+                        <option value="gaussian">2.5·e^(-t²)</option>
+                        <option value="tent">2 - |t|</option>
+                    </select>
+                </div>
+
+                <!-- Limit a Slider in HUD -->
+                <div class="flex items-center gap-1.5 bg-[#001a2c] px-2.5 py-1 rounded-xl border border-[#CCCC99]/30">
+                    <span class="text-xs text-[#CCCC99] font-bold font-mono">a:</span>
+                    <input type="range" id="hudSliderA" min="-5" max="5" step="0.05" value="0" class="w-16 sm:w-20 accent-[#CCCC99] h-1.5 cursor-pointer">
+                    <span id="hudAVal" class="text-xs font-mono font-bold text-[#CCCC99] min-w-[34px] text-right">0.00</span>
+                </div>
+
+                <!-- Limit b Slider & Sweep Toggle in HUD -->
+                <div class="flex items-center gap-1.5 bg-[#001a2c] px-2.5 py-1 rounded-xl border border-[#FFC72C]/40">
+                    <span class="text-xs text-[#FFC72C] font-bold font-mono">b:</span>
+                    <input type="range" id="hudSliderB" min="-5" max="5" step="0.02" value="2.1" class="w-20 sm:w-24 accent-[#FFC72C] h-1.5 cursor-pointer">
+                    <span id="hudBVal" class="text-xs font-mono font-bold text-[#FFC72C] min-w-[34px] text-right">2.10</span>
+                    <button id="hudPlayBBtn" onclick="toggleBPlayer()" title="Sweep b across domain" class="ml-1 px-2 h-6 rounded-md bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold text-xs flex items-center gap-1 transition">
+                        <i id="hudPlayBIcon" class="fa-solid fa-play text-[10px]"></i>
+                    </button>
+                </div>
+
+                <!-- Constant +C Slider in HUD -->
+                <div class="flex items-center gap-1.5 bg-[#001a2c] px-2.5 py-1 rounded-xl border border-[#38bdf8]/40">
+                    <span class="text-xs text-[#38bdf8] font-bold font-mono">+C:</span>
+                    <input type="range" id="hudSliderC" min="-10" max="10" step="0.1" value="0" class="w-16 sm:w-20 accent-[#38bdf8] h-1.5 cursor-pointer cyan-slider">
+                    <span id="hudCVal" class="text-xs font-mono font-bold text-[#38bdf8] min-w-[34px] text-right">0.00</span>
+                </div>
+
+                <!-- Toggle Combined Axes, Analysis Drawer & Exit Presentation -->
+                <div class="flex items-center gap-1.5">
+                    <button id="hudCombineAxesBtn" onclick="toggleCombineAxes()" title="Toggle Split vs Same Axes (Shortcut: C)" class="px-2.5 py-1.5 rounded-xl bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8]/60 text-xs font-bold flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-layer-group text-[#38bdf8]"></i>
+                        <span id="hudCombineAxesText">Split Axes</span>
+                    </button>
+                    <button onclick="toggleAnalysisCollapse()" title="Toggle Bottom Analysis Panel" class="px-2.5 py-1.5 rounded-xl bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 text-xs font-semibold flex items-center gap-1 transition">
+                        <i class="fa-solid fa-chart-simple text-[#FFC72C]"></i>
+                        <span class="hidden md:inline">Stats</span>
+                    </button>
+                    <button onclick="togglePresentationMode(false)" title="Exit Presentation Mode (Esc)" class="px-3 py-1.5 rounded-xl bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] text-xs font-bold flex items-center gap-1.5 transition shadow">
+                        <i class="fa-solid fa-compress"></i>
+                        <span>Exit</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dual Synchronized Graphs Area -->
+            <div id="graphsContainer" class="flex-1 flex flex-col overflow-hidden p-3 gap-0 min-h-[220px]">
+                
+                <!-- Top Graph Pane: Integrand y = f(t) & Signed Area (Also hosts Combined Same-Axes View) -->
+                <div id="topGraphPane" style="height: 100%;" class="relative flex flex-col rounded-xl border border-[#CCCC99]/30 bg-[#002B49]/40 overflow-hidden min-h-[100px]">
+                    <!-- Top Graph Badge & Pane Toolbar -->
+                    <div class="absolute top-2.5 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-10">
+                        <div id="topGraphBadge" class="bg-[#001a2c]/90 backdrop-blur border border-[#FFC72C]/40 px-2.5 py-1 rounded-lg text-xs font-medium text-white flex items-center gap-2 shadow">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#FFC72C] shrink-0"></span>
+                            <span id="topGraphBadgeText"><strong>Combined Axes:</strong> <span class="font-mono text-[#FFC72C]">y = f(t)</span> <span class="text-[#CCCC99]">&amp;</span> <span class="inline-flex items-center gap-1 font-mono text-[#38bdf8]"><span class="w-2 h-2 rounded-full bg-[#38bdf8] inline-block"></span>F(x) = ∫ₐˣ f(t) dt + C</span></span>
+                        </div>
+
+                        <div id="normalPaneToolbar" class="flex items-center gap-1.5 pointer-events-auto">
+                            <button id="expandSidebarBtn" onclick="toggleSidebarCollapse()" title="Show Controls Sidebar" class="hidden px-2.5 py-1 rounded-lg bg-[#001a2c]/90 hover:bg-[#003961] text-[#FFC72C] border border-[#FFC72C]/40 text-xs font-semibold items-center gap-1.5 shadow transition">
+                                <i class="fa-solid fa-angles-right"></i> Controls
+                            </button>
+                            <button id="combineAxesBtn" onclick="toggleCombineAxes()" title="Graph f(t) and F(x) on the Same Coordinate Axes (Shortcut: C)" class="px-2.5 py-1 rounded-lg bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8]/60 text-xs font-bold flex items-center gap-1.5 shadow transition">
+                                <i id="combineAxesIcon" class="fa-solid fa-layer-group text-[#38bdf8]"></i>
+                                <span id="combineAxesText">Split Axes</span>
+                            </button>
+                            <button id="maximizeGraphBtn" onclick="toggleMaximizeGraph()" title="Maximize / Restore Graphs" class="px-2.5 py-1 rounded-lg bg-[#001a2c]/90 hover:bg-[#003961] text-[#CCCC99] hover:text-[#FFC72C] border border-[#CCCC99]/30 text-xs font-medium flex items-center gap-1.5 shadow transition">
+                                <i id="maximizeGraphIcon" class="fa-solid fa-expand"></i>
+                                <span id="maximizeGraphText" class="hidden sm:inline">Maximize Graphs</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <canvas id="topCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                </div>
+
+                <!-- Middle Resizer Between f(t) Graph and F(x) Graph -->
+                <div id="midGraphResizer" style="display: none;" title="Drag to resize f(t) vs F(x) graph heights (Double-click for 50/50 split)" class="resizer-h flex items-center justify-center shrink-0 z-20 group">
+                    <div class="w-10 h-1 rounded-full bg-[#CCCC99]/40 group-hover:bg-[#FFC72C] transition"></div>
+                </div>
+
+                <!-- Bottom Graph Pane: Accumulation Function F(x) = ∫ₐˣ f(t) dt + C -->
+                <div id="bottomGraphPane" style="display: none;" class="flex-1 relative flex flex-col rounded-b-xl border border-t-0 border-[#CCCC99]/30 bg-[#002B49]/30 overflow-hidden min-h-[100px]">
+                    <!-- Bottom Graph Badge -->
+                    <div class="absolute top-2.5 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none z-10">
+                        <div class="bg-[#001a2c]/90 backdrop-blur border border-[#38bdf8]/40 px-2.5 py-1 rounded-lg text-xs font-medium text-white flex items-center gap-2 shadow">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#38bdf8] shrink-0"></span>
+                            <span><strong>Accumulation Function:</strong> <span class="font-mono text-[#38bdf8]">F(x) = ∫ₐˣ f(t) dt + C</span> <span class="hidden md:inline text-[#CCCC99]">(F(a) = C, Tangent Slope = f(b))</span></span>
+                        </div>
+                    </div>
+
+                    <canvas id="bottomCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+                </div>
+
+            </div>
+
+            <!-- Horizontal Drag Resizer (Between Graphs and Analysis Panel) -->
+            <div id="horizontalResizer" title="Drag to resize analysis window (Double-click to collapse/restore)" class="resizer-h flex items-center justify-between px-4 shrink-0 z-20 group">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-[#CCCC99]/70 group-hover:text-[#FFC72C] transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-square-poll-vertical"></i> Fundamental Theorem Readouts &amp; AP Justification
+                </span>
+                <div class="w-10 h-1 rounded-full bg-[#CCCC99]/40 group-hover:bg-[#FFC72C] transition"></div>
+                <button onclick="toggleAnalysisCollapse(); event.stopPropagation();" title="Collapse / Expand Analysis Window" class="text-[11px] text-[#CCCC99] hover:text-[#FFC72C] px-1.5 rounded transition">
+                    <i id="analysisCollapseIcon" class="fa-solid fa-chevron-down"></i>
+                </button>
+            </div>
+
+            <!-- Bottom Calculus Analysis & Formula Panel -->
+            <div id="analysisPane" style="height: 205px;" class="bg-[#002B49] p-4 overflow-y-auto shrink-0 space-y-3 transition-[height] duration-75">
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                    
+                    <!-- Card 1: FTC Part 2 (Net Signed Area = F(b) - F(a)) -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-2">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center justify-between">
+                            <span>FTC Part 2: Net Change &amp; Area</span>
+                            <span id="intervalBoundsTag" class="text-[10px] font-mono text-[#CCCC99]">∫₀²·¹ f(t) dt</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#38bdf8]/30">
+                                <div class="text-[10px] text-[#CCCC99]">Antiderivative F(b)</div>
+                                <div id="fbValText" class="text-base font-mono font-bold text-[#38bdf8]">0.8632</div>
+                            </div>
+                            <div class="bg-[#002B49] p-2 rounded-lg border border-[#CCCC99]/20">
+                                <div class="text-[10px] text-[#CCCC99]">Net Area F(b) − F(a)</div>
+                                <div id="netAreaValText" class="text-base font-mono font-bold text-[#CCCC99]">0.8632</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] font-mono pt-0.5 text-[#CCCC99]">
+                            <span>Pos: <strong id="posAreaText" class="text-emerald-400">1.0000</strong></span>
+                            <span>Neg: <strong id="negAreaText" class="text-[#ff4d4d]">-0.1368</strong></span>
+                            <span>|f|: <strong id="totalAbsAreaText" class="text-white">1.1368</strong></span>
+                            <span id="reversedLimitsFlag" class="hidden text-[#FFC72C] font-bold">[b &lt; a]</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: FTC Part 1 (Derivative & Concavity Table at x = b) -->
+                    <div class="p-3.5 rounded-xl bg-[#001a2c] border border-[#CCCC99]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#38bdf8] flex items-center justify-between">
+                            <span>FTC Part 1: At x = <span id="derivBLabel">2.10</span></span>
+                            <span class="text-[10px] font-mono text-[#CCCC99]">F'(x) = f(x)</span>
+                        </div>
+                        
+                        <div class="text-xs font-mono space-y-1 text-[#CCCC99]">
+                            <div class="flex justify-between">
+                                <span>Position / Value <span class="text-[#38bdf8] font-bold">F(b)</span>:</span>
+                                <span id="tableFbVal" class="text-white font-bold">0.8632</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Tangent Slope <span class="text-[#FFC72C] font-bold">F'(b) = f(b)</span>:</span>
+                                <span id="fpbValText" class="text-[#FFC72C] font-bold">-0.5048</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Concavity <span class="text-[#CCCC99] font-bold">F''(b) = f'(b)</span>:</span>
+                                <span id="fppbValText" class="text-white font-bold">-0.8632</span>
+                            </div>
+                            <div class="flex justify-between border-t border-[#CCCC99]/20 pt-1 text-[11px]">
+                                <span>Initial Value <span class="text-[#38bdf8]">F(a) = C</span>:</span>
+                                <span id="tableFaVal" class="text-emerald-400 font-bold">0.0000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: AP Calculus Exam Behavior & Justification -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-br from-[#001a2c] to-[#002B49] border border-[#FFC72C]/30 space-y-1.5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-[#FFC72C] flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-[#FFC72C]"></i> AP Calculus Exam Justification
+                        </div>
+                        <div id="apFtcTheoremText" class="text-xs text-white leading-relaxed font-sans">
+                            At <i>x</i> = 2.10, since <i>F'</i>(2.10) = <i>f</i>(2.10) &lt; 0, the accumulation function <strong><i>F</i>(<i>x</i>) is decreasing</strong>.
+                        </div>
+                        <div id="apConcavityText" class="text-[11px] text-[#CCCC99] font-sans border-t border-[#CCCC99]/20 pt-1">
+                            Since <i>F''</i>(2.10) = <i>f'</i>(2.10) &lt; 0, <strong><i>F</i>(<i>x</i>) is concave down</strong>.
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- FTC Help & AP Guide Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 bg-[#001a2c]/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-[#002B49] border border-[#CCCC99]/40 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl relative">
+            <button onclick="toggleHelpModal()" class="absolute top-4 right-4 text-[#CCCC99] hover:text-[#FFC72C] text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-[#FFC72C]/20 text-[#FFC72C] flex items-center justify-center font-bold text-xl border border-[#FFC72C]/40">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">Fundamental Theorem of Calculus (FTC) Guide</h3>
+                    <p class="text-xs text-[#CCCC99]">Connecting Rate Graphs f(t) to Accumulation Graphs F(x)</p>
+                </div>
+            </div>
+            
+            <div class="space-y-3 text-xs text-[#CCCC99] leading-relaxed max-h-96 overflow-y-auto pr-2">
+                
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#38bdf8]/40 space-y-1">
+                    <span class="font-bold text-[#38bdf8] block">1. FTC Part 1: The Derivative of an Accumulation Function</span>
+                    <p>If <i>f</i> is continuous on [<i>a</i>, <i>b</i>], then the function defined by <strong><i>F</i>(<i>x</i>) = ∫<sub>a</sub><sup>x</sup> <i>f</i>(<i>t</i>) <i>dt</i></strong> is continuous on [<i>a</i>, <i>b</i>], differentiable on (<i>a</i>, <i>b</i>), and:<br>
+                    <strong class="text-white font-mono">F'(x) = d/dx [ ∫ₐˣ f(t) dt ] = f(x)</strong><br>
+                    Visually, the <strong>height</strong> of the rate graph <i>f</i>(<i>b</i>) equals the <strong>slope of the tangent line</strong> to the accumulation graph <i>F</i>(<i>x</i>) at <i>x</i> = <i>b</i>.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#FFC72C]/40 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">2. FTC Part 2: Net Change, Signed Area &amp; Constant +C</span>
+                    <p>If <i>F</i>(<i>x</i>) = ∫<sub>a</sub><sup>x</sup> <i>f</i>(<i>t</i>) <i>dt</i> + <i>C</i>, then <strong>∫<sub>a</sub><sup>b</sup> <i>f</i>(<i>t</i>) <i>dt</i> = <i>F</i>(<i>b</i>) − <i>F</i>(<i>a</i>)</strong>.<br>
+                    • Regions where <i>f</i>(<i>t</i>) &gt; 0 add positive area (green) to <i>F</i>(<i>x</i>); regions where <i>f</i>(<i>t</i>) &lt; 0 subtract area (red).<br>
+                    • Adjusting <strong>+<i>C</i></strong> vertically shifts the entire antiderivative curve so that <strong><i>F</i>(<i>a</i>) = <i>C</i></strong>, while the derivative <i>F'</i>(<i>x</i>) = <i>f</i>(<i>x</i>) and net change <i>F</i>(<i>b</i>) − <i>F</i>(<i>a</i>) stay completely unchanged.</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">3. AP Calculus FRQ Curve Sketching Rules</span>
+                    <p>• <strong><i>F</i> is increasing</strong> where <i>F'</i>(<i>x</i>) = <i>f</i>(<i>x</i>) &gt; 0 (rate graph is above the <i>t</i>-axis).<br>
+                    • <strong><i>F</i> is decreasing</strong> where <i>F'</i>(<i>x</i>) = <i>f</i>(<i>x</i>) &lt; 0 (rate graph is below the <i>t</i>-axis).<br>
+                    • <strong>Local Extrema of <i>F</i></strong> occur where <i>f</i>(<i>x</i>) changes sign (+ to − gives a local max; − to + gives a local min).<br>
+                    • <strong>Inflection Points of <i>F</i></strong> occur where <i>F''</i>(<i>x</i>) = <i>f'</i>(<i>x</i>) changes sign (local extrema of the rate graph <i>f</i>).</p>
+                </div>
+
+                <div class="p-3 bg-[#001a2c] rounded-lg border border-[#CCCC99]/30 space-y-1">
+                    <span class="font-bold text-[#FFC72C] block">4. Interactive Canvas, Same-Axes Overlay &amp; Presentation Mode</span>
+                    <p>• <strong>Same Axes vs. Split Axes (C):</strong> Overlay <i>f</i>(<i>t</i>) and <i>F</i>(<i>x</i>) on a single shared coordinate grid or split them into two synchronized panes.<br>
+                    • <strong>Direct Canvas Dragging:</strong> Click or drag anywhere on either graph to move <i>b</i>, or grab the vertical <span class="text-white font-mono">a</span> / <span class="text-[#FFC72C] font-mono">b</span> lines directly.<br>
+                    • <strong>Resizable Windows:</strong> Drag any divider bar to resize the sidebar, top/bottom graphs, or bottom analysis panel. Double-click a splitter to collapse/restore.<br>
+                    • <strong>Presentation Mode (P / Esc):</strong> Enlarges curves, tangent lines, and readouts for classroom projection with a draggable floating toolbar.</p>
+                </div>
+
+            </div>
+
+            <div class="pt-2 flex justify-end">
+                <button onclick="toggleHelpModal()" class="px-4 py-2 text-xs font-bold bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] rounded-lg transition">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main JavaScript Logic -->
+    <script>
+        // --- Global Application & Layout State ---
+        const state = {
+            fStr: 'cos(t)',
+            a: 0,
+            b: 2.1,
+            c: 0,
+            domMin: -5,
+            domMax: 5,
+            combineAxes: true,
+            showTangent: false,
+            showSignedColors: true,
+            showTraceTrail: false,
+            showGrid: false,
+            // Sweep Player for b
+            isPlayingB: false,
+            playSpeedStep: 0.045,
+            loopPlayB: true,
+            // Layout & Presentation State
+            isPresentation: false,
+            sidebarWidth: 390,
+            sidebarCollapsed: false,
+            topGraphRatio: 0.50,
+            analysisHeight: 205,
+            analysisCollapsed: false,
+            isGraphMaximized: false
+        };
+
+        let bPlayerAnimId = null;
+        let lastFrameTime = 0;
+
+        // Cached canvas transforms for direct pointer dragging of a and b
+        let topTransform = { xMin: -5, xMax: 5, yMin: -2, yMax: 2, width: 1, height: 1 };
+        let bottomTransform = { xMin: -5, xMax: 5, yMin: -2, yMax: 2, width: 1, height: 1 };
+
+        // High-precision lookup table for F(x) = ∫_a^x f(t) dt
+        let integralTable = {
+            tMin: -5,
+            tMax: 5,
+            steps: 800,
+            cumValues: [],
+            cumAbsValues: [],
+            cumPosValues: [],
+            cumNegValues: []
+        };
+
+        // Compiled Integrand Function f(t)
+        let compiledF = (t) => Math.cos(t);
+
+        // Canvas Contexts
+        let topCanvas, topCtx, bottomCanvas, bottomCtx;
+
+        // --- Window Onload ---
+        window.onload = function() {
+            topCanvas = document.getElementById('topCanvas');
+            topCtx = topCanvas.getContext('2d');
+            bottomCanvas = document.getElementById('bottomCanvas');
+            bottomCtx = bottomCanvas.getContext('2d');
+
+            setupEventListeners();
+            initResizers();
+            initDraggableHud();
+            setupCanvasDragging();
+            observeGraphContainers();
+            toggleCombineAxes(state.combineAxes);
+            updateAll(true);
+        };
+
+        // --- Safe Math Evaluator (Supports both 't' and 'x' variables seamlessly) ---
+        function parseFunction(exprStr) {
+            try {
+                if (!exprStr || exprStr.trim() === '') return null;
+                const node = math.parse(exprStr);
+                const code = node.compile();
+                const testVal = code.evaluate({ t: 1, x: 1 });
+                if (typeof testVal !== 'number' && typeof testVal !== 'object') return null;
+
+                return (val) => {
+                    try {
+                        let res = code.evaluate({ t: val, x: val });
+                        if (typeof res !== 'number' || isNaN(res) || !isFinite(res)) return 0;
+                        return Math.max(-1e4, Math.min(1e4, res));
+                    } catch (e) {
+                        return 0;
+                    }
+                };
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // --- High-Precision Cumulative Simpson Table for F(x) = ∫_a^x f(t) dt ---
+        function rebuildIntegralTable() {
+            const tMin = Math.min(state.domMin, state.a, state.b) - 0.5;
+            const tMax = Math.max(state.domMax, state.a, state.b) + 0.5;
+            const N = 800;
+            const h = (tMax - tMin) / N;
+
+            const cumValues = new Float64Array(N + 1);
+            const cumAbsValues = new Float64Array(N + 1);
+            const cumPosValues = new Float64Array(N + 1);
+            const cumNegValues = new Float64Array(N + 1);
+
+            cumValues[0] = 0;
+            cumAbsValues[0] = 0;
+            cumPosValues[0] = 0;
+            cumNegValues[0] = 0;
+
+            for (let i = 0; i < N; i++) {
+                const t0 = tMin + i * h;
+                const tm = t0 + 0.5 * h;
+                const t1 = t0 + h;
+
+                const y0 = compiledF(t0);
+                const ym = compiledF(tm);
+                const y1 = compiledF(t1);
+
+                const panelSigned = (h / 6) * (y0 + 4 * ym + y1);
+                const panelAbs = (h / 6) * (Math.abs(y0) + 4 * Math.abs(ym) + Math.abs(y1));
+                const panelPos = (h / 6) * (Math.max(0, y0) + 4 * Math.max(0, ym) + Math.max(0, y1));
+                const panelNeg = (h / 6) * (Math.min(0, y0) + 4 * Math.min(0, ym) + Math.min(0, y1));
+
+                cumValues[i + 1] = cumValues[i] + panelSigned;
+                cumAbsValues[i + 1] = cumAbsValues[i] + panelAbs;
+                cumPosValues[i + 1] = cumPosValues[i] + panelPos;
+                cumNegValues[i + 1] = cumNegValues[i] + panelNeg;
+            }
+
+            integralTable = {
+                tMin,
+                tMax,
+                steps: N,
+                cumValues,
+                cumAbsValues,
+                cumPosValues,
+                cumNegValues
+            };
+        }
+
+        // Interpolate cumulative array at arbitrary t
+        function queryCumArray(arr, t) {
+            const { tMin, tMax, steps } = integralTable;
+            if (t <= tMin) return arr[0];
+            if (t >= tMax) return arr[steps];
+            const exactIdx = ((t - tMin) / (tMax - tMin)) * steps;
+            const idx0 = Math.floor(exactIdx);
+            const idx1 = Math.min(steps, idx0 + 1);
+            const frac = exactIdx - idx0;
+            return arr[idx0] * (1 - frac) + arr[idx1] * frac;
+        }
+
+        // Evaluate F(x) = ∫_a^x f(t) dt + C
+        function evaluateF(x) {
+            return queryCumArray(integralTable.cumValues, x) - queryCumArray(integralTable.cumValues, state.a) + state.c;
+        }
+
+        // Evaluate signed/unsigned area metrics between a and b
+        function evaluateAreaMetrics(a, b) {
+            const signed = queryCumArray(integralTable.cumValues, b) - queryCumArray(integralTable.cumValues, a);
+            const totalAbs = Math.abs(queryCumArray(integralTable.cumAbsValues, b) - queryCumArray(integralTable.cumAbsValues, a));
+            const posPart = queryCumArray(integralTable.cumPosValues, b) - queryCumArray(integralTable.cumPosValues, a);
+            const negPart = queryCumArray(integralTable.cumNegValues, b) - queryCumArray(integralTable.cumNegValues, a);
+            return { signed, totalAbs, posPart, negPart };
+        }
+
+        // --- ResizeObserver for Smooth Real-Time Canvas Redrawing ---
+        function observeGraphContainers() {
+            const topPane = document.getElementById('topGraphPane');
+            const bottomPane = document.getElementById('bottomGraphPane');
+            if (typeof ResizeObserver === 'undefined') return;
+            const ro = new ResizeObserver(() => {
+                resizeCanvases();
+            });
+            if (topPane) ro.observe(topPane);
+            if (bottomPane) ro.observe(bottomPane);
+        }
+
+        function resizeCanvases() {
+            if (topCanvas && topCanvas.parentElement) {
+                const rTop = topCanvas.parentElement.getBoundingClientRect();
+                if (rTop.width > 0 && rTop.height > 0) {
+                    topCanvas.width = rTop.width;
+                    topCanvas.height = rTop.height;
+                }
+            }
+            if (bottomCanvas && bottomCanvas.parentElement) {
+                const rBot = bottomCanvas.parentElement.getBoundingClientRect();
+                if (rBot.width > 0 && rBot.height > 0) {
+                    bottomCanvas.width = rBot.width;
+                    bottomCanvas.height = rBot.height;
+                }
+            }
+            drawAllGraphs();
+        }
+
+        window.addEventListener('resize', () => {
+            clampPaneDimensions();
+            resizeCanvases();
+        });
+
+        // --- Window Resizers (Vertical Sidebar, Middle Graph Split, Bottom Analysis) ---
+        function initResizers() {
+            const vResizer = document.getElementById('verticalResizer');
+            const midResizer = document.getElementById('midGraphResizer');
+            const hResizer = document.getElementById('horizontalResizer');
+
+            const sidebar = document.getElementById('sidebarPane');
+            const topGraphPane = document.getElementById('topGraphPane');
+            const graphsContainer = document.getElementById('graphsContainer');
+            const analysis = document.getElementById('analysisPane');
+
+            let isDraggingV = false;
+            let isDraggingMid = false;
+            let isDraggingH = false;
+
+            const startV = (e) => {
+                if (window.innerWidth < 1024) return;
+                isDraggingV = true;
+                vResizer.classList.add('active');
+                document.body.classList.add('resizing-v');
+                sidebar.style.transition = 'none';
+                e.preventDefault();
+            };
+
+            const onV = (clientX) => {
+                if (!isDraggingV) return;
+                const maxW = Math.min(640, window.innerWidth - 320);
+                const newWidth = Math.max(260, Math.min(maxW, clientX));
+                state.sidebarWidth = newWidth;
+                state.sidebarCollapsed = false;
+                sidebar.style.display = 'flex';
+                sidebar.style.width = `${newWidth}px`;
+                document.getElementById('expandSidebarBtn').classList.add('hidden');
+                document.getElementById('expandSidebarBtn').classList.remove('flex');
+                updateMaximizeButtonState();
+            };
+
+            const startMid = (e) => {
+                isDraggingMid = true;
+                midResizer.classList.add('active');
+                document.body.classList.add('resizing-h');
+                e.preventDefault();
+            };
+
+            const onMid = (clientY) => {
+                if (!isDraggingMid) return;
+                const rect = graphsContainer.getBoundingClientRect();
+                const relY = clientY - rect.top;
+                const ratio = Math.max(0.22, Math.min(0.78, relY / rect.height));
+                state.topGraphRatio = ratio;
+                topGraphPane.style.height = `${(ratio * 100).toFixed(1)}%`;
+            };
+
+            const startH = (e) => {
+                isDraggingH = true;
+                hResizer.classList.add('active');
+                document.body.classList.add('resizing-h');
+                analysis.style.transition = 'none';
+                e.preventDefault();
+            };
+
+            const onH = (clientY) => {
+                if (!isDraggingH) return;
+                const workspaceRect = document.getElementById('rightWorkspace').getBoundingClientRect();
+                const rawHeight = workspaceRect.bottom - clientY;
+                const maxH = Math.max(160, workspaceRect.height - 230);
+                const newHeight = Math.max(85, Math.min(maxH, rawHeight));
+                state.analysisHeight = newHeight;
+                state.analysisCollapsed = false;
+                analysis.style.display = 'block';
+                analysis.style.height = `${newHeight}px`;
+                document.getElementById('analysisCollapseIcon').className = 'fa-solid fa-chevron-down';
+                updateMaximizeButtonState();
+            };
+
+            const stopAllResizers = () => {
+                if (isDraggingV) {
+                    isDraggingV = false;
+                    vResizer.classList.remove('active');
+                    document.body.classList.remove('resizing-v');
+                    sidebar.style.transition = '';
+                }
+                if (isDraggingMid) {
+                    isDraggingMid = false;
+                    midResizer.classList.remove('active');
+                    document.body.classList.remove('resizing-h');
+                }
+                if (isDraggingH) {
+                    isDraggingH = false;
+                    hResizer.classList.remove('active');
+                    document.body.classList.remove('resizing-h');
+                    analysis.style.transition = '';
+                }
+            };
+
+            vResizer.addEventListener('mousedown', startV);
+            vResizer.addEventListener('touchstart', (e) => startV(e.touches[0]), { passive: false });
+            vResizer.addEventListener('dblclick', () => toggleSidebarCollapse());
+
+            midResizer.addEventListener('mousedown', startMid);
+            midResizer.addEventListener('touchstart', (e) => startMid(e.touches[0]), { passive: false });
+            midResizer.addEventListener('dblclick', () => {
+                state.topGraphRatio = 0.50;
+                topGraphPane.style.height = '50%';
+            });
+
+            hResizer.addEventListener('mousedown', startH);
+            hResizer.addEventListener('touchstart', (e) => startH(e.touches[0]), { passive: false });
+            hResizer.addEventListener('dblclick', () => toggleAnalysisCollapse());
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDraggingV) onV(e.clientX);
+                if (isDraggingMid) onMid(e.clientY);
+                if (isDraggingH) onH(e.clientY);
+            });
+            window.addEventListener('touchmove', (e) => {
+                if (!e.touches[0]) return;
+                if (isDraggingV) onV(e.touches[0].clientX);
+                if (isDraggingMid) onMid(e.touches[0].clientY);
+                if (isDraggingH) onH(e.touches[0].clientY);
+            }, { passive: false });
+
+            window.addEventListener('mouseup', stopAllResizers);
+            window.addEventListener('touchend', stopAllResizers);
+        }
+
+        function clampPaneDimensions() {
+            const sidebar = document.getElementById('sidebarPane');
+            const analysis = document.getElementById('analysisPane');
+            const workspace = document.getElementById('rightWorkspace');
+
+            if (window.innerWidth >= 1024 && !state.sidebarCollapsed && !state.isPresentation) {
+                const maxW = Math.min(640, window.innerWidth - 320);
+                if (state.sidebarWidth > maxW) {
+                    state.sidebarWidth = Math.max(260, maxW);
+                    sidebar.style.width = `${state.sidebarWidth}px`;
+                }
+            } else if (window.innerWidth < 1024) {
+                sidebar.style.width = '';
+            }
+
+            if (workspace && !state.analysisCollapsed) {
+                const maxH = Math.max(140, workspace.getBoundingClientRect().height - 220);
+                if (state.analysisHeight > maxH) {
+                    state.analysisHeight = maxH;
+                    analysis.style.height = `${state.analysisHeight}px`;
+                }
+            }
+        }
+
+        // --- Pane Collapse / Expand / Maximize Controls ---
+        function toggleSidebarCollapse(forceState) {
+            const sidebar = document.getElementById('sidebarPane');
+            const expandBtn = document.getElementById('expandSidebarBtn');
+            state.sidebarCollapsed = typeof forceState === 'boolean' ? forceState : !state.sidebarCollapsed;
+
+            if (state.sidebarCollapsed) {
+                sidebar.style.display = 'none';
+                expandBtn.classList.remove('hidden');
+                expandBtn.classList.add('flex');
+            } else {
+                sidebar.style.display = 'flex';
+                if (window.innerWidth >= 1024) {
+                    sidebar.style.width = `${state.sidebarWidth}px`;
+                }
+                expandBtn.classList.add('hidden');
+                expandBtn.classList.remove('flex');
+            }
+            updateMaximizeButtonState();
+            resizeCanvases();
+        }
+
+        function toggleAnalysisCollapse(forceState) {
+            const analysis = document.getElementById('analysisPane');
+            const icon = document.getElementById('analysisCollapseIcon');
+            state.analysisCollapsed = typeof forceState === 'boolean' ? forceState : !state.analysisCollapsed;
+
+            if (state.analysisCollapsed) {
+                analysis.style.display = 'none';
+                icon.className = 'fa-solid fa-chevron-up';
+            } else {
+                analysis.style.display = 'block';
+                analysis.style.height = `${state.analysisHeight}px`;
+                icon.className = 'fa-solid fa-chevron-down';
+            }
+            updateMaximizeButtonState();
+            resizeCanvases();
+        }
+
+        function toggleMaximizeGraph() {
+            const shouldMaximize = !(state.sidebarCollapsed && state.analysisCollapsed);
+            toggleSidebarCollapse(shouldMaximize);
+            toggleAnalysisCollapse(shouldMaximize);
+        }
+
+        function updateMaximizeButtonState() {
+            const isMax = state.sidebarCollapsed && state.analysisCollapsed;
+            state.isGraphMaximized = isMax;
+            const icon = document.getElementById('maximizeGraphIcon');
+            const text = document.getElementById('maximizeGraphText');
+            if (icon && text) {
+                icon.className = isMax ? 'fa-solid fa-compress' : 'fa-solid fa-expand';
+                text.textContent = isMax ? 'Restore Panes' : 'Maximize Graphs';
+            }
+        }
+
+        function resetLayout() {
+            state.sidebarWidth = 390;
+            state.analysisHeight = 205;
+            state.topGraphRatio = 0.50;
+            toggleCombineAxes(true);
+            toggleSidebarCollapse(false);
+            toggleAnalysisCollapse(false);
+            const hud = document.getElementById('presentationHud');
+            if (hud) {
+                hud.style.top = '14px';
+                hud.style.left = '50%';
+                hud.style.transform = 'translateX(-50%)';
+            }
+            resizeCanvases();
+        }
+
+        // --- Toggle Combined (Same Axes) vs Split Axes View ---
+        function toggleCombineAxes(forceState) {
+            state.combineAxes = typeof forceState === 'boolean' ? forceState : !state.combineAxes;
+
+            const topPane = document.getElementById('topGraphPane');
+            const midResizer = document.getElementById('midGraphResizer');
+            const bottomPane = document.getElementById('bottomGraphPane');
+            const badgeText = document.getElementById('topGraphBadgeText');
+            const combineCheck = document.getElementById('combineAxesCheck');
+            const btn = document.getElementById('combineAxesBtn');
+            const btnText = document.getElementById('combineAxesText');
+            const hudBtn = document.getElementById('hudCombineAxesBtn');
+            const hudBtnText = document.getElementById('hudCombineAxesText');
+
+            if (combineCheck) combineCheck.checked = state.combineAxes;
+
+            if (state.combineAxes) {
+                midResizer.style.display = 'none';
+                bottomPane.style.display = 'none';
+                topPane.style.height = '100%';
+                topPane.classList.remove('rounded-t-xl');
+                topPane.classList.add('rounded-xl');
+
+                if (badgeText) {
+                    badgeText.innerHTML = `<strong>Combined Axes:</strong> <span class="font-mono text-[#FFC72C]">y = f(t)</span> <span class="text-[#CCCC99]">&amp;</span> <span class="inline-flex items-center gap-1 font-mono text-[#38bdf8]"><span class="w-2 h-2 rounded-full bg-[#38bdf8] inline-block"></span>F(x) = ∫ₐˣ f(t) dt + C</span>`;
+                }
+                if (btn && btnText) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8]/60 text-xs font-bold flex items-center gap-1.5 shadow transition';
+                    btnText.textContent = 'Split Axes';
+                }
+                if (hudBtn && hudBtnText) {
+                    hudBtn.className = 'px-2.5 py-1.5 rounded-xl bg-[#38bdf8]/20 hover:bg-[#38bdf8]/30 text-[#38bdf8] border border-[#38bdf8]/60 text-xs font-bold flex items-center gap-1.5 transition';
+                    hudBtnText.textContent = 'Split Axes';
+                }
+            } else {
+                midResizer.style.display = 'flex';
+                bottomPane.style.display = 'flex';
+                topPane.style.height = `${(state.topGraphRatio * 100).toFixed(1)}%`;
+                topPane.classList.remove('rounded-xl');
+                topPane.classList.add('rounded-t-xl');
+
+                if (badgeText) {
+                    badgeText.innerHTML = `<strong>Integrand Rate:</strong> <span class="font-mono text-[#FFC72C]">y = f(t)</span> <span class="hidden sm:inline text-[#CCCC99]">(Drag markers <span class="text-white font-mono">a</span> or <span class="text-[#FFC72C] font-mono">b</span> directly)</span>`;
+                }
+                if (btn && btnText) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-[#001a2c]/90 hover:bg-[#003961] text-[#CCCC99] hover:text-[#38bdf8] border border-[#CCCC99]/30 text-xs font-medium flex items-center gap-1.5 shadow transition';
+                    btnText.textContent = 'Same Axes';
+                }
+                if (hudBtn && hudBtnText) {
+                    hudBtn.className = 'px-2.5 py-1.5 rounded-xl bg-[#001a2c] hover:bg-[#003961] text-[#CCCC99] border border-[#CCCC99]/30 text-xs font-semibold flex items-center gap-1.5 transition';
+                    hudBtnText.textContent = 'Same Axes';
+                }
+            }
+
+            resizeCanvases();
+        }
+
+        // --- Presentation Mode Toggle ---
+        function togglePresentationMode(forceState) {
+            state.isPresentation = typeof forceState === 'boolean' ? forceState : !state.isPresentation;
+            document.body.classList.toggle('presentation-mode', state.isPresentation);
+
+            if (!state.isPresentation) {
+                const sidebar = document.getElementById('sidebarPane');
+                if (!state.sidebarCollapsed) {
+                    sidebar.style.display = 'flex';
+                    if (window.innerWidth >= 1024) {
+                        sidebar.style.width = `${state.sidebarWidth}px`;
+                    }
+                }
+            }
+            updateAll(false);
+            setTimeout(resizeCanvases, 30);
+        }
+
+        // --- Draggable Floating Presentation Toolbar ---
+        function initDraggableHud() {
+            const hud = document.getElementById('presentationHud');
+            const handle = document.getElementById('hudDragHandle');
+            if (!hud || !handle) return;
+
+            let isDragging = false;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            const startDrag = (clientX, clientY) => {
+                isDragging = true;
+                const rect = hud.getBoundingClientRect();
+                hud.style.transform = 'none';
+                hud.style.left = `${rect.left}px`;
+                hud.style.top = `${rect.top}px`;
+                offsetX = clientX - rect.left;
+                offsetY = clientY - rect.top;
+            };
+
+            const moveDrag = (clientX, clientY) => {
+                if (!isDragging) return;
+                const maxLeft = Math.max(8, window.innerWidth - hud.offsetWidth - 8);
+                const maxTop = Math.max(8, window.innerHeight - hud.offsetHeight - 8);
+                hud.style.left = `${Math.min(maxLeft, Math.max(8, clientX - offsetX))}px`;
+                hud.style.top = `${Math.min(maxTop, Math.max(8, clientY - offsetY))}px`;
+            };
+
+            const endDrag = () => { isDragging = false; };
+
+            handle.addEventListener('mousedown', (e) => { startDrag(e.clientX, e.clientY); e.preventDefault(); });
+            handle.addEventListener('touchstart', (e) => { if (e.touches[0]) startDrag(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+            window.addEventListener('mousemove', (e) => moveDrag(e.clientX, e.clientY));
+            window.addEventListener('touchmove', (e) => { if (isDragging && e.touches[0]) moveDrag(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+            window.addEventListener('mouseup', endDrag);
+            window.addEventListener('touchend', endDrag);
+        }
+
+        // --- Direct Canvas Pointer Dragging for Limits 'a' and 'b' ---
+        function setupCanvasDragging() {
+            let activeDragTarget = null; // 'a' or 'b'
+
+            const pxToMathX = (pxX, transform) => {
+                return transform.xMin + (pxX / transform.width) * (transform.xMax - transform.xMin);
+            };
+
+            const mathToPxX = (mathX, transform) => {
+                return ((mathX - transform.xMin) / (transform.xMax - transform.xMin)) * transform.width;
+            };
+
+            const attachCanvasEvents = (canvasEl, getTransformFn) => {
+                const handleDown = (clientX) => {
+                    stopBPlayer();
+                    const rect = canvasEl.getBoundingClientRect();
+                    const pxX = clientX - rect.left;
+                    const tr = getTransformFn();
+                    const pxA = mathToPxX(state.a, tr);
+                    const pxB = mathToPxX(state.b, tr);
+
+                    if (Math.abs(pxX - pxA) < 14 && Math.abs(pxX - pxA) <= Math.abs(pxX - pxB)) {
+                        activeDragTarget = 'a';
+                    } else {
+                        activeDragTarget = 'b';
+                        const nextB = Math.max(state.domMin, Math.min(state.domMax, pxToMathX(pxX, tr)));
+                        state.b = Number(nextB.toFixed(2));
+                        updateAll(false);
+                    }
+                };
+
+                const handleHover = (clientX) => {
+                    if (activeDragTarget) return;
+                    const rect = canvasEl.getBoundingClientRect();
+                    const pxX = clientX - rect.left;
+                    const tr = getTransformFn();
+                    const pxA = mathToPxX(state.a, tr);
+                    const pxB = mathToPxX(state.b, tr);
+                    if (Math.abs(pxX - pxA) < 12 || Math.abs(pxX - pxB) < 12) {
+                        canvasEl.style.cursor = 'ew-resize';
+                    } else {
+                        canvasEl.style.cursor = 'crosshair';
+                    }
+                };
+
+                canvasEl.addEventListener('mousedown', (e) => {
+                    handleDown(e.clientX);
+                    e.preventDefault();
+                });
+                canvasEl.addEventListener('mousemove', (e) => handleHover(e.clientX));
+                canvasEl.addEventListener('touchstart', (e) => {
+                    if (e.touches[0]) handleDown(e.touches[0].clientX);
+                    e.preventDefault();
+                }, { passive: false });
+            };
+
+            attachCanvasEvents(topCanvas, () => topTransform);
+            attachCanvasEvents(bottomCanvas, () => bottomTransform);
+
+            const handleMoveGlobal = (clientX) => {
+                if (!activeDragTarget) return;
+                const rect = topCanvas.getBoundingClientRect();
+                const pxX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+                const mathX = pxToMathX(pxX, topTransform);
+                const clamped = Number(Math.max(state.domMin, Math.min(state.domMax, mathX)).toFixed(2));
+
+                if (activeDragTarget === 'a') {
+                    state.a = clamped;
+                } else {
+                    state.b = clamped;
+                }
+                updateAll(false);
+            };
+
+            window.addEventListener('mousemove', (e) => handleMoveGlobal(e.clientX));
+            window.addEventListener('touchmove', (e) => {
+                if (activeDragTarget && e.touches[0]) handleMoveGlobal(e.touches[0].clientX);
+            }, { passive: false });
+
+            window.addEventListener('mouseup', () => { activeDragTarget = null; });
+            window.addEventListener('touchend', () => { activeDragTarget = null; });
+        }
+
+        // --- Quick Limit & Constant Helpers + Sweep Player for b ---
+        function setAValue(val) {
+            stopBPlayer();
+            state.a = Math.max(state.domMin, Math.min(state.domMax, Number(val)));
+            updateAll(false);
+        }
+
+        function setCValue(val) {
+            state.c = Number(val) || 0;
+            updateAll(false);
+        }
+
+        function resetBToA() {
+            stopBPlayer();
+            state.b = state.a;
+            updateAll(false);
+        }
+
+        function toggleBPlayer() {
+            if (state.isPlayingB) {
+                stopBPlayer();
+            } else {
+                startBPlayer();
+            }
+        }
+
+        function startBPlayer() {
+            if (state.b >= state.domMax - 1e-4) {
+                state.b = state.domMin;
+            }
+            state.isPlayingB = true;
+            syncBPlayerUI();
+            lastFrameTime = performance.now();
+
+            const stepLoop = (now) => {
+                if (!state.isPlayingB) return;
+                const dtFactor = Math.min(3, (now - lastFrameTime) / 16.67);
+                lastFrameTime = now;
+
+                state.b = Number((state.b + state.playSpeedStep * dtFactor).toFixed(3));
+                if (state.b >= state.domMax) {
+                    if (state.loopPlayB) {
+                        state.b = state.domMin;
+                    } else {
+                        state.b = state.domMax;
+                        updateAll(false);
+                        stopBPlayer();
+                        return;
+                    }
+                }
+
+                updateAll(false);
+                bPlayerAnimId = requestAnimationFrame(stepLoop);
+            };
+
+            if (bPlayerAnimId) cancelAnimationFrame(bPlayerAnimId);
+            bPlayerAnimId = requestAnimationFrame(stepLoop);
+        }
+
+        function stopBPlayer() {
+            state.isPlayingB = false;
+            if (bPlayerAnimId) {
+                cancelAnimationFrame(bPlayerAnimId);
+                bPlayerAnimId = null;
+            }
+            syncBPlayerUI();
+        }
+
+        function toggleLoopB() {
+            state.loopPlayB = !state.loopPlayB;
+            syncBPlayerUI();
+        }
+
+        function setPlaySpeed(stepVal) {
+            state.playSpeedStep = parseFloat(stepVal) || 0.045;
+        }
+
+        function syncBPlayerUI() {
+            const playIcon = document.getElementById('playBIcon');
+            const playLabel = document.getElementById('playBLabel');
+            const playBtn = document.getElementById('playBBtn');
+            const hudPlayIcon = document.getElementById('hudPlayBIcon');
+            const hudPlayBtn = document.getElementById('hudPlayBBtn');
+            const loopBtn = document.getElementById('loopBBtn');
+
+            if (playIcon && playLabel && playBtn) {
+                if (state.isPlayingB) {
+                    playIcon.className = 'fa-solid fa-pause';
+                    playLabel.textContent = 'Pause';
+                    playBtn.className = 'px-2.5 py-1 rounded-md bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-sm';
+                } else {
+                    playIcon.className = 'fa-solid fa-play';
+                    playLabel.textContent = 'Sweep b';
+                    playBtn.className = 'px-2.5 py-1 rounded-md bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold text-xs flex items-center gap-1.5 transition shadow-sm';
+                }
+            }
+
+            if (hudPlayIcon && hudPlayBtn) {
+                if (state.isPlayingB) {
+                    hudPlayIcon.className = 'fa-solid fa-pause text-[10px]';
+                    hudPlayBtn.className = 'ml-1 px-2 h-6 rounded-md bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1 transition';
+                } else {
+                    hudPlayIcon.className = 'fa-solid fa-play text-[10px]';
+                    hudPlayBtn.className = 'ml-1 px-2 h-6 rounded-md bg-[#FFC72C] hover:bg-[#e6b328] text-[#002B49] font-bold text-xs flex items-center gap-1 transition';
+                }
+            }
+
+            if (loopBtn) {
+                if (state.loopPlayB) {
+                    loopBtn.className = 'w-7 h-7 rounded-md bg-[#FFC72C]/20 text-[#FFC72C] border border-[#FFC72C]/60 text-xs flex items-center justify-center transition';
+                } else {
+                    loopBtn.className = 'w-7 h-7 rounded-md bg-[#002B49] hover:bg-[#003961] text-[#CCCC99]/70 border border-[#CCCC99]/20 text-xs flex items-center justify-center transition';
+                }
+            }
+        }
+
+        // --- Sync Sliders, Inputs & Formula Subscripts ---
+        function syncSliderInputs() {
+            const sliderA = document.getElementById('sliderA');
+            const hudSliderA = document.getElementById('hudSliderA');
+            const boundAInput = document.getElementById('boundAInput');
+            const hudAVal = document.getElementById('hudAVal');
+
+            const sliderB = document.getElementById('sliderB');
+            const hudSliderB = document.getElementById('hudSliderB');
+            const boundBInput = document.getElementById('boundBInput');
+            const hudBVal = document.getElementById('hudBVal');
+            const formulaSubA = document.getElementById('formulaSubA');
+
+            const sliderC = document.getElementById('sliderC');
+            const hudSliderC = document.getElementById('hudSliderC');
+            const constCInput = document.getElementById('constCInput');
+            const hudCVal = document.getElementById('hudCVal');
+            const formulaPlusC = document.getElementById('formulaPlusC');
+
+            const hudFunc = document.getElementById('hudFuncInput');
+
+            [sliderA, hudSliderA, sliderB, hudSliderB].forEach(el => {
+                if (!el) return;
+                el.min = state.domMin;
+                el.max = state.domMax;
+            });
+
+            if (sliderA) sliderA.value = state.a;
+            if (hudSliderA) hudSliderA.value = state.a;
+            if (boundAInput && document.activeElement !== boundAInput) {
+                boundAInput.value = Number(state.a.toFixed(2));
+            }
+            if (hudAVal) hudAVal.textContent = state.a.toFixed(2);
+            if (formulaSubA) formulaSubA.textContent = Number(state.a.toFixed(2));
+
+            if (sliderB) sliderB.value = state.b;
+            if (hudSliderB) hudSliderB.value = state.b;
+            if (boundBInput && document.activeElement !== boundBInput) {
+                boundBInput.value = Number(state.b.toFixed(2));
+            }
+            if (hudBVal) hudBVal.textContent = state.b.toFixed(2);
+
+            const clampedSliderC = Math.max(-10, Math.min(10, state.c));
+            if (sliderC) sliderC.value = clampedSliderC;
+            if (hudSliderC) hudSliderC.value = clampedSliderC;
+            if (constCInput && document.activeElement !== constCInput) {
+                constCInput.value = Number(state.c.toFixed(2));
+            }
+            if (hudCVal) hudCVal.textContent = state.c.toFixed(2);
+            if (formulaPlusC) {
+                const cFormatted = Math.abs(Number(state.c.toFixed(2)));
+                formulaPlusC.textContent = state.c >= 0 ? `+ ${cFormatted}` : `− ${cFormatted}`;
+            }
+
+            if (hudFunc && document.activeElement !== hudFunc) {
+                hudFunc.value = state.fStr;
+            }
+        }
+
+        // --- Master Update ---
+        function updateAll(rebuildTable = true) {
+            if (rebuildTable || integralTable.cumValues.length === 0 ||
+                state.a < integralTable.tMin + 0.1 || state.a > integralTable.tMax - 0.1 ||
+                state.b < integralTable.tMin + 0.1 || state.b > integralTable.tMax - 0.1) {
+                rebuildIntegralTable();
+            }
+            syncSliderInputs();
+            drawAllGraphs();
+            calculateFTCResults();
+            updateAPTheoremText();
+        }
+
+        // --- Calculate FTC Part 1 & Part 2 Metrics ---
+        function calculateFTCResults() {
+            const { a, b } = state;
+            const metrics = evaluateAreaMetrics(a, b);
+            const fbRate = compiledF(b);
+            const h = 0.001;
+            const fppb = (compiledF(b + h) - compiledF(b - h)) / (2 * h);
+
+            const boundsTag = document.getElementById('intervalBoundsTag');
+            if (boundsTag) {
+                boundsTag.textContent = `∫[${a.toFixed(2)}, ${b.toFixed(2)}] f(t) dt`;
+            }
+
+            const fbValEl = document.getElementById('fbValText');
+            const netAreaEl = document.getElementById('netAreaValText');
+            const totalAbsEl = document.getElementById('totalAbsAreaText');
+            const posAreaEl = document.getElementById('posAreaText');
+            const negAreaEl = document.getElementById('negAreaText');
+            const revFlagEl = document.getElementById('reversedLimitsFlag');
+
+            const totalFb = metrics.signed + state.c;
+
+            if (fbValEl) fbValEl.textContent = totalFb.toFixed(4);
+            if (netAreaEl) netAreaEl.textContent = metrics.signed.toFixed(4);
+            if (totalAbsEl) totalAbsEl.textContent = metrics.totalAbs.toFixed(4);
+            if (posAreaEl) posAreaEl.textContent = metrics.posPart.toFixed(4);
+            if (negAreaEl) negAreaEl.textContent = metrics.negPart.toFixed(4);
+            if (revFlagEl) {
+                revFlagEl.classList.toggle('hidden', !(b < a));
+            }
+
+            const derivBLabel = document.getElementById('derivBLabel');
+            const tableFbVal = document.getElementById('tableFbVal');
+            const fpbValText = document.getElementById('fpbValText');
+            const fppbValText = document.getElementById('fppbValText');
+            const tableFaVal = document.getElementById('tableFaVal');
+
+            if (derivBLabel) derivBLabel.textContent = b.toFixed(2);
+            if (tableFbVal) tableFbVal.textContent = totalFb.toFixed(4);
+            if (fpbValText) fpbValText.textContent = fbRate.toFixed(4);
+            if (fppbValText) fppbValText.textContent = fppb.toFixed(4);
+            if (tableFaVal) tableFaVal.textContent = state.c.toFixed(4);
+        }
+
+        // --- AP Calculus Exam Justification Engine ---
+        function updateAPTheoremText() {
+            const { b } = state;
+            const fbRate = compiledF(b);
+            const h = 0.001;
+            const fppb = (compiledF(b + h) - compiledF(b - h)) / (2 * h);
+            const bStr = b.toFixed(2);
+
+            const apEl = document.getElementById('apFtcTheoremText');
+            const concEl = document.getElementById('apConcavityText');
+            if (!apEl || !concEl) return;
+
+            if (Math.abs(fbRate) < 0.015) {
+                apEl.innerHTML = `At <i>x</i> = ${bStr}, since <i>F'</i>(${bStr}) = <i>f</i>(${bStr}) ≈ 0, <strong><i>F</i>(<i>x</i>) has a critical point</strong> (tangent line is horizontal).`;
+            } else if (fbRate > 0) {
+                apEl.innerHTML = `At <i>x</i> = ${bStr}, since <i>F'</i>(${bStr}) = <i>f</i>(${bStr}) = ${fbRate.toFixed(2)} &gt; 0, the accumulation function <strong><i>F</i>(<i>x</i>) is increasing</strong>.`;
+            } else {
+                apEl.innerHTML = `At <i>x</i> = ${bStr}, since <i>F'</i>(${bStr}) = <i>f</i>(${bStr}) = ${fbRate.toFixed(2)} &lt; 0, the accumulation function <strong><i>F</i>(<i>x</i>) is decreasing</strong>.`;
+            }
+
+            if (Math.abs(fppb) < 0.02) {
+                concEl.innerHTML = `Since <i>F''</i>(${bStr}) = <i>f'</i>(${bStr}) ≈ 0, check for a potential <strong>point of inflection</strong> on <i>F</i>(<i>x</i>).`;
+            } else if (fppb > 0) {
+                concEl.innerHTML = `Since <i>F''</i>(${bStr}) = <i>f'</i>(${bStr}) &gt; 0 (<i>f</i> is increasing), <strong><i>F</i>(<i>x</i>) is concave up</strong>.`;
+            } else {
+                concEl.innerHTML = `Since <i>F''</i>(${bStr}) = <i>f'</i>(${bStr}) &lt; 0 (<i>f</i> is decreasing), <strong><i>F</i>(<i>x</i>) is concave down</strong>.`;
+            }
+        }
+
+        // --- Draw Both Synchronized Graphs (Or Single Combined Graph) ---
+        function drawAllGraphs() {
+            if (state.combineAxes) {
+                drawCombinedGraph();
+            } else {
+                drawTopIntegrandGraph();
+                drawBottomAccumulationGraph();
+            }
+        }
+
+        // Helper: Draw Shared Coordinate Grid, Axes & Tick Numbers
+        function drawAxesAndGrid(ctx, width, height, xMin, xMax, yMin, yMax, presScale) {
+            const toPxX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+            const toPxY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+            const xStep = Math.pow(10, Math.floor(Math.log10(xMax - xMin))) / 2 || 1;
+            const yStep = Math.pow(10, Math.floor(Math.log10(yMax - yMin))) / 2 || 1;
+
+            if (state.showGrid) {
+                ctx.strokeStyle = 'rgba(204, 204, 153, 0.12)';
+                ctx.lineWidth = 1;
+
+                for (let x = Math.ceil(xMin / xStep) * xStep; x <= xMax; x += xStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(x), 0);
+                    ctx.lineTo(toPxX(x), height);
+                    ctx.stroke();
+                }
+
+                for (let y = Math.ceil(yMin / yStep) * yStep; y <= yMax; y += yStep) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, toPxY(y));
+                    ctx.lineTo(width, toPxY(y));
+                    ctx.stroke();
+                }
+            }
+
+            // Main X and Y Axes
+            ctx.strokeStyle = 'rgba(204, 204, 153, 0.75)';
+            ctx.lineWidth = 1.5 * presScale;
+
+            const yZeroPx = toPxY(0);
+            if (yZeroPx >= 0 && yZeroPx <= height) {
+                ctx.beginPath();
+                ctx.moveTo(0, yZeroPx);
+                ctx.lineTo(width, yZeroPx);
+                ctx.stroke();
+            }
+
+            const xZeroPx = toPxX(0);
+            if (xZeroPx >= 0 && xZeroPx <= width) {
+                ctx.beginPath();
+                ctx.moveTo(xZeroPx, 0);
+                ctx.lineTo(xZeroPx, height);
+                ctx.stroke();
+            }
+
+            // Subtle integer tick labels along X-axis and Y-axis
+            ctx.fillStyle = 'rgba(204, 204, 153, 0.65)';
+            ctx.font = `${state.isPresentation ? 12 : 10}px monospace`;
+            const tickStart = Math.ceil(xMin);
+            const tickEnd = Math.floor(xMax);
+            const tickSkip = (tickEnd - tickStart) > 16 ? 2 : 1;
+            const labelY = Math.min(height - 6, Math.max(14, yZeroPx + 13));
+            for (let tx = tickStart; tx <= tickEnd; tx += tickSkip) {
+                if (tx === 0) continue;
+                ctx.fillText(String(tx), toPxX(tx) - 4, labelY);
+            }
+
+            const yLabelX = Math.min(width - 28, Math.max(6, xZeroPx + 6));
+            for (let ty = Math.ceil(yMin / yStep) * yStep; ty <= yMax; ty += yStep) {
+                if (Math.abs(ty) < 1e-6) continue;
+                const py = toPxY(ty);
+                if (py < 34 || py > height - 14) continue;
+                const formattedY = Number.isInteger(Number(ty.toFixed(2))) ? String(Math.round(ty)) : ty.toFixed(1);
+                ctx.fillText(formattedY, yLabelX, py + 3);
+            }
+
+            return { toPxX, toPxY };
+        }
+
+        // Helper: Fill Signed Area Panels Between a and b (Emerald Positive, Clear Red Negative)
+        function drawSignedAreaShading(ctx, a, b, toPxX, toPxY, posFill, negFill, neutralFill) {
+            if (Math.abs(b - a) <= 1e-5) return;
+            const dir = b >= a ? 1 : -1;
+            const panels = 240;
+            const dt = (b - a) / panels;
+            const yZeroPx = toPxY(0);
+
+            for (let i = 0; i < panels; i++) {
+                const t0 = a + i * dt;
+                const t1 = a + (i + 1) * dt;
+                const y0 = compiledF(t0);
+                const y1 = compiledF(t1);
+
+                // Check for sign crossing inside this panel
+                if ((y0 > 0 && y1 < 0) || (y0 < 0 && y1 > 0)) {
+                    const frac = Math.abs(y0) / (Math.abs(y0) + Math.abs(y1));
+                    const tZero = t0 + frac * (t1 - t0);
+
+                    // First half
+                    const sign1 = y0 * dir;
+                    ctx.fillStyle = state.showSignedColors
+                        ? (sign1 >= 0 ? posFill : negFill)
+                        : neutralFill;
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(t0), yZeroPx);
+                    ctx.lineTo(toPxX(t0), toPxY(y0));
+                    ctx.lineTo(toPxX(tZero), yZeroPx);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Second half
+                    const sign2 = y1 * dir;
+                    ctx.fillStyle = state.showSignedColors
+                        ? (sign2 >= 0 ? posFill : negFill)
+                        : neutralFill;
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(tZero), yZeroPx);
+                    ctx.lineTo(toPxX(t1), toPxY(y1));
+                    ctx.lineTo(toPxX(t1), yZeroPx);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    const midY = 0.5 * (y0 + y1);
+                    const effectiveSign = midY * dir;
+                    ctx.fillStyle = state.showSignedColors
+                        ? (effectiveSign >= 0 ? posFill : negFill)
+                        : neutralFill;
+                    ctx.beginPath();
+                    ctx.moveTo(toPxX(t0), yZeroPx);
+                    ctx.lineTo(toPxX(t0), toPxY(y0));
+                    ctx.lineTo(toPxX(t1), toPxY(y1));
+                    ctx.lineTo(toPxX(t1), yZeroPx);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        }
+
+        // --- COMBINED CANVAS: Both y = f(t) and F(x) = ∫_a^x f(t) dt + C on the Same Axes ---
+        function drawCombinedGraph() {
+            if (!topCtx || !topCanvas) return;
+            const width = topCanvas.width;
+            const height = topCanvas.height;
+            const presScale = state.isPresentation ? 1.35 : 1.0;
+
+            topCtx.clearRect(0, 0, width, height);
+
+            const xMin = Math.min(state.domMin, state.a, state.b);
+            const xMax = Math.max(state.domMax, state.a, state.b);
+
+            // Unified Y-range covering both f(t) and F(x)
+            let yMin = Math.min(0, state.c);
+            let yMax = Math.max(0.5, state.c);
+            const samples = 240;
+            for (let i = 0; i <= samples; i++) {
+                const x = xMin + (i / samples) * (xMax - xMin);
+                const yf = compiledF(x);
+                const yF = evaluateF(x);
+                if (yf < yMin) yMin = yf;
+                if (yf > yMax) yMax = yf;
+                if (yF < yMin) yMin = yF;
+                if (yF > yMax) yMax = yF;
+            }
+            const yPad = (yMax - yMin || 1) * 0.22;
+            yMin -= yPad;
+            yMax += yPad;
+
+            topTransform = { xMin, xMax, yMin, yMax, width, height };
+            const { toPxX, toPxY } = drawAxesAndGrid(topCtx, width, height, xMin, xMax, yMin, yMax, presScale);
+
+            const { a, b } = state;
+
+            // 1. Shaded Signed Area under f(t) between a and b (Emerald +, Clear Red −)
+            drawSignedAreaShading(
+                topCtx,
+                a,
+                b,
+                toPxX,
+                toPxY,
+                'rgba(52, 211, 153, 0.28)',
+                'rgba(255, 42, 32, 0.52)',
+                'rgba(255, 199, 44, 0.24)'
+            );
+
+            // 2. Full F(x) Domain Preview Curve (Subtle Cyan Dashed)
+            if (state.showTraceTrail) {
+                topCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                topCtx.lineWidth = 2 * presScale;
+                topCtx.setLineDash([5, 5]);
+                topCtx.beginPath();
+                const fullSteps = 260;
+                for (let i = 0; i <= fullSteps; i++) {
+                    const x = xMin + (i / fullSteps) * (xMax - xMin);
+                    const y = evaluateF(x);
+                    if (i === 0) topCtx.moveTo(toPxX(x), toPxY(y));
+                    else topCtx.lineTo(toPxX(x), toPxY(y));
+                }
+                topCtx.stroke();
+                topCtx.setLineDash([]);
+            }
+
+            // 3. Active Accumulated F(x) Curve from a to b (Vibrant Cyan)
+            if (Math.abs(b - a) > 1e-5) {
+                topCtx.strokeStyle = '#38bdf8';
+                topCtx.lineWidth = 3.5 * presScale;
+                topCtx.beginPath();
+                const activeSteps = 180;
+                for (let i = 0; i <= activeSteps; i++) {
+                    const x = a + (i / activeSteps) * (b - a);
+                    const y = evaluateF(x);
+                    if (i === 0) topCtx.moveTo(toPxX(x), toPxY(y));
+                    else topCtx.lineTo(toPxX(x), toPxY(y));
+                }
+                topCtx.stroke();
+            }
+
+            // 4. Integrand Rate Curve y = f(t) across full domain (Vibrant Yellow)
+            topCtx.strokeStyle = '#FFC72C';
+            topCtx.lineWidth = 3 * presScale;
+            topCtx.beginPath();
+            const curveSteps = 300;
+            for (let i = 0; i <= curveSteps; i++) {
+                const t = xMin + (i / curveSteps) * (xMax - xMin);
+                const y = compiledF(t);
+                if (i === 0) topCtx.moveTo(toPxX(t), toPxY(y));
+                else topCtx.lineTo(toPxX(t), toPxY(y));
+            }
+            topCtx.stroke();
+
+            // 5. Tangent Line to F(x) at (b, F(b)) with Slope = f(b)
+            const Fb = evaluateF(b);
+            const slope = compiledF(b);
+            if (state.showTangent) {
+                const tangentHalfSpan = (xMax - xMin) * 0.16;
+                const tx0 = b - tangentHalfSpan;
+                const ty0 = Fb - slope * tangentHalfSpan;
+                const tx1 = b + tangentHalfSpan;
+                const ty1 = Fb + slope * tangentHalfSpan;
+
+                topCtx.strokeStyle = '#f8fafc';
+                topCtx.lineWidth = 2 * presScale;
+                topCtx.setLineDash([6, 4]);
+                topCtx.beginPath();
+                topCtx.moveTo(toPxX(tx0), toPxY(ty0));
+                topCtx.lineTo(toPxX(tx1), toPxY(ty1));
+                topCtx.stroke();
+                topCtx.setLineDash([]);
+            }
+
+            // 6. Vertical Marker Lines at x = a and x = b
+            topCtx.strokeStyle = '#CCCC99';
+            topCtx.lineWidth = 2 * presScale;
+            topCtx.setLineDash([4, 4]);
+            topCtx.beginPath();
+            topCtx.moveTo(toPxX(a), 0);
+            topCtx.lineTo(toPxX(a), height);
+            topCtx.stroke();
+
+            topCtx.strokeStyle = '#FFC72C';
+            topCtx.beginPath();
+            topCtx.moveTo(toPxX(b), 0);
+            topCtx.lineTo(toPxX(b), height);
+            topCtx.stroke();
+            topCtx.setLineDash([]);
+
+            // 7. Anchor Point (a, F(a) = C)
+            const Fa = evaluateF(a);
+            topCtx.fillStyle = '#001a2c';
+            topCtx.strokeStyle = '#38bdf8';
+            topCtx.lineWidth = 2.5 * presScale;
+            topCtx.beginPath();
+            topCtx.arc(toPxX(a), toPxY(Fa), 5.5 * presScale, 0, Math.PI * 2);
+            topCtx.fill();
+            topCtx.stroke();
+
+            // 8. Active Point on Rate Curve (b, f(b))
+            const fb = compiledF(b);
+            topCtx.fillStyle = '#FFC72C';
+            topCtx.beginPath();
+            topCtx.arc(toPxX(b), toPxY(fb), 5 * presScale, 0, Math.PI * 2);
+            topCtx.fill();
+
+            // 9. Active Point on Accumulation Curve (b, F(b))
+            topCtx.fillStyle = '#38bdf8';
+            topCtx.beginPath();
+            topCtx.arc(toPxX(b), toPxY(Fb), 6 * presScale, 0, Math.PI * 2);
+            topCtx.fill();
+
+            // 10. Non-Overlapping Labels for a, b, f(b), and F(b)
+            const fontSize = state.isPresentation ? 14 : 11;
+            topCtx.font = `bold ${fontSize}px monospace`;
+            const axisLabelY = Math.min(height - 10, Math.max(46, toPxY(0) - 8));
+
+            topCtx.fillStyle = '#CCCC99';
+            topCtx.fillText(`a=${a.toFixed(2)}`, toPxX(a) + 5, axisLabelY);
+
+            topCtx.fillStyle = '#FFC72C';
+            topCtx.fillText(`b=${b.toFixed(2)}`, toPxX(b) + 5, axisLabelY + (Math.abs(b - a) < 0.45 ? 16 : 0));
+
+            const pxB = toPxX(b);
+            const pxY_f = toPxY(fb);
+            const pxY_F = toPxY(Fb);
+            const labelOffsetX = pxB > width - 140 ? -125 : 9;
+
+            let labelY_f = Math.max(46, Math.min(height - 12, pxY_f - 8));
+            let labelY_F = Math.max(46, Math.min(height - 12, pxY_F - 8));
+            if (Math.abs(labelY_f - labelY_F) < 16) {
+                if (pxY_F <= pxY_f) {
+                    labelY_F = Math.max(46, labelY_F - 10);
+                    labelY_f = Math.min(height - 10, labelY_f + 10);
+                } else {
+                    labelY_f = Math.max(46, labelY_f - 10);
+                    labelY_F = Math.min(height - 10, labelY_F + 10);
+                }
+            }
+
+            topCtx.fillStyle = '#FFC72C';
+            topCtx.fillText(`f(b)=${fb.toFixed(2)}`, pxB + labelOffsetX, labelY_f);
+
+            topCtx.fillStyle = '#38bdf8';
+            topCtx.fillText(`F(b)=${Fb.toFixed(2)}`, pxB + labelOffsetX, labelY_F);
+        }
+
+        // --- TOP CANVAS (Split Mode): Integrand y = f(t) & Shaded Signed Area from a to b ---
+        function drawTopIntegrandGraph() {
+            if (!topCtx || !topCanvas) return;
+            const width = topCanvas.width;
+            const height = topCanvas.height;
+            const presScale = state.isPresentation ? 1.35 : 1.0;
+
+            topCtx.clearRect(0, 0, width, height);
+
+            const xMin = Math.min(state.domMin, state.a, state.b);
+            const xMax = Math.max(state.domMax, state.a, state.b);
+
+            let yMin = 0;
+            let yMax = 0.5;
+            const samples = 220;
+            for (let i = 0; i <= samples; i++) {
+                const t = xMin + (i / samples) * (xMax - xMin);
+                const y = compiledF(t);
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+            const yPad = (yMax - yMin || 1) * 0.22;
+            yMin -= yPad;
+            yMax += yPad;
+
+            topTransform = { xMin, xMax, yMin, yMax, width, height };
+            const { toPxX, toPxY } = drawAxesAndGrid(topCtx, width, height, xMin, xMax, yMin, yMax, presScale);
+
+            const { a, b } = state;
+
+            // 1. Shaded Signed Area between a and b (Emerald +, Clear Red −)
+            drawSignedAreaShading(
+                topCtx,
+                a,
+                b,
+                toPxX,
+                toPxY,
+                'rgba(52, 211, 153, 0.34)',
+                'rgba(255, 42, 32, 0.56)',
+                'rgba(255, 199, 44, 0.30)'
+            );
+
+            // 2. Plot Integrand Curve y = f(t)
+            topCtx.strokeStyle = '#FFC72C';
+            topCtx.lineWidth = 3 * presScale;
+            topCtx.beginPath();
+            const curveSteps = 300;
+            for (let i = 0; i <= curveSteps; i++) {
+                const t = xMin + (i / curveSteps) * (xMax - xMin);
+                const y = compiledF(t);
+                if (i === 0) topCtx.moveTo(toPxX(t), toPxY(y));
+                else topCtx.lineTo(toPxX(t), toPxY(y));
+            }
+            topCtx.stroke();
+
+            // 3. Vertical Marker Lines at t = a and t = b
+            topCtx.strokeStyle = '#CCCC99';
+            topCtx.lineWidth = 2 * presScale;
+            topCtx.setLineDash([4, 4]);
+            topCtx.beginPath();
+            topCtx.moveTo(toPxX(a), 0);
+            topCtx.lineTo(toPxX(a), height);
+            topCtx.stroke();
+
+            topCtx.strokeStyle = '#FFC72C';
+            topCtx.beginPath();
+            topCtx.moveTo(toPxX(b), 0);
+            topCtx.lineTo(toPxX(b), height);
+            topCtx.stroke();
+            topCtx.setLineDash([]);
+
+            // 4. Active Dot at (b, f(b))
+            const fb = compiledF(b);
+            topCtx.fillStyle = '#FFC72C';
+            topCtx.beginPath();
+            topCtx.arc(toPxX(b), toPxY(fb), 5.5 * presScale, 0, Math.PI * 2);
+            topCtx.fill();
+
+            // 5. Labels for a, b, and f(b)
+            const fontSize = state.isPresentation ? 14 : 11;
+            topCtx.font = `bold ${fontSize}px monospace`;
+            const axisLabelY = Math.min(height - 10, Math.max(44, toPxY(0) - 8));
+
+            topCtx.fillStyle = '#CCCC99';
+            topCtx.fillText(`a=${a.toFixed(2)}`, toPxX(a) + 5, axisLabelY);
+
+            topCtx.fillStyle = '#FFC72C';
+            topCtx.fillText(`b=${b.toFixed(2)}`, toPxX(b) + 5, axisLabelY + (Math.abs(b - a) < 0.45 ? 16 : 0));
+
+            const labelOffsetX = toPxX(b) > width - 125 ? -115 : 8;
+            const labelOffsetY = toPxY(fb) < 52 ? 16 : -8;
+            topCtx.fillText(`f(b)=${fb.toFixed(2)}`, toPxX(b) + labelOffsetX, toPxY(fb) + labelOffsetY);
+        }
+
+        // --- BOTTOM CANVAS (Split Mode): Accumulation Function F(x) = ∫_a^x f(t) dt + C ---
+        function drawBottomAccumulationGraph() {
+            if (!bottomCtx || !bottomCanvas) return;
+            const width = bottomCanvas.width;
+            const height = bottomCanvas.height;
+            const presScale = state.isPresentation ? 1.35 : 1.0;
+
+            bottomCtx.clearRect(0, 0, width, height);
+
+            const xMin = Math.min(state.domMin, state.a, state.b);
+            const xMax = Math.max(state.domMax, state.a, state.b);
+
+            let yMin = Math.min(0, state.c);
+            let yMax = Math.max(0.5, state.c);
+            const samples = 220;
+            for (let i = 0; i <= samples; i++) {
+                const x = xMin + (i / samples) * (xMax - xMin);
+                const y = evaluateF(x);
+                if (y < yMin) yMin = y;
+                if (y > yMax) yMax = y;
+            }
+            const yPad = (yMax - yMin || 1) * 0.24;
+            yMin -= yPad;
+            yMax += yPad;
+
+            bottomTransform = { xMin, xMax, yMin, yMax, width, height };
+            const { toPxX, toPxY } = drawAxesAndGrid(bottomCtx, width, height, xMin, xMax, yMin, yMax, presScale);
+
+            const { a, b } = state;
+
+            // 1. Optional Full Domain Preview of F(x)
+            if (state.showTraceTrail) {
+                bottomCtx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+                bottomCtx.lineWidth = 2 * presScale;
+                bottomCtx.setLineDash([5, 5]);
+                bottomCtx.beginPath();
+                const fullSteps = 260;
+                for (let i = 0; i <= fullSteps; i++) {
+                    const x = xMin + (i / fullSteps) * (xMax - xMin);
+                    const y = evaluateF(x);
+                    if (i === 0) bottomCtx.moveTo(toPxX(x), toPxY(y));
+                    else bottomCtx.lineTo(toPxX(x), toPxY(y));
+                }
+                bottomCtx.stroke();
+                bottomCtx.setLineDash([]);
+            }
+
+            // 2. Active Accumulation Curve F(x) from a to b
+            if (Math.abs(b - a) > 1e-5) {
+                bottomCtx.strokeStyle = '#38bdf8';
+                bottomCtx.lineWidth = 3.5 * presScale;
+                bottomCtx.beginPath();
+                const activeSteps = 180;
+                for (let i = 0; i <= activeSteps; i++) {
+                    const x = a + (i / activeSteps) * (b - a);
+                    const y = evaluateF(x);
+                    if (i === 0) bottomCtx.moveTo(toPxX(x), toPxY(y));
+                    else bottomCtx.lineTo(toPxX(x), toPxY(y));
+                }
+                bottomCtx.stroke();
+            }
+
+            // 3. Optional Tangent Line to F(x) at x = b with Slope = f(b)
+            const Fb = evaluateF(b);
+            const slope = compiledF(b);
+            if (state.showTangent) {
+                const tangentHalfSpan = (xMax - xMin) * 0.16;
+                const tx0 = b - tangentHalfSpan;
+                const ty0 = Fb - slope * tangentHalfSpan;
+                const tx1 = b + tangentHalfSpan;
+                const ty1 = Fb + slope * tangentHalfSpan;
+
+                bottomCtx.strokeStyle = '#f8fafc';
+                bottomCtx.lineWidth = 2 * presScale;
+                bottomCtx.setLineDash([6, 4]);
+                bottomCtx.beginPath();
+                bottomCtx.moveTo(toPxX(tx0), toPxY(ty0));
+                bottomCtx.lineTo(toPxX(tx1), toPxY(ty1));
+                bottomCtx.stroke();
+                bottomCtx.setLineDash([]);
+            }
+
+            // 4. Vertical Marker Lines at x = a and x = b
+            bottomCtx.strokeStyle = '#CCCC99';
+            bottomCtx.lineWidth = 1.75 * presScale;
+            bottomCtx.setLineDash([4, 4]);
+            bottomCtx.beginPath();
+            bottomCtx.moveTo(toPxX(a), 0);
+            bottomCtx.lineTo(toPxX(a), height);
+            bottomCtx.stroke();
+
+            bottomCtx.strokeStyle = '#FFC72C';
+            bottomCtx.beginPath();
+            bottomCtx.moveTo(toPxX(b), 0);
+            bottomCtx.lineTo(toPxX(b), height);
+            bottomCtx.stroke();
+            bottomCtx.setLineDash([]);
+
+            // 5. Anchor Point (a, F(a) = C)
+            const Fa = evaluateF(a);
+            bottomCtx.fillStyle = '#001a2c';
+            bottomCtx.strokeStyle = '#38bdf8';
+            bottomCtx.lineWidth = 2.5 * presScale;
+            bottomCtx.beginPath();
+            bottomCtx.arc(toPxX(a), toPxY(Fa), 5.5 * presScale, 0, Math.PI * 2);
+            bottomCtx.fill();
+            bottomCtx.stroke();
+
+            // 6. Active Accumulation Point (b, F(b))
+            bottomCtx.fillStyle = '#38bdf8';
+            bottomCtx.beginPath();
+            bottomCtx.arc(toPxX(b), toPxY(Fb), 6 * presScale, 0, Math.PI * 2);
+            bottomCtx.fill();
+
+            // 7. Labels
+            const fontSize = state.isPresentation ? 14 : 11;
+            bottomCtx.font = `bold ${fontSize}px monospace`;
+            const labelOffsetX = toPxX(b) > width - 135 ? -125 : 8;
+            const labelOffsetY = toPxY(Fb) < 52 ? 16 : -8;
+            bottomCtx.fillStyle = '#38bdf8';
+            bottomCtx.fillText(`F(b)=${Fb.toFixed(2)}`, toPxX(b) + labelOffsetX, toPxY(Fb) + labelOffsetY);
+        }
+
+        // --- Presets Loader ---
+        function loadPreset(key) {
+            stopBPlayer();
+            if (key === 'linear') {
+                state.fStr = 't';
+                compiledF = parseFunction('t');
+                state.domMin = -5;
+                state.domMax = 5;
+                state.a = 0;
+                state.b = 2.5;
+                state.c = 0;
+            } else if (key === 'cosine') {
+                state.fStr = 'cos(t)';
+                compiledF = parseFunction('cos(t)');
+                state.domMin = -5;
+                state.domMax = 5;
+                state.a = 0;
+                state.b = 2.1;
+                state.c = 0;
+            } else if (key === 'quadratic_shift') {
+                state.fStr = 't^2 - 2';
+                compiledF = parseFunction('t^2 - 2');
+                state.domMin = -4;
+                state.domMax = 4;
+                state.a = -1;
+                state.b = 2;
+                state.c = 0;
+            } else if (key === 'gaussian') {
+                state.fStr = '2.5 * e^(-t^2)';
+                compiledF = parseFunction('2.5 * e^(-t^2)');
+                state.domMin = -4;
+                state.domMax = 4;
+                state.a = -2;
+                state.b = 1.5;
+                state.c = 0;
+            } else if (key === 'tent') {
+                state.fStr = '2 - abs(t)';
+                compiledF = parseFunction('2 - abs(t)');
+                state.domMin = -4;
+                state.domMax = 4;
+                state.a = -2;
+                state.b = 1.5;
+                state.c = 0;
+            }
+
+            document.getElementById('funcFInput').value = state.fStr;
+            document.getElementById('hudFuncInput').value = state.fStr;
+            document.getElementById('domMinInput').value = state.domMin;
+            document.getElementById('domMaxInput').value = state.domMax;
+            document.getElementById('functionError').classList.add('hidden');
+
+            updateAll(true);
+        }
+
+        // --- Shared Function Input Handler ---
+        function handleFunctionInput(val, sourceId) {
+            const fn = parseFunction(val);
+            if (fn) {
+                compiledF = fn;
+                state.fStr = val;
+                if (sourceId !== 'funcFInput') document.getElementById('funcFInput').value = val;
+                if (sourceId !== 'hudFuncInput') document.getElementById('hudFuncInput').value = val;
+                document.getElementById('functionError').classList.add('hidden');
+                updateAll(true);
+            } else {
+                document.getElementById('functionError').classList.remove('hidden');
+            }
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            // Function inputs
+            document.getElementById('funcFInput').addEventListener('input', (e) => {
+                handleFunctionInput(e.target.value, 'funcFInput');
+            });
+            document.getElementById('hudFuncInput').addEventListener('input', (e) => {
+                handleFunctionInput(e.target.value, 'hudFuncInput');
+            });
+
+            // Limit a controls
+            document.getElementById('sliderA').addEventListener('input', (e) => {
+                stopBPlayer();
+                state.a = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('hudSliderA').addEventListener('input', (e) => {
+                stopBPlayer();
+                state.a = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('boundAInput').addEventListener('change', (e) => {
+                stopBPlayer();
+                const val = parseFloat(e.target.value);
+                state.a = isNaN(val) ? 0 : Math.max(state.domMin, Math.min(state.domMax, val));
+                updateAll(false);
+            });
+
+            // Constant +C controls
+            document.getElementById('sliderC').addEventListener('input', (e) => {
+                state.c = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('hudSliderC').addEventListener('input', (e) => {
+                state.c = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('constCInput').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                state.c = isNaN(val) ? 0 : val;
+                updateAll(false);
+            });
+
+            // Limit b controls
+            document.getElementById('sliderB').addEventListener('input', (e) => {
+                stopBPlayer();
+                state.b = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('hudSliderB').addEventListener('input', (e) => {
+                stopBPlayer();
+                state.b = parseFloat(e.target.value) || 0;
+                updateAll(false);
+            });
+            document.getElementById('boundBInput').addEventListener('change', (e) => {
+                stopBPlayer();
+                const val = parseFloat(e.target.value);
+                state.b = isNaN(val) ? 0 : Math.max(state.domMin, Math.min(state.domMax, val));
+                updateAll(false);
+            });
+
+            // Domain min / max controls
+            document.getElementById('domMinInput').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val < state.domMax) {
+                    state.domMin = val;
+                    state.a = Math.max(state.domMin, state.a);
+                    state.b = Math.max(state.domMin, state.b);
+                    updateAll(true);
+                }
+            });
+            document.getElementById('domMaxInput').addEventListener('change', (e) => {
+                const val = parseFloat(e.target.value);
+                if (!isNaN(val) && val > state.domMin) {
+                    state.domMax = val;
+                    state.a = Math.min(state.domMax, state.a);
+                    state.b = Math.min(state.domMax, state.b);
+                    updateAll(true);
+                }
+            });
+
+            // Visual overlay toggles
+            document.getElementById('combineAxesCheck').addEventListener('change', (e) => {
+                toggleCombineAxes(e.target.checked);
+            });
+            document.getElementById('showTangentCheck').addEventListener('change', (e) => {
+                state.showTangent = e.target.checked;
+                drawAllGraphs();
+            });
+            document.getElementById('showSignedColorsCheck').addEventListener('change', (e) => {
+                state.showSignedColors = e.target.checked;
+                drawAllGraphs();
+            });
+            document.getElementById('showTraceTrailCheck').addEventListener('change', (e) => {
+                state.showTraceTrail = e.target.checked;
+                drawAllGraphs();
+            });
+            document.getElementById('showGridCheck').addEventListener('change', (e) => {
+                state.showGrid = e.target.checked;
+                drawAllGraphs();
+            });
+
+            // Keyboard Shortcuts
+            window.addEventListener('keydown', (e) => {
+                const tag = document.activeElement ? document.activeElement.tagName : '';
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+                    if (e.key === 'Escape') document.activeElement.blur();
+                    return;
+                }
+
+                if (e.key === 'Escape' && state.isPresentation) {
+                    togglePresentationMode(false);
+                } else if (e.key.toLowerCase() === 'p') {
+                    togglePresentationMode();
+                } else if (e.key.toLowerCase() === 'c') {
+                    toggleCombineAxes();
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    toggleBPlayer();
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    stopBPlayer();
+                    state.b = Number(Math.min(state.domMax, state.b + 0.05).toFixed(2));
+                    updateAll(false);
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    stopBPlayer();
+                    state.b = Number(Math.max(state.domMin, state.b - 0.05).toFixed(2));
+                    updateAll(false);
+                }
+            });
+        }
+
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            modal.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
